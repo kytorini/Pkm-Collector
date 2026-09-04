@@ -19,8 +19,10 @@ from a phone on the same network — `npm run dev` already listens on your LAN).
 There's no server and no database, so any static host works.
 
 - **GitHub Pages** — `.github/workflows/deploy.yml` builds and publishes on
-  every push, and switches Pages on itself the first time it runs. Pages needs
-  the repository to be public unless the account has GitHub Pro.
+  every push. Enable it once under Settings → Pages → Source: **GitHub Actions**;
+  the workflow can't do this for itself, as creating a Pages site needs repository
+  admin rights that `GITHUB_TOKEN` doesn't have. Pages also needs the repository
+  to be public unless the account has GitHub Pro.
 - **Netlify / Vercel / Cloudflare Pages** — `netlify.toml` and `vercel.json` are
   in the repo; point the service at this repo and it builds with no further
   configuration. These serve private repositories on their free tiers.
