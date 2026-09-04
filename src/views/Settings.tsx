@@ -4,6 +4,7 @@ import { idbClear } from '../lib/idb'
 import { collectionToCsv, collectionToJson, download, parseBackup } from '../lib/exporters'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
+import { routeHref } from '../lib/router'
 import { CONDITIONS, type ConditionId } from '../types'
 
 export function Settings() {
@@ -51,6 +52,7 @@ export function Settings() {
             Export spreadsheet (CSV)
           </button>
           <button className="btn ghost" onClick={() => fileInput.current?.click()}>Import backup</button>
+          <a className="btn ghost" href={routeHref.import}>Import a spreadsheet</a>
           <input
             ref={fileInput}
             type="file"

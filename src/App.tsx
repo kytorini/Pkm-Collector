@@ -3,6 +3,7 @@ import { navigate, routeHref, useRoute } from './lib/router'
 import { CollectionProvider } from './store/collection'
 import { LibraryProvider, useLibrary } from './store/library'
 import { Dashboard } from './views/Dashboard'
+import { Import } from './views/Import'
 import { Search } from './views/Search'
 import { SetDetail } from './views/SetDetail'
 import { SetList } from './views/SetList'
@@ -33,7 +34,7 @@ function Shell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const active = route.name === 'set' ? 'sets' : route.name
+  const active = route.name === 'set' ? 'sets' : route.name === 'import' ? 'settings' : route.name
 
   return (
     <div className="app">
@@ -64,6 +65,7 @@ function Shell() {
         {route.name === 'set' && <SetDetail setId={route.setId} variantId={route.variantId} />}
         {route.name === 'search' && <Search />}
         {route.name === 'settings' && <Settings />}
+        {route.name === 'import' && <Import />}
       </main>
     </div>
   )
