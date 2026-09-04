@@ -14,6 +14,24 @@ npm run dev          # http://localhost:5173
 `npm run build` produces a static `dist/` you can drop on any host (or open
 from a phone on the same network — `npm run dev` already listens on your LAN).
 
+### Hosting it
+
+There's no server and no database, so any static host works.
+
+- **GitHub Pages** — `.github/workflows/deploy.yml` builds and publishes on
+  every push. Enable it once under Settings → Pages → Source: **GitHub Actions**.
+  Pages needs the repository to be public unless the account has GitHub Pro.
+- **Netlify / Vercel / Cloudflare Pages** — `netlify.toml` and `vercel.json` are
+  in the repo; point the service at this repo and it builds with no further
+  configuration. These serve private repositories on their free tiers.
+
+Pages serves the app from `/<repo>/` rather than the domain root, which the
+build handles through the `BASE_PATH` environment variable — the workflow sets
+it, and everything else defaults to the root.
+
+Once it's on a URL, iOS and iPadOS can **Share → Add to Home Screen** to install
+it: it gets an icon and opens full-screen without browser chrome.
+
 On first launch the app downloads card data for all 17 vintage sets from the
 [Pokémon TCG API](https://pokemontcg.io/) — names, artwork URLs, rarities and
 current TCGplayer prices. That's cached in IndexedDB, so afterwards it opens

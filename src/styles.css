@@ -48,8 +48,10 @@ h2 { font-size: 1.05rem; }
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 0 20px;
+  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
   height: 56px;
+  padding-top: env(safe-area-inset-top);
+  box-sizing: content-box;
   background: rgba(14, 16, 22, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line-soft);
@@ -84,7 +86,11 @@ h2 { font-size: 1.05rem; }
 
 .main { flex: 1; }
 
-.view { max-width: 1280px; margin: 0 auto; padding: 28px 20px 72px; }
+.view {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px max(20px, env(safe-area-inset-right)) calc(72px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
 .view.narrow { max-width: 720px; }
 
 .view-head { margin-bottom: 22px; }
@@ -477,7 +483,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .progress-row .progress { grid-column: 1 / -1; }
   .progress-row-value { display: none; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
-  .view { padding: 20px 14px 60px; }
+  .view {
+    padding: 20px max(14px, env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  }
 }
 
 /* ---------- import wizard ---------- */

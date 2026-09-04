@@ -1,0 +1,7 @@
+# Used if you host on Netlify. Nothing here affects local development.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
