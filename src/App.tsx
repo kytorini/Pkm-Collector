@@ -43,15 +43,21 @@ function Shell() {
           <span className="brand-mark" aria-hidden>◈</span>
           <span>Pkm Collector</span>
         </a>
-        <nav className="nav">
-          {NAV.map((item) => (
-            <a key={item.href} href={item.href} className={`nav-link ${active === item.match ? 'is-active' : ''}`}>
-              <span className="nav-icon" aria-hidden>{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-            </a>
-          ))}
-        </nav>
       </header>
+
+      {/*
+        A sibling of the top bar rather than a child: the bar's backdrop-filter
+        makes it a containing block, which would pin this to the bar instead of
+        the viewport and strand the phone tab bar at the top of the screen.
+      */}
+      <nav className="nav" aria-label="Main">
+        {NAV.map((item) => (
+          <a key={item.href} href={item.href} className={`nav-link ${active === item.match ? 'is-active' : ''}`}>
+            <span className="nav-icon" aria-hidden>{item.icon}</span>
+            <span className="nav-label">{item.label}</span>
+          </a>
+        ))}
+      </nav>
 
       {progress.running && (
         <div className="sync-bar" role="status">

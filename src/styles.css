@@ -60,7 +60,19 @@ h2 { font-size: 1.05rem; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.02em; }
 .brand-mark { color: var(--gold); font-size: 1.1rem; }
 
-.nav { display: flex; gap: 4px; margin-left: auto; }
+.nav {
+  /* Fixed rather than in flow, so it sits above the bar's blurred backdrop
+     and can move to the bottom of the screen on phones. */
+  position: fixed;
+  top: 0;
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: calc(56px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
 
 .nav-link {
   display: flex;
@@ -473,18 +485,235 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 
 /* ---------- responsive ---------- */
-@media (max-width: 760px) {
-  .nav-label { display: none; }
-  .nav-link { padding: 8px 11px; }
-  .nav-icon { font-size: 1.15rem; }
-  .modal { grid-template-columns: 1fr; gap: 18px; padding: 20px; }
-  .modal-art { max-width: 260px; margin: 0 auto; }
-  .progress-row { grid-template-columns: 1fr 60px; row-gap: 8px; }
+
+/*
+ * Phones. Navigation moves to a bottom bar (the top of a 6.3" screen is out of
+ * thumb reach), tap targets go to Apple's 44pt minimum, and the set header
+ * compresses so cards start above the fold instead of a screen down.
+ */
+@media (max-width: 700px) {
+  .topbar { gap: 12px; }
+  .nav {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: auto;
+    z-index: 30;
+    padding-top: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0;
+    padding: 6px max(4px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-right));
+    background: rgba(14, 16, 22, 0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line-soft);
+  }
+  .nav-link {
+    flex-direction: column;
+    gap: 3px;
+    min-height: 48px;
+    padding: 6px 4px;
+    border-radius: var(--radius-sm);
+    justify-content: center;
+  }
+  .nav-link.is-active { background: transparent; }
+  .nav-icon { font-size: 1.2rem; line-height: 1; }
+  .nav-label { display: block; font-size: 0.66rem; letter-spacing: 0.01em; }
+
+  /* Clear the fixed bottom bar. */
+  .view { padding: 18px max(14px, env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+
+  h1 { font-size: 1.25rem; }
+  .view-head { margin-bottom: 10px; }
+  .view-head p { font-size: 0.8rem; }
+  /* The set's series and card count are already on the sets list and the
+   * print-run tabs; on a phone that line only pushes cards off-screen. */
+  .set-head p { display: none; }
+
+  /*
+   * Set header, tabs, summary and filters used to fill the screen before a
+   * single card appeared. Everything here is about getting cards above the
+   * fold: tighter type, one-line summary, and filters that stay put when you
+   * scroll instead of costing you the scroll back.
+   */
+  .set-head { align-items: center; gap: 10px; }
+  .set-head .btn { padding: 8px 12px; min-height: 40px; font-size: 0.8rem; white-space: nowrap; }
+  .back-link { margin-bottom: 2px; font-size: 0.8rem; }
+  .variant-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -14px 12px;
+    padding: 0 14px 4px;
+    scrollbar-width: none;
+  }
+  .variant-tabs::-webkit-scrollbar { display: none; }
+  .variant-tab { flex: 0 0 auto; scroll-snap-align: start; min-height: 44px; padding: 7px 14px; }
+  .variant-tab-name { font-size: 0.85rem; }
+
+  /* Drop the panel chrome: the numbers matter, the box around them doesn't. */
+  .set-summary {
+    display: block;
+    padding: 0;
+    margin-bottom: 12px;
+    background: none;
+    border: 0;
+  }
+  .summary-progress { display: block; min-width: 0; }
+  .summary-progress span { display: none; }
+  .summary-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 7px;
+    justify-content: space-between;
+  }
+  .summary-stats > div { display: flex; align-items: baseline; gap: 5px; }
+  .summary-stats dt { font-size: 0.68rem; text-transform: none; letter-spacing: 0; }
+  .summary-stats dd { font-size: 0.82rem; margin: 0; }
+  .summary-stats .small { display: none; }
+
+  .toolbar {
+    position: sticky;
+    top: calc(56px + env(safe-area-inset-top));
+    z-index: 15;
+    gap: 6px;
+    margin: 0 -14px 10px;
+    padding: 6px 14px;
+    background: rgba(14, 16, 22, 0.94);
+    backdrop-filter: blur(12px);
+  }
+  .search-input { min-height: 38px; flex: 1 1 100%; padding: 7px 12px; }
+  .segmented { flex: 1 1 auto; }
+  .segmented button { min-height: 38px; padding: 7px 12px; flex: 1; }
+  .select { min-height: 38px; padding: 7px 10px; }
+
+  /* Three across reads better than two — more of the set per screen. */
+  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile-meta { grid-template-columns: auto 1fr; row-gap: 1px; font-size: 0.72rem; }
+  .tile-price { grid-column: 1 / -1; }
+  .tile-check { width: 32px; height: 32px; top: 5px; right: 5px; }
+  .tile-condition { top: 5px; left: 5px; font-size: 0.66rem; padding: 2px 6px; }
+
+  .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat { padding: 13px; }
+  .stat-value { font-size: 1.4rem; }
+
+  .progress-row { grid-template-columns: 1fr 60px; row-gap: 8px; padding: 14px 14px; }
   .progress-row .progress { grid-column: 1 / -1; }
   .progress-row-value { display: none; }
-  .card-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+
+  .set-grid { grid-template-columns: 1fr; }
+  .btn-row .btn { flex: 1 1 auto; }
+
+  /* Card detail becomes a bottom sheet: reachable, and dismissable downward. */
+  .modal-backdrop { padding: 0; align-items: end; }
+  .modal {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    max-height: 92vh;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    animation: sheet-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .modal-art { max-width: 200px; margin: 0 auto; }
+  .modal-close { width: 40px; height: 40px; }
+  .variant-fields input, .variant-fields select { min-height: 42px; }
+  .modal-nav button { width: 56px; height: 44px; }
+
+  .map-grid { grid-template-columns: 1fr; }
+  .import-counts { grid-template-columns: repeat(2, 1fr); }
+  .preview-table th, .preview-table td { padding: 7px 9px; }
+}
+
+@keyframes sheet-up { from { transform: translateY(100%); } }
+
+/* Small phones and the closed screen of a folding phone. */
+@media (max-width: 400px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .brand span:last-child { font-size: 0.92rem; }
+  .summary-stats { gap: 10px; }
+}
+
+/*
+ * Folding phones. When the viewport spans two screens the hinge sits in the
+ * middle, so content is kept out of that band rather than being split by it.
+ * env(viewport-segment-*) is the standard for this; browsers without it are
+ * unaffected and keep the layout above.
+ */
+@media (horizontal-viewport-segments: 2) {
   .view {
-    padding: 20px max(14px, env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    /* Widen the gutter so no card or control lands under the fold. */
+    padding-left: max(20px, env(viewport-segment-left 1 0));
+    padding-right: max(20px, calc(100vw - env(viewport-segment-right 0 0)));
+  }
+  .modal {
+    /* Keep the sheet on one panel instead of straddling the seam. */
+    max-width: env(viewport-segment-width 0 0, 100%);
+    margin-right: auto;
+  }
+}
+
+/* Unfolded: a phone that is suddenly tablet-shaped gets the roomier layout. */
+@media (min-width: 701px) and (max-width: 1024px) {
+  .card-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Landscape phones: the top bar and headers eat too much of a short viewport. */
+@media (max-height: 460px) and (orientation: landscape) {
+  .topbar { height: 44px; }
+  .view { padding-top: 12px; }
+  .modal { max-height: 96vh; }
+}
+
+/* Touch devices: hover effects misfire, and tap targets need real estate. */
+@media (hover: none) {
+  .tile:hover .tile-art img { transform: none; }
+  .tile-check:hover { transform: none; }
+  /* Extends the tap area to 44pt without enlarging the visible control. */
+  .tile-check::before { content: ''; position: absolute; inset: -7px; }
+  .tile-art { -webkit-tap-highlight-color: transparent; }
+
+  /* Apple's 44pt floor, applied by input type rather than screen width. */
+  .btn,
+  .nav-link,
+  .segmented button,
+  .select,
+  .search-input,
+  .variant-tab,
+  .modal-close,
+  .modal-nav button,
+  .issue-head,
+  input[type='text'],
+  input[type='number'],
+  input[type='password'],
+  select {
+    min-height: 44px;
+  }
+  .link-btn, .back-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .variant-toggle input { width: 22px; height: 22px; }
+  .brand { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+/* Phones override the floor where a 44pt row would push cards off-screen. */
+@media (hover: none) and (max-width: 700px) {
+  .btn.small, .set-head .btn { min-height: 40px; }
+  .search-input, .segmented button, .select { min-height: 38px; }
+  .variant-tab { min-height: 40px; }
+  .back-link { min-height: 32px; }
+}
+
+/* Respect the system setting rather than animating regardless. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

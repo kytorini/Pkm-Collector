@@ -1,0 +1,17 @@
+# Capacitor copies the built web app here on `cap sync` — it's build output.
+App/App/public/
+App/App/capacitor.config.json
+App/App/config.xml
+
+# CocoaPods installs these on a Mac.
+App/Pods/
+App/Podfile.lock
+App/App.xcworkspace/xcuserdata/
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout

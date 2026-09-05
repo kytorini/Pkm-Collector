@@ -32,7 +32,59 @@ build handles through the `BASE_PATH` environment variable — the workflow sets
 it, and everything else defaults to the root.
 
 Once it's on a URL, iOS and iPadOS can **Share → Add to Home Screen** to install
-it: it gets an icon and opens full-screen without browser chrome.
+it: it gets an icon, opens full-screen without browser chrome, and works offline
+(a service worker caches the app's own files and card artwork; card data and the
+collection were already stored on the device).
+
+## Native iOS app
+
+The repo is set up as a [Capacitor](https://capacitorjs.com) app — the same web
+build wrapped in a native shell, with the Xcode project committed under `ios/`.
+
+```bash
+npm run ios:sync    # build the web app and copy it into the native project
+npm run ios:open    # open it in Xcode
+```
+
+**This needs a Mac.** Xcode only runs on macOS, so building, signing and
+submitting can't happen from an iPad or from CI on Linux. What each level costs:
+
+| Goal | Needs |
+| --- | --- |
+| Run in the iOS Simulator | Mac + Xcode (free) |
+| Install on your own iPhone | Mac + Xcode + free Apple ID — the app expires after 7 days and must be re-signed |
+| TestFlight, or an app that doesn't expire | Apple Developer Program, $99/year |
+| App Store listing | Apple Developer Program + review |
+
+Cloud macOS runners (GitHub Actions `macos-latest`, Codemagic, Ionic Appflow)
+can do the building without owning a Mac, but signing still requires a paid
+Apple Developer account.
+
+Until then the Add-to-Home-Screen install above covers most of what the native
+app would give you: icon, full-screen, offline, no browser UI.
+
+## Phone and foldable layout
+
+The layout is driven by capability, not device lists — nothing keys off a
+specific model:
+
+- **Navigation sits at the bottom on phones**, where a thumb reaches on a 6.3"
+  screen, and at the top on tablets and desktops.
+- **Tap targets meet Apple's 44pt minimum**, applied under `@media (hover: none)`
+  so a folding phone gets them at tablet widths too. The owned-check on a card
+  keeps its compact look but takes a 44pt tap area via a `::before` overlay.
+- **Safe-area insets** on the bar, views and bottom sheet, for the Dynamic
+  Island and home indicator.
+- **The card detail is a bottom sheet on phones** and a centred dialog elsewhere.
+- **Foldables** use the CSS Viewport Segments feature
+  (`@media (horizontal-viewport-segments: 2)`) to keep content and sheets out of
+  the hinge. The unfolded width picks up the roomier layout automatically.
+
+Two caveats worth stating plainly: the iPhone Fold is unreleased and its
+dimensions aren't public, so the fold handling is written against the web
+standard rather than that device; and everything here was verified in a
+Chromium-based browser at iPhone-sized viewports, not on real hardware or in
+Safari.
 
 On first launch the app downloads card data for all 17 vintage sets from the
 [Pokémon TCG API](https://pokemontcg.io/) — names, artwork URLs, rarities and
