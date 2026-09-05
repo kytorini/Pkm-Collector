@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getApiKey, setApiKey } from '../api/pokemonTcg'
 import { idbClear } from '../lib/idb'
 import { collectionToCsv, collectionToJson, download, parseBackup } from '../lib/exporters'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
+import { formatBytes, getPersistState, getStorageUse, requestPersistentStorage, type PersistState, type StorageUse } from '../lib/storage'
 import { routeHref } from '../lib/router'
 import { CONDITIONS, type ConditionId } from '../types'
 
@@ -13,7 +14,14 @@ export function Settings() {
   const [key, setKey] = useState(getApiKey())
   const [saved, setSaved] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [persist, setPersist] = useState<PersistState | null>(null)
+  const [use, setUse] = useState<StorageUse | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    void getPersistState().then(setPersist)
+    void getStorageUse().then(setUse)
+  }, [])
 
   const onSaveKey = () => {
     setApiKey(key)
@@ -44,6 +52,28 @@ export function Settings() {
         <p className="muted">
           {ownedCount} cards marked as owned. Everything lives in this browser — back it up before switching devices.
         </p>
+
+        {/* Browser storage is durable, not guaranteed. Say which it is here
+            rather than letting someone find out by losing their collection. */}
+        {persist === 'persisted' && (
+          <p className="note">
+            Storage is marked persistent — this browser won't evict your collection to reclaim space.
+            {use && use.usedBytes > 0 && ` Using ${formatBytes(use.usedBytes)}.`}
+          </p>
+        )}
+        {persist === 'not-persisted' && (
+          <p className="warn-note">
+            This browser hasn't granted persistent storage, so it could clear your collection if the
+            device runs very low on space.{' '}
+            <button
+              className="link-btn"
+              onClick={() => void requestPersistentStorage().then(setPersist)}
+            >
+              Ask again
+            </button>
+            {' '}— and keep a JSON backup either way. Installing to the Home Screen usually grants it.
+          </p>
+        )}
         <div className="btn-row">
           <button className="btn" onClick={() => download(`pkm-collection-${stamp}.json`, collectionToJson(collection), 'application/json')}>
             Export backup (JSON)

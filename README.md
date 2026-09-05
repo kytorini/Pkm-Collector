@@ -110,7 +110,10 @@ TCGplayer bucket — 1st Edition prices off `1stEditionHolofoil`, Unlimited off
 `unlimitedHolofoil`/`holofoil`. The set and collection views roll that up into
 what you hold, what finishing costs, and what you're up against what you paid.
 
-**Your data is yours.** The collection lives in this browser's localStorage.
+**Your data is yours.** The collection lives in this browser's localStorage. The
+app asks for persistent storage on start, which exempts it from the browser's
+low-disk eviction; Settings shows whether that was granted and nudges you to
+keep a JSON backup if it wasn't.
 Settings exports a JSON backup (re-importable) and a CSV that opens straight in
 a spreadsheet.
 

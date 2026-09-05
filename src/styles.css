@@ -474,6 +474,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .panel p { margin: 0 0 14px; font-size: 0.88rem; }
 .panel a { color: var(--blue); }
 .note { color: var(--green); font-size: 0.85rem; margin: 12px 0 0; }
+.warn-note {
+  color: #d5a95a;
+  font-size: 0.85rem;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--line));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+.warn-note .link-btn { color: inherit; }
 .error-banner {
   padding: 11px 14px;
   margin-bottom: 18px;
