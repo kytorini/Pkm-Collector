@@ -91,9 +91,10 @@ export function Import() {
       setSheets(parsed)
       setActiveSheet(0)
       setSheetSets(Object.fromEntries(parsed.map((s, i) => [i, setIdFromName(s.name)])))
-      // A workbook whose tabs are named after sets is the common shape; offer
-      // to take all of them at once rather than seventeen separate imports.
-      setAllSheets(parsed.length > 1 && parsed.filter((s) => setIdFromName(s.name)).length > 1)
+      // Any multi-tab workbook starts in all-tabs mode. It used to require two
+      // tabs to auto-match a set first, which hid the tab mapper from exactly
+      // the workbooks whose tab names needed mapping by hand.
+      setAllSheets(parsed.length > 1)
       setFileName(file.name)
       setMapping(guessMapping(first.headers))
     } catch (err) {
@@ -178,6 +179,13 @@ export function Import() {
                     <em>Each tab's name is read as its set — correct any it got wrong below</em>
                   </span>
                 </label>
+
+                {allSheets && mapping?.set != null && (
+                  <p className="muted small tab-map-hint">
+                    Your sheet has a Set column, so each row's own set is used. To map whole tabs instead,
+                    set <strong>Set</strong> to “not in my sheet” below.
+                  </p>
+                )}
 
                 {allSheets && mapping?.set == null && (
                   <div className="tab-map">

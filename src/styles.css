@@ -885,3 +885,4 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   border-bottom: 1px solid var(--line-soft);
 }
 .qty-list strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.tab-map-hint { margin: 12px 0 0; }
