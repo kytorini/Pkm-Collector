@@ -886,3 +886,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .qty-list strong { color: var(--gold); font-variant-numeric: tabular-nums; }
 .tab-map-hint { margin: 12px 0 0; }
+
+/* ---------- single-tab set selector ---------- */
+.sheet-set { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; font-size: 0.82rem; color: var(--text-dim); }
+.sheet-set strong { color: var(--text); }
+.sheet-set select { width: 100%; }

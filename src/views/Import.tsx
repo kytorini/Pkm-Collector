@@ -68,7 +68,7 @@ export function Import() {
       return combinePlans(usable.map(([s, i]) => forSheet(s, i)))
     }
     const current = sheets[activeSheet]
-    return current ? buildPlan(current.rows, mapping, index, collection, defaultCondition) : null
+    return current ? forSheet(current, activeSheet) : null
   }, [sheets, activeSheet, allSheets, mapping, index, collection, defaultCondition, sheetSets])
 
   const onFile = async (file: File) => {
@@ -240,6 +240,26 @@ export function Import() {
                     ))}
                   </div>
                 )}
+
+                {!allSheets && mapping?.set == null && sheet && (
+                  <label className="sheet-set">
+                    <span>
+                      “<strong>{sheet.name}</strong>” is which set?
+                    </span>
+                    <select
+                      value={sheetSets[activeSheet] ?? ''}
+                      onChange={(e) => {
+                        setDone(null)
+                        setSheetSets((prev) => ({ ...prev, [activeSheet]: e.target.value || null }))
+                      }}
+                    >
+                      <option value="">— match by card name across all sets —</option>
+                      {VINTAGE_SETS.map((vs) => (
+                        <option key={vs.id} value={vs.id}>{vs.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
             )}
           </>
@@ -363,12 +383,15 @@ export function Import() {
             )}
 
             <div className="map-grid fallbacks">
-              {mapping.set == null && !allSheets && (
+              {mapping.set == null && !allSheets && sheets.length === 1 && (
                 <label>
                   <span>My sheet has no Set column — it's all…</span>
                   <select
-                    value={mapping.fallbackSetId ?? ''}
-                    onChange={(e) => patch({ fallbackSetId: e.target.value || null })}
+                    value={sheetSets[0] ?? ''}
+                    onChange={(e) => {
+                      setDone(null)
+                      setSheetSets((prev) => ({ ...prev, 0: e.target.value || null }))
+                    }}
                   >
                     <option value="">— match by card name across all sets —</option>
                     {VINTAGE_SETS.map((s) => (
