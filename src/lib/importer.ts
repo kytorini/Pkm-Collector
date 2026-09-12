@@ -123,8 +123,95 @@ export function matchVariantId(raw: string): string | null {
   if (/\b(1st|first)\b/.test(v) || v === 'ed1' || v === '1e') return 'first-edition'
   if (v.includes('shadowless') || v === 'sl') return 'shadowless'
   if (v.includes('reverse') || v === 'rh' || v.includes('rev holo')) return 'reverse-holo'
-  if (v.includes('unlimited') || v === 'unl' || v === 'ul') return 'unlimited'
+  if (v.includes('unlimited') || v.startsWith('unli') || v === 'unl' || v === 'ul' || v === 'u') return 'unlimited'
   return null
+}
+
+/* ------------------------------------------------------------------ *
+ * Reading a column by its contents
+ *
+ * Headers are often unhelpful — "Column 1" holding conditions, "Index"
+ * holding card numbers, "Unli." holding checkboxes. Sampling the values
+ * identifies those columns where the header can't.
+ * ------------------------------------------------------------------ */
+
+const SAMPLE_ROWS = 40
+/** Share of non-empty values that must agree before a column is claimed. */
+const CONFIDENCE = 0.7
+
+function sample(rows: string[][], col: number): string[] {
+  const out: string[] = []
+  for (const row of rows.slice(0, SAMPLE_ROWS)) {
+    const value = (row[col] ?? '').trim()
+    if (value) out.push(value)
+  }
+  return out
+}
+
+const shareMatching = (values: string[], test: (v: string) => boolean): number =>
+  values.length === 0 ? 0 : values.filter(test).length / values.length
+
+const looksBoolean = (v: string) => matchTruthy(v) !== 'unknown'
+const looksCondition = (v: string) => matchCondition(v).condition != null || matchCondition(v).graded != null
+/** "1/102", "004/102", "H12", "12" — a card number, not a quantity. */
+const looksCardNumber = (v: string) => /^[A-Za-z]?\d{1,3}\s*(\/\s*\d{1,3})?$/.test(v.trim())
+const looksNumbered = (v: string) => /^\s*[A-Za-z]?\d{1,3}\s*\/\s*\d{1,3}\s*$/.test(v)
+const looksCardName = (v: string) => /[A-Za-z]{3}/.test(v) && !looksBoolean(v) && !looksCondition(v) && !looksCardNumber(v)
+
+/**
+ * Fills in whatever the header row couldn't identify, by looking at what each
+ * unclaimed column actually holds.
+ */
+function inferFromContent(mapping: ColumnMapping, headers: string[], rows: string[][]): ColumnMapping {
+  if (rows.length === 0) return mapping
+  const next = { ...mapping, variantColumns: { ...mapping.variantColumns } }
+
+  const claimed = new Set<number>(
+    [next.set, next.name, next.number, next.variation, next.condition, next.owned, next.quantity, next.pricePaid, next.notes]
+      .filter((c): c is number => c != null),
+  )
+  for (const col of Object.keys(next.variantColumns)) claimed.add(Number(col))
+
+  const columns = headers.map((_, i) => i).filter((i) => !claimed.has(i))
+  const samples = new Map(columns.map((i) => [i, sample(rows, i)]))
+
+  // Checkbox columns first: two or more of them mean a column-per-print-run
+  // sheet, which changes how every other column is read.
+  const booleanCols = columns.filter((i) => {
+    const values = samples.get(i) ?? []
+    return values.length > 0 && shareMatching(values, looksBoolean) >= CONFIDENCE
+  })
+  const namedBooleans = booleanCols.filter((i) => matchVariantId(headers[i]))
+  if (namedBooleans.length + Object.keys(next.variantColumns).length >= 2) {
+    next.layout = 'wide'
+    for (const i of namedBooleans) {
+      next.variantColumns[i] = matchVariantId(headers[i]) as string
+      claimed.add(i)
+    }
+    // A checkbox column whose header names nothing is left for the user to
+    // assign rather than guessed at.
+  }
+
+  const take = (field: 'name' | 'number' | 'condition', test: (v: string) => boolean) => {
+    if (next[field] != null) return
+    const best = columns
+      .filter((i) => !claimed.has(i))
+      .map((i) => ({ i, score: shareMatching(samples.get(i) ?? [], test), count: (samples.get(i) ?? []).length }))
+      .filter((c) => c.count > 0 && c.score >= CONFIDENCE)
+      .sort((a, b) => b.score - a.score || b.count - a.count)[0]
+    if (best) {
+      next[field] = best.i
+      claimed.add(best.i)
+    }
+  }
+
+  // Order matters: the narrowest test claims its column before a looser one can.
+  take('number', looksNumbered)
+  take('condition', looksCondition)
+  take('number', looksCardNumber)
+  take('name', looksCardName)
+
+  return next
 }
 
 /* ------------------------------------------------------------------ *
@@ -564,7 +651,7 @@ const normHeader = (s: string): string =>
 /** Header patterns, most specific first — "price paid" must beat "price". */
 const HEADER_PATTERNS: { field: keyof ColumnMapping; patterns: RegExp[] }[] = [
   { field: 'pricePaid', patterns: [/paid/, /\bcost\b/, /purchase/, /buy price/, /acquired for/] },
-  { field: 'number', patterns: [/^#$/, /card\s*(no|num|number|#)/, /^(no|num|number|nr)$/, /^card\s*id$/, /^#\s/] },
+  { field: 'number', patterns: [/^#$/, /card\s*(no|num|number|#)/, /^(no|num|number|nr)$/, /^card\s*id$/, /^#\s/, /^index$/] },
   { field: 'name', patterns: [/^card$/, /card ?name/, /^name$/, /pokemon/, /^title$/] },
   { field: 'set', patterns: [/^set$/, /set ?name/, /expansion/, /^series$/] },
   { field: 'variation', patterns: [/variation/, /variant/, /^edition$/, /print/, /^version$/, /1st.*unlimited/] },
@@ -583,7 +670,7 @@ function variantColumnId(header: string): string | null {
   return matchVariantId(header)
 }
 
-export function guessMapping(headers: string[]): ColumnMapping {
+export function guessMapping(headers: string[], rows: string[][] = []): ColumnMapping {
   const mapping: ColumnMapping = {
     layout: 'long',
     set: null,
@@ -632,16 +719,18 @@ export function guessMapping(headers: string[]): ColumnMapping {
   // column would only fight them.
   if (mapping.layout === 'wide') mapping.owned = null
 
-  return mapping
+  const inferred = inferFromContent(mapping, headers, rows)
+  if (inferred.layout === 'wide') inferred.owned = null
+  return inferred
 }
 
 /**
  * How much of a mapping a candidate header row yields. Card name and number
  * are what matching actually needs, so they count for more than the extras.
  */
-function mappingScore(headers: string[]): number {
+function mappingScore(headers: string[], rows: string[][] = []): number {
   if (headers.length === 0) return 0
-  const m = guessMapping(headers)
+  const m = guessMapping(headers, rows)
   let score = 0
   if (m.name != null) score += 3
   if (m.number != null) score += 3
@@ -666,11 +755,11 @@ export function findHeaderRow(
   maxLookahead = 5,
 ): { headers: string[]; rows: string[][]; shiftedBy: number } {
   let best = { headers, rows, shiftedBy: 0 }
-  let bestScore = mappingScore(headers)
+  let bestScore = mappingScore(headers, rows)
 
   for (let i = 0; i < Math.min(maxLookahead, rows.length - 1); i++) {
     const candidate = rows[i]
-    const score = mappingScore(candidate)
+    const score = mappingScore(candidate, rows.slice(i + 1))
     // Strictly better, so an equally good row further down never wins and the
     // earliest plausible header keeps its place.
     if (score > bestScore) {

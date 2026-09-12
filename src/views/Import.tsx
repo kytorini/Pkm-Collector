@@ -67,7 +67,7 @@ export function Import() {
     (s: WorkbookSheet, i: number) => {
       const m = mappings[i]
       if (!m) return null
-      const withSet = m.set == null ? { ...m, fallbackSetId: sheetSets[i] ?? null } : m
+      const withSet = { ...m, fallbackSetId: sheetSets[i] ?? m.fallbackSetId ?? null }
       return labelPlanRows(buildPlan(s.rows, withSet, index, collection, defaultCondition), s.name)
     },
     [mappings, sheetSets, index, collection, defaultCondition],
@@ -144,7 +144,7 @@ export function Import() {
       setSheets(parsed)
       setActiveSheet(0)
       setSheetSets(Object.fromEntries(parsed.map((s, i) => [i, setIdFromName(s.name)])))
-      setMappings(Object.fromEntries(parsed.map((s, i) => [i, guessMapping(s.headers)])))
+      setMappings(Object.fromEntries(parsed.map((s, i) => [i, guessMapping(s.headers, s.rows)])))
       // Any multi-tab workbook starts in all-tabs mode. It used to require two
       // tabs to auto-match a set first, which hid the tab mapper from exactly
       // the workbooks whose tab names needed mapping by hand.
@@ -238,12 +238,12 @@ export function Import() {
 
                 {allSheets && mapping?.set != null && (
                   <p className="muted small tab-map-hint">
-                    Your sheet has a Set column, so each row's own set is used. To map whole tabs instead,
-                    set <strong>Set</strong> to “not in my sheet” below.
+                    Your sheet has a Set column, so each row's own set wins. The set chosen per tab below is
+                    used for rows that leave it blank.
                   </p>
                 )}
 
-                {allSheets && mapping?.set == null && (
+                {allSheets && (
                   <div className="tab-map">
                     <div className="tab-map-head">
                       <h3>Which set is each tab?</h3>
