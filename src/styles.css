@@ -918,3 +918,6 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .tab-result-name { color: var(--text); font-weight: 600; }
 .tab-result strong { color: var(--green); }
 .tab-result-bad { font-style: normal; color: #f0a09d; }
+.tab-result { align-items: flex-start; }
+.tab-result-figures { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; text-align: right; }
+.tab-result-why { font-style: normal; font-size: 0.74rem; color: var(--text-dim); max-width: 22ch; }

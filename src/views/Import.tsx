@@ -31,7 +31,7 @@ const VARIANT_CHOICES = [
 ]
 
 export function Import() {
-  const { allCards, empty } = useLibrary()
+  const { allCards, empty, cardsBySet, syncAll, progress } = useLibrary()
   const { collection, replaceAll, defaultCondition } = useCollection()
   const [sheets, setSheets] = useState<WorkbookSheet[] | null>(null)
   const [activeSheet, setActiveSheet] = useState(0)
@@ -72,13 +72,38 @@ export function Import() {
     [mappings, sheetSets, index, collection, defaultCondition],
   )
 
+  /**
+   * Sets a tab is pointed at but whose cards were never downloaded. Every row
+   * for such a tab fails, which looks like a mapping fault but isn't.
+   */
+  const setsMissingData = useMemo(() => {
+    if (!sheets) return []
+    const ids = new Set<string>()
+    sheets.forEach((_, i) => {
+      const id = sheetSets[i]
+      if (id && !cardsBySet[id]?.length) ids.add(id)
+    })
+    return [...ids]
+  }, [sheets, sheetSets, cardsBySet])
+
   /** Per-tab outcome, so a badly mapped tab stands out instead of hiding in a total. */
   const perSheet = useMemo(() => {
     if (!sheets || !allSheets) return []
     return sheets.map((s, i) => {
       const usable = mappings[i]?.set != null || sheetSets[i]
       const p = usable ? planFor(s, i) : null
-      return { name: s.name, index: i, rows: s.rows.length, plan: p, skippedWholeTab: !usable }
+      // One reason usually accounts for a whole tab; naming it beats making
+      // someone expand a list of 245 identical lines.
+      let topReason: string | null = null
+      if (p && p.unmatched.length > 0) {
+        const tally = new Map<string, number>()
+        for (const row of p.unmatched) {
+          const key = row.reason ?? 'Unmatched'
+          tally.set(key, (tally.get(key) ?? 0) + 1)
+        }
+        topReason = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0]
+      }
+      return { name: s.name, index: i, rows: s.rows.length, plan: p, skippedWholeTab: !usable, topReason }
     })
   }, [sheets, allSheets, mappings, sheetSets, planFor])
 
@@ -494,6 +519,24 @@ export function Import() {
                 </div>
               </div>
 
+              {setsMissingData.length > 0 && (
+                <div className="error-banner">
+                  <p>
+                    {setsMissingData.length} of the sets your tabs point at have no card data on this device,
+                    so every row for them fails to match. This isn't a problem with your spreadsheet.
+                  </p>
+                  <button
+                    className="btn small"
+                    disabled={progress.running}
+                    onClick={() => void syncAll(false, setsMissingData)}
+                  >
+                    {progress.running
+                      ? `Downloading ${progress.current}…`
+                      : `Download card data for ${setsMissingData.length} ${setsMissingData.length === 1 ? 'set' : 'sets'}`}
+                  </button>
+                </div>
+              )}
+
               {allSheets && perSheet.length > 1 && (
                 <>
                   <h3>By tab</h3>
@@ -516,9 +559,12 @@ export function Import() {
                           {s.skippedWholeTab ? (
                             <span className="muted">no set assigned — skipped</span>
                           ) : (
-                            <span>
-                              <strong>{imported}</strong> to import
-                              {failed > 0 && <em className="tab-result-bad"> · {failed} unmatched</em>}
+                            <span className="tab-result-figures">
+                              <span>
+                                <strong>{imported}</strong> to import
+                                {failed > 0 && <em className="tab-result-bad"> · {failed} unmatched</em>}
+                              </span>
+                              {s.topReason && failed > 0 && <em className="tab-result-why">{s.topReason}</em>}
                             </span>
                           )}
                         </button>
