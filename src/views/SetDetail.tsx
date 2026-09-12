@@ -15,13 +15,16 @@ type Sort = 'number' | 'name' | 'price-desc' | 'price-asc'
 
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
   const set = getSet(setId)
-  const { cardsBySet, fetchedAt, syncSet, progress } = useLibrary()
+  const { cardsBySet, fetchedAt, syncSet, progress, error } = useLibrary()
   const { collection } = useCollection()
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<Sort>('number')
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  // Distinguishes "still waiting" from "tried and failed", so a dead request
+  // doesn't sit under a Loading message forever.
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const cards = useMemo(() => cardsBySet[setId] ?? [], [cardsBySet, setId])
   const activeVariant = useMemo(
@@ -31,7 +34,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
   // A set the user navigated to directly may not be cached yet.
   useEffect(() => {
-    if (set && cards.length === 0 && !progress.running) void syncSet(setId).catch(() => undefined)
+    if (!set || cards.length > 0 || progress.running) return
+    setLoadFailed(false)
+    void syncSet(setId).catch(() => setLoadFailed(true))
   }, [set, setId, cards.length, syncSet, progress.running])
 
   const visible = useMemo(() => {
@@ -71,8 +76,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
   const onRefresh = async () => {
     setRefreshing(true)
+    setLoadFailed(false)
     try {
       await syncSet(setId, true)
+    } catch {
+      setLoadFailed(true)
     } finally {
       setRefreshing(false)
     }
@@ -148,7 +156,22 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         </select>
       </div>
 
-      {cards.length === 0 ? (
+      {cards.length === 0 && loadFailed ? (
+        <div className="load-error">
+          <h3>Couldn’t load {set.name}</h3>
+          <p>{error ?? 'The card data request failed.'}</p>
+          <div className="btn-row">
+            <button className="btn primary" onClick={() => void onRefresh()} disabled={refreshing}>
+              {refreshing ? 'Trying again…' : 'Try again'}
+            </button>
+            <a className="btn ghost" href={routeHref.settings}>Open Settings</a>
+          </div>
+          <p className="muted small">
+            Your collection is safe — this only affects card names, artwork and prices, which are fetched from
+            the Pokémon TCG API. Settings has a connection test if you want the detail.
+          </p>
+        </div>
+      ) : cards.length === 0 ? (
         <p className="muted pad">Loading cards from the Pokémon TCG API…</p>
       ) : visible.length === 0 ? (
         <p className="muted pad">Nothing matches those filters.</p>

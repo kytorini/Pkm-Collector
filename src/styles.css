@@ -830,3 +830,14 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .sheet-tab:hover { border-color: var(--gold-dim); }
 .sheet-tab.is-active { border-color: var(--gold); color: var(--gold); }
+
+/* ---------- load failure ---------- */
+.load-error {
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+}
+.load-error h3 { margin-bottom: 8px; font-size: 1rem; }
+.load-error p { margin: 0 0 14px; font-size: 0.9rem; color: #f0a09d; }
+.load-error p.small { margin: 14px 0 0; color: var(--text-dim); }

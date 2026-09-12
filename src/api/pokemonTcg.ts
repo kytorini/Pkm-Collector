@@ -39,13 +39,74 @@ function headers(): HeadersInit {
   return key ? { 'X-Api-Key': key } : {}
 }
 
+/** A request that never returns would otherwise leave the UI on "Loading…". */
+const REQUEST_TIMEOUT_MS = 25_000
+
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { headers: headers() })
-  if (!res.ok) {
-    if (res.status === 429) throw new Error('Pokémon TCG API rate limit reached. Add a free API key in Settings, or try again later.')
-    throw new Error(`Pokémon TCG API returned ${res.status}`)
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      headers: headers(),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+  } catch (err) {
+    // fetch only rejects for transport-level problems, and the browser hides
+    // the detail — so name the likely causes rather than saying "failed".
+    if (err instanceof DOMException && err.name === 'TimeoutError') {
+      throw new Error(`The Pokémon TCG API didn't respond within ${REQUEST_TIMEOUT_MS / 1000}s. It may be down or slow right now.`)
+    }
+    throw new Error(
+      'Could not reach the Pokémon TCG API (api.pokemontcg.io). Check your connection — if you are online, the API itself may be down.',
+    )
   }
-  return (await res.json()) as T
+
+  if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error('Pokémon TCG API rate limit reached. Add a free API key in Settings, or try again later.')
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Pokémon TCG API rejected the request (${res.status}). If you set an API key in Settings, check it — or clear it and try without one.`)
+    }
+    if (res.status >= 500) {
+      throw new Error(`The Pokémon TCG API is having trouble (${res.status}). This is on their end; try again shortly.`)
+    }
+    throw new Error(`Pokémon TCG API returned ${res.status}.`)
+  }
+
+  try {
+    return (await res.json()) as T
+  } catch {
+    throw new Error('The Pokémon TCG API returned a response that could not be read as JSON.')
+  }
+}
+
+/** One cheap request, for reporting what the API is actually doing. */
+export interface ConnectionCheck {
+  ok: boolean
+  detail: string
+  status?: number
+  ms: number
+}
+
+export async function checkConnection(): Promise<ConnectionCheck> {
+  const started = performance.now()
+  try {
+    const res = await fetch(`${BASE_URL}/sets?q=id:base1&pageSize=1`, {
+      headers: headers(),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    const ms = Math.round(performance.now() - started)
+    if (!res.ok) return { ok: false, detail: `API responded ${res.status} ${res.statusText}`, status: res.status, ms }
+    const body = (await res.json()) as { data?: unknown[] }
+    const count = Array.isArray(body.data) ? body.data.length : 0
+    return { ok: count > 0, detail: count > 0 ? `API reachable, responded in ${ms}ms` : 'API responded but returned no data', status: res.status, ms }
+  } catch (err) {
+    const ms = Math.round(performance.now() - started)
+    if (err instanceof DOMException && err.name === 'TimeoutError') {
+      return { ok: false, detail: `No response within ${REQUEST_TIMEOUT_MS / 1000}s`, ms }
+    }
+    return { ok: false, detail: `Could not connect${navigator.onLine ? '' : ' — this device reports it is offline'}`, ms }
+  }
 }
 
 /** Fetches every card in a set, following pagination. */

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getApiKey, setApiKey } from '../api/pokemonTcg'
+import { checkConnection, getApiKey, setApiKey, type ConnectionCheck } from '../api/pokemonTcg'
 import { idbClear } from '../lib/idb'
 import { collectionToCsv, collectionToJson, download, parseBackup } from '../lib/exporters'
 import { useCollection } from '../store/collection'
@@ -15,6 +15,8 @@ export function Settings() {
   const [saved, setSaved] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [persist, setPersist] = useState<PersistState | null>(null)
+  const [check, setCheck] = useState<ConnectionCheck | null>(null)
+  const [checking, setChecking] = useState(false)
   const [use, setUse] = useState<StorageUse | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -118,6 +120,39 @@ export function Settings() {
           <input className="search-input" type="password" placeholder="Paste key" value={key} onChange={(e) => setKey(e.target.value)} />
           <button className="btn" onClick={onSaveKey}>{saved ? 'Saved' : 'Save key'}</button>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Connection test</h2>
+        <p className="muted">
+          Card names, artwork and prices come from the Pokémon TCG API. If a set won't load, this says whether
+          the API is reachable from this device.
+        </p>
+        <div className="btn-row">
+          <button
+            className="btn"
+            disabled={checking}
+            onClick={async () => {
+              setChecking(true)
+              setCheck(null)
+              try {
+                setCheck(await checkConnection())
+              } finally {
+                setChecking(false)
+              }
+            }}
+          >
+            {checking ? 'Testing…' : 'Test connection'}
+          </button>
+        </div>
+        {check && (
+          <p className={check.ok ? 'note' : 'warn-note'}>
+            {check.ok ? '✓ ' : '✕ '}
+            {check.detail}
+            {check.status ? ` (HTTP ${check.status})` : ''}
+            {!check.ok && ' — the app keeps working with whatever it already cached.'}
+          </p>
+        )}
       </section>
 
       <section className="panel">
