@@ -195,7 +195,12 @@ export function parseMoney(raw: string): number | undefined {
 
 export function parseCount(raw: string): number | undefined {
   if (!raw.trim()) return undefined
-  const n = parseInt(raw.replace(/[^0-9-]/g, ''), 10)
+  // Truncate at the decimal separator rather than deleting it. Stripping every
+  // non-digit turned "1.00" into 100 and a "$69.36" cell into 6936 copies,
+  // which then multiplied straight into the collection's value.
+  const value = parseMoney(raw)
+  if (value == null) return undefined
+  const n = Math.trunc(value)
   return Number.isFinite(n) && n > 0 ? n : undefined
 }
 

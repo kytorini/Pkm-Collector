@@ -45,6 +45,10 @@ export function Settings() {
   const owned = Object.values(collection).filter((e) => e.owned)
   const multiCopy = owned.filter((e) => e.quantity > 1).length
   const totalCopies = owned.reduce((n, e) => n + Math.max(1, e.quantity || 1), 0)
+  // Naming the worst offenders makes the cause obvious: a count of 6936 beside
+  // a card that books at $69.36 says the Quantity column was a price column.
+  const cardNames = new Map(allCards.map((c) => [c.id, `${c.name} #${c.number}`]))
+  const worstCounts = [...owned].sort((a, b) => b.quantity - a.quantity).slice(0, 5)
 
   return (
     <div className="view narrow">
@@ -188,6 +192,16 @@ export function Settings() {
             ? `${multiCopy} ${multiCopy === 1 ? 'entry holds' : 'entries hold'} more than one copy (${totalCopies} copies of ${ownedCount} cards).`
             : 'Every entry currently holds a single copy.'}
         </p>
+        {multiCopy > 0 && (
+          <ul className="qty-list">
+            {worstCounts.map((e) => (
+              <li key={`${e.cardId}::${e.variantId}`}>
+                <span>{cardNames.get(e.cardId) ?? e.cardId}</span>
+                <strong>×{e.quantity.toLocaleString()}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
         {multiCopy > 0 && (
           <button
             className="btn"
