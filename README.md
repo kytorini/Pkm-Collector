@@ -125,10 +125,12 @@ directly, as well as `.csv` and tab- or semicolon-separated files.
 On the Google Sheets **iPhone or iPad app** there is no CSV export — use
 Share & export → **Save as Excel (.xlsx)** and hand that file to the importer.
 
-A workbook with **a tab per set** can come in all at once: each tab's name is
-read as its set ("Base Set", "Jungle", "1999 Fossil"…), and tabs that don't
-match a tracked set are reported rather than guessed at. Or switch it off and
-import one tab at a time.
+A workbook with **a tab per set** can come in all at once. Each tab's name is
+read as its set — full names, ids and common shorthand ("Base Set", "Jungle",
+"1999 Fossil", "R", "TR", "G1", "LC") — and every tab is then listed with a
+dropdown so anything guessed wrongly, or not at all, can be assigned by hand.
+Tabs left unassigned are skipped rather than reported as missing cards. Or
+switch the whole thing off and import one tab at a time.
 
 Checkbox columns arrive from Excel as TRUE/FALSE and are read as owned marks;
 date-formatted cells are converted rather than imported as serial numbers.

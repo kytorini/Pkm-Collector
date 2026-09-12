@@ -36,6 +36,12 @@ export function Import() {
   const [sheets, setSheets] = useState<WorkbookSheet[] | null>(null)
   const [activeSheet, setActiveSheet] = useState(0)
   const [allSheets, setAllSheets] = useState(false)
+  /**
+   * Which set each tab belongs to, by tab index. Seeded from the tab's name and
+   * then correctable — tab names are personal shorthand ("R" for Team Rocket),
+   * which no amount of alias guessing covers reliably.
+   */
+  const [sheetSets, setSheetSets] = useState<Record<number, string | null>>({})
   const [fileName, setFileName] = useState('')
   const [mapping, setMapping] = useState<ColumnMapping | null>(null)
   const [mode, setMode] = useState<MergeMode>('keep')
@@ -51,14 +57,19 @@ export function Import() {
 
   const plan = useMemo(() => {
     if (!sheets || !mapping) return null
-    const forSheet = (s: WorkbookSheet) => {
-      const m = mapping.set == null && allSheets ? { ...mapping, fallbackSetId: setIdFromName(s.name) } : mapping
+    const forSheet = (s: WorkbookSheet, i: number) => {
+      const m = mapping.set == null ? { ...mapping, fallbackSetId: sheetSets[i] ?? null } : mapping
       return labelPlanRows(buildPlan(s.rows, m, index, collection, defaultCondition), s.name)
     }
-    if (allSheets) return combinePlans(sheets.map(forSheet))
+    if (allSheets) {
+      // A tab left unassigned contributes nothing rather than a page of
+      // "no card named…" noise.
+      const usable = sheets.map((s, i) => [s, i] as const).filter(([, i]) => mapping.set != null || sheetSets[i])
+      return combinePlans(usable.map(([s, i]) => forSheet(s, i)))
+    }
     const current = sheets[activeSheet]
     return current ? buildPlan(current.rows, mapping, index, collection, defaultCondition) : null
-  }, [sheets, activeSheet, allSheets, mapping, index, collection, defaultCondition])
+  }, [sheets, activeSheet, allSheets, mapping, index, collection, defaultCondition, sheetSets])
 
   const onFile = async (file: File) => {
     setParseError(null)
@@ -79,6 +90,7 @@ export function Import() {
 
       setSheets(parsed)
       setActiveSheet(0)
+      setSheetSets(Object.fromEntries(parsed.map((s, i) => [i, setIdFromName(s.name)])))
       // A workbook whose tabs are named after sets is the common shape; offer
       // to take all of them at once rather than seventeen separate imports.
       setAllSheets(parsed.length > 1 && parsed.filter((s) => setIdFromName(s.name)).length > 1)
@@ -114,6 +126,7 @@ export function Import() {
     setFileName('')
     setAllSheets(false)
     setActiveSheet(0)
+    setSheetSets({})
   }
 
   if (empty) {
@@ -162,13 +175,42 @@ export function Import() {
                   />
                   <span>
                     <strong>Import every tab at once</strong>
-                    <em>
-                      Each tab's name is read as its set
-                      {sheets.filter((s) => setIdFromName(s.name)).length < sheets.length &&
-                        ` — ${sheets.filter((s) => !setIdFromName(s.name)).length} of ${sheets.length} don't match a tracked set and will be reported below`}
-                    </em>
+                    <em>Each tab's name is read as its set — correct any it got wrong below</em>
                   </span>
                 </label>
+
+                {allSheets && mapping?.set == null && (
+                  <div className="tab-map">
+                    <div className="tab-map-head">
+                      <h3>Which set is each tab?</h3>
+                      {Object.values(sheetSets).filter(Boolean).length < sheets.length && (
+                        <span className="muted small">
+                          {sheets.length - Object.values(sheetSets).filter(Boolean).length} still unassigned — those tabs are skipped
+                        </span>
+                      )}
+                    </div>
+                    {sheets.map((s, i) => (
+                      <label key={s.name + i} className={`tab-map-row ${sheetSets[i] ? '' : 'is-unset'}`}>
+                        <span className="tab-map-name">
+                          {s.name}
+                          <em className="muted"> · {s.rows.length} rows</em>
+                        </span>
+                        <select
+                          value={sheetSets[i] ?? ''}
+                          onChange={(e) => {
+                            setDone(null)
+                            setSheetSets((prev) => ({ ...prev, [i]: e.target.value || null }))
+                          }}
+                        >
+                          <option value="">— skip this tab —</option>
+                          {VINTAGE_SETS.map((vs) => (
+                            <option key={vs.id} value={vs.id}>{vs.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                )}
 
                 {!allSheets && (
                   <div className="sheet-tabs" role="tablist">
