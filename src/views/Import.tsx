@@ -64,9 +64,13 @@ export function Import() {
     setParseError(null)
     setDone(null)
     try {
-      const parsed: WorkbookSheet[] = looksLikeXlsx(file)
-        ? parseXlsx(await file.arrayBuffer()).filter((s) => s.headers.length > 0 && s.rows.length > 0)
-        : [{ name: file.name, ...parseCsv(await file.text()) }]
+      // Read once and decide from the bytes: a workbook picked out of a cloud
+      // drive may not carry a .xlsx name or type by the time it reaches here.
+      const buffer = await file.arrayBuffer()
+      const head = new Uint8Array(buffer.slice(0, 4))
+      const parsed: WorkbookSheet[] = looksLikeXlsx(file, head)
+        ? parseXlsx(buffer).filter((s) => s.headers.length > 0 && s.rows.length > 0)
+        : [{ name: file.name, ...parseCsv(new TextDecoder().decode(buffer)) }]
 
       if (parsed.length === 0) throw new Error('No sheet in that file had a header row and data.')
       const first = parsed[0]
@@ -204,7 +208,7 @@ export function Import() {
               <input
                 ref={fileInput}
                 type="file"
-                accept=".xlsx,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values"
+                accept=".xlsx,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/tab-separated-values,text/plain"
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0]

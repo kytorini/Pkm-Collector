@@ -182,6 +182,16 @@ export function parseXlsx(buffer: ArrayBuffer): WorkbookSheet[] {
   })
 }
 
-export function looksLikeXlsx(file: File): boolean {
+/**
+ * Identifies a workbook by its content, not its name. Files arriving from a
+ * cloud drive on iOS can lose their extension or come through as a generic
+ * binary type, and an xlsx is a zip, so its signature is the reliable tell.
+ */
+export function looksLikeXlsx(file: File, head?: Uint8Array): boolean {
+  if (head && head.length >= 4) {
+    // "PK\x03\x04" — the local file header every zip, and so every xlsx, starts with.
+    const isZip = head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04
+    if (isZip) return true
+  }
   return /\.xlsx$/i.test(file.name) || file.type.includes('spreadsheetml')
 }
