@@ -484,6 +484,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   background: color-mix(in srgb, var(--gold) 7%, transparent);
 }
 .warn-note .link-btn { color: inherit; }
+.error-banner p { margin: 0; }
+.error-banner .btn { margin-top: 10px; color: var(--text); }
 .error-banner {
   padding: 11px 14px;
   margin-bottom: 18px;

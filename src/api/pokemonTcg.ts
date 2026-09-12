@@ -42,7 +42,36 @@ function headers(): HeadersInit {
 /** A request that never returns would otherwise leave the UI on "Loading…". */
 const REQUEST_TIMEOUT_MS = 25_000
 
+/** Server errors and dropped connections are usually transient here. */
+const MAX_ATTEMPTS = 3
+const RETRY_BASE_MS = 800
+
+/** Marks the errors worth trying again, so permanent ones fail fast. */
+class TransientError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'TransientError'
+  }
+}
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 async function getJson<T>(path: string): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await requestJson<T>(path)
+    } catch (err) {
+      lastError = err
+      if (!(err instanceof TransientError) || attempt === MAX_ATTEMPTS) throw err
+      // Back off so a struggling API isn't hammered: 0.8s, then 1.6s.
+      await wait(RETRY_BASE_MS * 2 ** (attempt - 1))
+    }
+  }
+  throw lastError
+}
+
+async function requestJson<T>(path: string): Promise<T> {
   let res: Response
   try {
     res = await fetch(`${BASE_URL}${path}`, {
@@ -53,9 +82,9 @@ async function getJson<T>(path: string): Promise<T> {
     // fetch only rejects for transport-level problems, and the browser hides
     // the detail — so name the likely causes rather than saying "failed".
     if (err instanceof DOMException && err.name === 'TimeoutError') {
-      throw new Error(`The Pokémon TCG API didn't respond within ${REQUEST_TIMEOUT_MS / 1000}s. It may be down or slow right now.`)
+      throw new TransientError(`The Pokémon TCG API didn't respond within ${REQUEST_TIMEOUT_MS / 1000}s. It may be down or slow right now.`)
     }
-    throw new Error(
+    throw new TransientError(
       'Could not reach the Pokémon TCG API (api.pokemontcg.io). Check your connection — if you are online, the API itself may be down.',
     )
   }
@@ -68,7 +97,7 @@ async function getJson<T>(path: string): Promise<T> {
       throw new Error(`Pokémon TCG API rejected the request (${res.status}). If you set an API key in Settings, check it — or clear it and try without one.`)
     }
     if (res.status >= 500) {
-      throw new Error(`The Pokémon TCG API is having trouble (${res.status}). This is on their end; try again shortly.`)
+      throw new TransientError(`The Pokémon TCG API is having trouble (${res.status}). This is on their end — it usually passes; try again shortly.`)
     }
     throw new Error(`Pokémon TCG API returned ${res.status}.`)
   }
@@ -115,7 +144,7 @@ async function fetchAllCards(setId: string): Promise<ApiCard[]> {
   const pageSize = 250
   for (let page = 1; page <= 10; page++) {
     const body = await getJson<{ data: ApiCard[]; totalCount: number }>(
-      `/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=${pageSize}&orderBy=number`,
+      `/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=${pageSize}`,
     )
     cards.push(...body.data)
     if (body.data.length < pageSize) break

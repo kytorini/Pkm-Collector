@@ -7,7 +7,7 @@ import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 
 export function Dashboard() {
-  const { cardsBySet, hydrated, empty, progress, syncAll, error } = useLibrary()
+  const { cardsBySet, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
   const { collection } = useCollection()
   const total = statsForCollection(cardsBySet, collection)
 
@@ -31,7 +31,16 @@ export function Dashboard() {
           ) : (
             <button className="btn primary" onClick={() => void syncAll()}>Download card data</button>
           )}
-          {error && <p className="error-banner">{error}</p>}
+          {error && (
+            <div className="error-banner">
+              <p>{error}</p>
+              {failedSets.length > 0 && !progress.running && (
+                <button className="btn small" onClick={() => void syncAll(true, failedSets)}>
+                  Retry {failedSets.length} failed {failedSets.length === 1 ? 'set' : 'sets'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -46,7 +55,16 @@ export function Dashboard() {
         </p>
       </header>
 
-      {error && <p className="error-banner">{error}</p>}
+      {error && (
+        <div className="error-banner">
+          <p>{error}</p>
+          {failedSets.length > 0 && !progress.running && (
+            <button className="btn small" onClick={() => void syncAll(true, failedSets)}>
+              Retry {failedSets.length} failed {failedSets.length === 1 ? 'set' : 'sets'}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="stat-row">
         <div className="stat">

@@ -177,6 +177,11 @@ pick replace.
   PSA 10 is a different market from the raw price shown here.
 - Prices refresh automatically when the cache is over a day old, or on demand
   via "Refresh prices".
+- The API is occasionally flaky. Requests time out after 25s and retry
+  transient failures (5xx, dropped connections) twice with backoff; permanent
+  ones fail immediately. A sync that partly succeeds says how many sets loaded
+  and offers to retry only the ones that didn't, and anything already cached
+  keeps working throughout.
 
 ## API key
 

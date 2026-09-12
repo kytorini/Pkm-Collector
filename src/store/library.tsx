@@ -19,7 +19,9 @@ interface LibraryContextValue {
   empty: boolean
   progress: SyncProgress
   error: string | null
-  syncAll: (force?: boolean) => Promise<void>
+  /** Sets whose last sync attempt failed, so they can be retried on their own. */
+  failedSets: string[]
+  syncAll: (force?: boolean, only?: string[]) => Promise<void>
   syncSet: (setId: string, force?: boolean) => Promise<void>
   allCards: ApiCard[]
   /** Sets whose prices are older than a day. */
@@ -33,6 +35,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   const [fetchedAt, setFetchedAt] = useState<Record<string, number>>({})
   const [hydrated, setHydrated] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [failedSets, setFailedSets] = useState<string[]>([])
   const [progress, setProgress] = useState<SyncProgress>({ running: false, done: 0, total: 0, current: null })
   const syncing = useRef(false)
 
@@ -63,30 +66,49 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       const result = await loadSetCards(setId, force)
       setCardsBySet((prev) => ({ ...prev, [setId]: result.cards }))
       setFetchedAt((prev) => ({ ...prev, [setId]: result.fetchedAt }))
+      setFailedSets((prev) => prev.filter((id) => id !== setId))
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reach the Pokémon TCG API.')
+      setFailedSets((prev) => (prev.includes(setId) ? prev : [...prev, setId]))
       throw err
     }
   }, [])
 
   const syncAll = useCallback(
-    async (force = false) => {
+    async (force = false, only?: string[]) => {
       if (syncing.current) return
       syncing.current = true
-      setProgress({ running: true, done: 0, total: VINTAGE_SETS.length, current: null })
-      let failed = false
-      for (const [i, set] of VINTAGE_SETS.entries()) {
-        setProgress({ running: true, done: i, total: VINTAGE_SETS.length, current: set.name })
+      const targets = only?.length ? VINTAGE_SETS.filter((s) => only.includes(s.id)) : VINTAGE_SETS
+      setProgress({ running: true, done: 0, total: targets.length, current: null })
+
+      const failures: string[] = []
+      let lastError: string | null = null
+      for (const [i, set] of targets.entries()) {
+        setProgress({ running: true, done: i, total: targets.length, current: set.name })
         try {
           await syncSet(set.id, force)
-        } catch {
-          failed = true
+        } catch (err) {
+          failures.push(set.id)
+          lastError = err instanceof Error ? err.message : null
         }
       }
-      setProgress({ running: false, done: VINTAGE_SETS.length, total: VINTAGE_SETS.length, current: null })
+
+      setProgress({ running: false, done: targets.length, total: targets.length, current: null })
       syncing.current = false
-      if (!failed) setError(null)
+
+      // One set failing shouldn't read like everything did — say how many, and
+      // leave them retryable on their own.
+      if (failures.length === 0) {
+        setError(null)
+        setFailedSets([])
+      } else {
+        const names = failures.map((id) => VINTAGE_SETS.find((s) => s.id === id)?.name ?? id)
+        const loaded = targets.length - failures.length
+        setError(
+          `${loaded} of ${targets.length} sets loaded. ${failures.length} failed (${names.slice(0, 3).join(', ')}${names.length > 3 ? `, +${names.length - 3} more` : ''}). ${lastError ?? ''}`.trim(),
+        )
+      }
     },
     [syncSet],
   )
@@ -99,8 +121,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ cardsBySet, fetchedAt, hydrated, empty, progress, error, syncAll, syncSet, allCards, staleSets }),
-    [cardsBySet, fetchedAt, hydrated, empty, progress, error, syncAll, syncSet, allCards, staleSets],
+    () => ({ cardsBySet, fetchedAt, hydrated, empty, progress, error, failedSets, syncAll, syncSet, allCards, staleSets }),
+    [cardsBySet, fetchedAt, hydrated, empty, progress, error, failedSets, syncAll, syncSet, allCards, staleSets],
   )
 
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>
