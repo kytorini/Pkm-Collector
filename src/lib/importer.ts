@@ -340,13 +340,19 @@ function resolveCard(row: string[], mapping: ColumnMapping, index: CardIndex): C
       return { card: matches[0], set: getSet(matches[0].set.id) ?? null, variantHint }
     }
     if (matches.length === 0) return { card: null, set: null, variantHint, reason: `No card named “${nameCell}”` }
-    const sets = [...new Set(matches.map((c) => c.set.name))]
+    const setName = (c: ApiCard) => getSet(c.set.id)?.name ?? c.set.name
+    const sets = [...new Set(matches.map(setName))]
     // More than one card of this name can mean several sets, or one set that
     // prints the card twice (a holo and a non-holo share a name). Those need
     // different fixes, so don't report them the same way.
     return sets.length > 1
       ? { card: null, set: null, variantHint, reason: `“${nameCell}” is in ${sets.length} sets (${sets.slice(0, 3).join(', ')}) — assign this tab a set, or map a Set column` }
-      : { card: null, set: null, variantHint, reason: `${sets[0]} has ${matches.length} cards named “${nameCell}” — map your card-number column in step 2` }
+      : {
+          card: null,
+          set: null,
+          variantHint,
+          reason: `${sets[0]} has ${matches.length} cards named “${nameCell}” — map your card-number column in step 2`,
+        }
   }
 
   const setIndex = index.bySet.get(set.id)
