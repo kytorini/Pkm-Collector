@@ -123,7 +123,15 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           <span className="muted">{stats.pct}% complete</span>
         </div>
         <dl className="summary-stats">
-          <div><dt>Owned value</dt><dd>{formatMoney(stats.ownedValue)}</dd></div>
+          <div>
+            <dt>Owned value</dt>
+            <dd>{formatMoney(stats.ownedValue)}</dd>
+            {stats.copies > stats.owned && (
+              <span className="copies-note">
+                {stats.copies} copies of {stats.owned} cards — value counts every copy
+              </span>
+            )}
+          </div>
           <div>
             <dt>Cost to finish</dt>
             <dd>{formatMoney(stats.missingValue)}</dd>

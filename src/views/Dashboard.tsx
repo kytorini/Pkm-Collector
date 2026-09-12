@@ -75,7 +75,9 @@ export function Dashboard() {
         <div className="stat">
           <span className="stat-label">Market value</span>
           <span className="stat-value">{formatMoney(total.ownedValue)}</span>
-          <span className="stat-sub muted">what you hold</span>
+          <span className="stat-sub muted">
+            {total.copies > total.owned ? `${total.copies} copies of ${total.owned} cards` : 'what you hold'}
+          </span>
         </div>
         <div className="stat">
           <span className="stat-label">Cost to finish</span>

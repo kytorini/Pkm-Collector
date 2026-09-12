@@ -9,7 +9,7 @@ import { routeHref } from '../lib/router'
 import { CONDITIONS, type ConditionId } from '../types'
 
 export function Settings() {
-  const { collection, replaceAll, defaultCondition, setDefaultCondition, ownedCount } = useCollection()
+  const { collection, replaceAll, resetQuantities, defaultCondition, setDefaultCondition, ownedCount } = useCollection()
   const { allCards, syncAll, progress } = useLibrary()
   const [key, setKey] = useState(getApiKey())
   const [saved, setSaved] = useState(false)
@@ -42,6 +42,9 @@ export function Settings() {
   }
 
   const stamp = new Date().toISOString().slice(0, 10)
+  const owned = Object.values(collection).filter((e) => e.owned)
+  const multiCopy = owned.filter((e) => e.quantity > 1).length
+  const totalCopies = owned.reduce((n, e) => n + Math.max(1, e.quantity || 1), 0)
 
   return (
     <div className="view narrow">
@@ -175,6 +178,28 @@ export function Settings() {
             Clear card cache
           </button>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Quantities</h2>
+        <p className="muted">
+          Collection value counts every copy, so a Quantity column pointed at the wrong thing during an
+          import inflates it. {multiCopy > 0
+            ? `${multiCopy} ${multiCopy === 1 ? 'entry holds' : 'entries hold'} more than one copy (${totalCopies} copies of ${ownedCount} cards).`
+            : 'Every entry currently holds a single copy.'}
+        </p>
+        {multiCopy > 0 && (
+          <button
+            className="btn"
+            onClick={() => {
+              if (!confirm(`Set all ${multiCopy} multi-copy entries back to a single copy? Conditions and notes are kept.`)) return
+              const changed = resetQuantities()
+              setMessage(`Reset ${changed} ${changed === 1 ? 'entry' : 'entries'} to one copy.`)
+            }}
+          >
+            Reset all quantities to 1
+          </button>
+        )}
       </section>
 
       <section className="panel">

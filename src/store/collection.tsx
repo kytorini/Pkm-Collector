@@ -14,6 +14,8 @@ interface CollectionContextValue {
   update: (cardId: string, variantId: string, patch: Partial<CollectionEntry>) => void
   remove: (cardId: string, variantId: string) => void
   replaceAll: (next: CollectionMap) => void
+  /** Sets every quantity back to one, for undoing a bad import mapping. */
+  resetQuantities: () => number
   ownedCount: number
 }
 
@@ -113,14 +115,27 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
 
   const replaceAll = useCallback((next: CollectionMap) => setCollection(next), [])
 
+  const resetQuantities = useCallback(() => {
+    let changed = 0
+    setCollection((prev) => {
+      const next: CollectionMap = {}
+      for (const [key, entry] of Object.entries(prev)) {
+        if (entry.quantity > 1) changed++
+        next[key] = entry.quantity > 1 ? { ...entry, quantity: 1 } : entry
+      }
+      return next
+    })
+    return changed
+  }, [])
+
   const ownedCount = useMemo(
     () => Object.values(collection).filter((e) => e.owned).length,
     [collection],
   )
 
   const value = useMemo(
-    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, ownedCount }),
-    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, ownedCount],
+    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, ownedCount }),
+    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, ownedCount],
   )
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>

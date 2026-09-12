@@ -5,6 +5,8 @@ import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type Vinta
 export interface VariantStats {
   total: number
   owned: number
+  /** Total copies held. Above `owned` when quantities are greater than one. */
+  copies: number
   pct: number
   /** Market value of the copies you own (quantity aware). */
   ownedValue: number
@@ -16,11 +18,12 @@ export interface VariantStats {
   unpriced: number
 }
 
-const ZERO: VariantStats = { total: 0, owned: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0 }
+const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0 }
 
 export function statsForVariant(cards: ApiCard[], variant: SetVariant, collection: CollectionMap): VariantStats {
   if (cards.length === 0) return { ...ZERO }
   let owned = 0
+  let copies = 0
   let ownedValue = 0
   let missingValue = 0
   let spend = 0
@@ -32,8 +35,10 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
     if (price == null) unpriced++
     if (entry?.owned) {
       owned++
-      ownedValue += (price ?? 0) * Math.max(1, entry.quantity)
-      spend += (entry.pricePaid ?? 0) * Math.max(1, entry.quantity)
+      const quantity = Math.max(1, entry.quantity || 1)
+      copies += quantity
+      ownedValue += (price ?? 0) * quantity
+      spend += (entry.pricePaid ?? 0) * quantity
     } else {
       missingValue += price ?? 0
     }
@@ -42,6 +47,7 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
   return {
     total: cards.length,
     owned,
+    copies,
     pct: cards.length ? Math.round((owned / cards.length) * 100) : 0,
     ownedValue,
     missingValue,
@@ -57,6 +63,7 @@ export function statsForSet(cards: ApiCard[], set: VintageSet, collection: Colle
       (acc, s) => ({
         total: acc.total + s.total,
         owned: acc.owned + s.owned,
+        copies: acc.copies + s.copies,
         pct: 0,
         ownedValue: acc.ownedValue + s.ownedValue,
         missingValue: acc.missingValue + s.missingValue,
@@ -79,6 +86,7 @@ export function statsForCollection(
     acc = {
       total: acc.total + s.total,
       owned: acc.owned + s.owned,
+      copies: acc.copies + s.copies,
       pct: 0,
       ownedValue: acc.ownedValue + s.ownedValue,
       missingValue: acc.missingValue + s.missingValue,

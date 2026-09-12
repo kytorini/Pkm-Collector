@@ -266,6 +266,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .summary-stats { display: flex; gap: 26px; margin: 0; flex-wrap: wrap; }
 .summary-stats dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .summary-stats dd { margin: 3px 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Deliberately not .small: this one explains a surprising number, so it has to
+   survive the phone rule that hides secondary notes. */
+.copies-note { display: block; margin-top: 2px; font-size: 0.72rem; color: var(--gold); }
 
 /* ---------- card grid ---------- */
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 16px; }

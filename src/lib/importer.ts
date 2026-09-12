@@ -298,6 +298,9 @@ export function buildCardIndex(cards: ApiCard[]): CardIndex {
 
 const cell = (row: string[], col: number | null): string => (col == null ? '' : (row[col] ?? '').trim())
 
+/** Above this, a quantity is far more likely a mis-mapped column than a real count. */
+const IMPLAUSIBLE_QUANTITY = 50
+
 interface CardResolution {
   card: ApiCard | null
   set: VintageSet | null
@@ -449,6 +452,14 @@ export function buildPlan(
       }
       seen.add(key)
 
+      const quantity = parseCount(cell(row, mapping.quantity)) ?? 1
+      // Nobody holds 50 copies of a vintage single. A number that large means
+      // the Quantity column is pointed at something else — a year, a price, a
+      // card number — and it would silently multiply the collection's value.
+      if (quantity > IMPLAUSIBLE_QUANTITY) {
+        reason = `Quantity of ${quantity} looks like the wrong column — check the Quantity mapping`
+      }
+
       const notes = cell(row, mapping.notes)
       entries.push({
         key,
@@ -461,7 +472,7 @@ export function buildPlan(
           cardId: card.id,
           variantId: variant.id,
           owned: true,
-          quantity: parseCount(cell(row, mapping.quantity)) ?? 1,
+          quantity,
           condition,
           ...(graded ? { graded } : {}),
           ...(parseMoney(cell(row, mapping.pricePaid)) != null
