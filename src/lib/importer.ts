@@ -600,3 +600,31 @@ export const MAPPABLE_FIELDS = [
   { field: 'pricePaid', label: 'Price paid', hint: '$9,500' },
   { field: 'notes', label: 'Notes', hint: 'Anything else' },
 ] as const satisfies readonly { field: keyof ColumnMapping; label: string; hint: string }[]
+
+/** Merges the per-sheet plans of a multi-tab workbook into one reviewable plan. */
+export function combinePlans(plans: ImportPlan[]): ImportPlan {
+  const rows = plans.flatMap((p) => p.rows)
+  const ready = rows.filter((r) => r.status === 'ready')
+  return {
+    rows,
+    ready,
+    skipped: rows.filter((r) => r.status === 'skipped'),
+    unmatched: rows.filter((r) => r.status === 'unmatched'),
+    warned: ready.filter((r) => r.reason),
+    entryCount: ready.reduce((n, r) => n + r.entries.length, 0),
+    clashCount: ready.reduce((n, r) => n + r.entries.filter((e) => e.clashes).length, 0),
+  }
+}
+
+/** Tags each row with the tab it came from, so review says where to look. */
+export function labelPlanRows(plan: ImportPlan, sheetName: string): ImportPlan {
+  const relabel = (r: PlannedRow): PlannedRow => ({ ...r, label: `${sheetName} · ${r.label}` })
+  return {
+    ...plan,
+    rows: plan.rows.map(relabel),
+    ready: plan.ready.map(relabel),
+    skipped: plan.skipped.map(relabel),
+    unmatched: plan.unmatched.map(relabel),
+    warned: plan.warned.map(relabel),
+  }
+}

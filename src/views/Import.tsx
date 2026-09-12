@@ -1,13 +1,17 @@
 import { useMemo, useRef, useState } from 'react'
 import { VINTAGE_SETS } from '../data/vintageSets'
-import { parseCsv, type ParsedSheet } from '../lib/csv'
+import { parseCsv } from '../lib/csv'
+import { looksLikeXlsx, parseXlsx, type WorkbookSheet } from '../lib/xlsx'
 import { download } from '../lib/exporters'
 import {
   MAPPABLE_FIELDS,
   applyPlan,
   buildCardIndex,
   buildPlan,
+  combinePlans,
   guessMapping,
+  labelPlanRows,
+  matchSet,
   matchVariantId,
   type ColumnMapping,
   type Layout,
@@ -29,7 +33,9 @@ const VARIANT_CHOICES = [
 export function Import() {
   const { allCards, empty } = useLibrary()
   const { collection, replaceAll, defaultCondition } = useCollection()
-  const [sheet, setSheet] = useState<ParsedSheet | null>(null)
+  const [sheets, setSheets] = useState<WorkbookSheet[] | null>(null)
+  const [activeSheet, setActiveSheet] = useState(0)
+  const [allSheets, setAllSheets] = useState(false)
   const [fileName, setFileName] = useState('')
   const [mapping, setMapping] = useState<ColumnMapping | null>(null)
   const [mode, setMode] = useState<MergeMode>('keep')
@@ -38,22 +44,42 @@ export function Import() {
   const fileInput = useRef<HTMLInputElement>(null)
 
   const index = useMemo(() => buildCardIndex(allCards), [allCards])
+  const sheet = sheets?.[activeSheet] ?? null
 
-  const plan = useMemo(
-    () => (sheet && mapping ? buildPlan(sheet.rows, mapping, index, collection, defaultCondition) : null),
-    [sheet, mapping, index, collection, defaultCondition],
-  )
+  /** A tab named "Jungle" tells us the set as well as a Set column would. */
+  const setIdFromName = (name: string) => matchSet(name).set?.id ?? null
+
+  const plan = useMemo(() => {
+    if (!sheets || !mapping) return null
+    const forSheet = (s: WorkbookSheet) => {
+      const m = mapping.set == null && allSheets ? { ...mapping, fallbackSetId: setIdFromName(s.name) } : mapping
+      return labelPlanRows(buildPlan(s.rows, m, index, collection, defaultCondition), s.name)
+    }
+    if (allSheets) return combinePlans(sheets.map(forSheet))
+    const current = sheets[activeSheet]
+    return current ? buildPlan(current.rows, mapping, index, collection, defaultCondition) : null
+  }, [sheets, activeSheet, allSheets, mapping, index, collection, defaultCondition])
 
   const onFile = async (file: File) => {
     setParseError(null)
     setDone(null)
     try {
-      const parsed = parseCsv(await file.text())
-      if (parsed.headers.length === 0) throw new Error('That file has no rows.')
-      if (parsed.rows.length === 0) throw new Error('That file has a header but no data rows.')
-      setSheet(parsed)
+      const parsed: WorkbookSheet[] = looksLikeXlsx(file)
+        ? parseXlsx(await file.arrayBuffer()).filter((s) => s.headers.length > 0 && s.rows.length > 0)
+        : [{ name: file.name, ...parseCsv(await file.text()) }]
+
+      if (parsed.length === 0) throw new Error('No sheet in that file had a header row and data.')
+      const first = parsed[0]
+      if (first.headers.length === 0) throw new Error('That file has no rows.')
+      if (first.rows.length === 0) throw new Error('That file has a header but no data rows.')
+
+      setSheets(parsed)
+      setActiveSheet(0)
+      // A workbook whose tabs are named after sets is the common shape; offer
+      // to take all of them at once rather than seventeen separate imports.
+      setAllSheets(parsed.length > 1 && parsed.filter((s) => setIdFromName(s.name)).length > 1)
       setFileName(file.name)
-      setMapping(guessMapping(parsed.headers))
+      setMapping(guessMapping(first.headers))
     } catch (err) {
       setParseError(err instanceof Error ? err.message : 'Could not read that file.')
     }
@@ -78,10 +104,12 @@ export function Import() {
   }
 
   const reset = () => {
-    setSheet(null)
+    setSheets(null)
     setMapping(null)
     setDone(null)
     setFileName('')
+    setAllSheets(false)
+    setActiveSheet(0)
   }
 
   if (empty) {
@@ -108,24 +136,75 @@ export function Import() {
       {/* ---- step 1: the file ---- */}
       <section className="panel">
         <h2>1. Your file</h2>
-        {sheet ? (
-          <p className="muted">
-            <strong>{fileName}</strong> — {sheet.rows.length} rows, {sheet.headers.length} columns
-            {sheet.delimiter === '\t' ? ', tab-separated' : sheet.delimiter === ';' ? ', semicolon-separated' : ''}.{' '}
-            <button className="link-btn" onClick={reset}>Choose a different file</button>
-          </p>
+        {sheets && sheet ? (
+          <>
+            <p className="muted">
+              <strong>{fileName}</strong> — {sheets.length > 1 ? `${sheets.length} tabs, ` : ''}
+              {sheet.rows.length} rows, {sheet.headers.length} columns
+              {sheet.delimiter === '\t' ? ', tab-separated' : sheet.delimiter === ';' ? ', semicolon-separated' : ''}.{' '}
+              <button className="link-btn" onClick={reset}>Choose a different file</button>
+            </p>
+
+            {sheets.length > 1 && (
+              <div className="sheet-picker">
+                <label className={`sheet-all ${allSheets ? 'is-active' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={allSheets}
+                    onChange={(e) => {
+                      setDone(null)
+                      setAllSheets(e.target.checked)
+                    }}
+                  />
+                  <span>
+                    <strong>Import every tab at once</strong>
+                    <em>
+                      Each tab's name is read as its set
+                      {sheets.filter((s) => setIdFromName(s.name)).length < sheets.length &&
+                        ` — ${sheets.filter((s) => !setIdFromName(s.name)).length} of ${sheets.length} don't match a tracked set and will be reported below`}
+                    </em>
+                  </span>
+                </label>
+
+                {!allSheets && (
+                  <div className="sheet-tabs" role="tablist">
+                    {sheets.map((s, i) => (
+                      <button
+                        key={s.name + i}
+                        role="tab"
+                        aria-selected={i === activeSheet}
+                        className={`sheet-tab ${i === activeSheet ? 'is-active' : ''}`}
+                        onClick={() => {
+                          setDone(null)
+                          setActiveSheet(i)
+                          setMapping(guessMapping(sheets[i].headers))
+                        }}
+                      >
+                        {s.name}
+                        <span className="muted"> · {s.rows.length}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <>
             <p className="muted">
-              Export your sheet as CSV first — in Excel, Numbers or Google Sheets that's File → Export / Download → CSV.
-              One row per card, however your columns are named.
+              Drop in an <strong>.xlsx</strong> workbook or a <strong>.csv</strong> file. One row per card,
+              however your columns are named — a workbook with a tab per set can come in all at once.
+            </p>
+            <p className="muted small">
+              On the Google Sheets iPhone or iPad app: <strong>Share &amp; export → Save as Excel (.xlsx)</strong>,
+              then pick that file here. The mobile app has no CSV option.
             </p>
             <div className="btn-row">
-              <button className="btn primary" onClick={() => fileInput.current?.click()}>Choose CSV file</button>
+              <button className="btn primary" onClick={() => fileInput.current?.click()}>Choose a file</button>
               <input
                 ref={fileInput}
                 type="file"
-                accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"
+                accept=".xlsx,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values"
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0]
@@ -139,7 +218,7 @@ export function Import() {
         {parseError && <p className="error-banner" style={{ marginTop: 12 }}>{parseError}</p>}
       </section>
 
-      {sheet && mapping && (
+      {sheets && sheet && mapping && (
         <>
           {/* ---- step 2: the columns ---- */}
           <section className="panel">
@@ -230,7 +309,7 @@ export function Import() {
             )}
 
             <div className="map-grid fallbacks">
-              {mapping.set == null && (
+              {mapping.set == null && !allSheets && (
                 <label>
                   <span>My sheet has no Set column — it's all…</span>
                   <select

@@ -119,9 +119,19 @@ a spreadsheet.
 
 ## Importing your existing spreadsheet
 
-Settings → **Import a spreadsheet**, or `#/import`. Export your sheet as CSV
-first (File → Export / Download → CSV in Excel, Numbers or Google Sheets);
-tab- and semicolon-separated files work too.
+Settings → **Import a spreadsheet**, or `#/import`. Takes `.xlsx` workbooks
+directly, as well as `.csv` and tab- or semicolon-separated files.
+
+On the Google Sheets **iPhone or iPad app** there is no CSV export — use
+Share & export → **Save as Excel (.xlsx)** and hand that file to the importer.
+
+A workbook with **a tab per set** can come in all at once: each tab's name is
+read as its set ("Base Set", "Jungle", "1999 Fossil"…), and tabs that don't
+match a tracked set are reported rather than guessed at. Or switch it off and
+import one tab at a time.
+
+Checkbox columns arrive from Excel as TRUE/FALSE and are read as owned marks;
+date-formatted cells are converted rather than imported as serial numbers.
 
 It handles the two shapes collection spreadsheets usually take, and guesses
 which you have from your headers:
@@ -197,6 +207,7 @@ src/
   store/collection.tsx  what you own — localStorage
   store/library.tsx     card data for every set — IndexedDB
   lib/csv.ts            CSV/TSV parsing
+  lib/xlsx.ts           .xlsx workbook reading (zip + XML, no spreadsheet lib)
   lib/importer.ts       spreadsheet -> collection matching and planning
   lib/pricing.ts        variation -> price-bucket resolution
   lib/stats.ts          completion, value, spend rollups

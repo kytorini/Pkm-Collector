@@ -799,3 +799,34 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .issue-list { list-style: none; margin: 0; padding: 4px 13px 12px; font-size: 0.83rem; max-height: 260px; overflow-y: auto; }
 .issue-list li { padding: 4px 0; }
 .issue-block .link-btn { margin: 0 13px 12px; }
+
+/* ---------- workbook sheet picker ---------- */
+.sheet-picker { margin-top: 14px; }
+.sheet-all {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  cursor: pointer;
+}
+.sheet-all.is-active { border-color: var(--gold); }
+.sheet-all input { margin-top: 3px; accent-color: var(--gold); }
+.sheet-all span { display: flex; flex-direction: column; gap: 3px; }
+.sheet-all em { font-style: normal; font-size: 0.8rem; color: var(--text-dim); }
+
+.sheet-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.sheet-tab {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.sheet-tab:hover { border-color: var(--gold-dim); }
+.sheet-tab.is-active { border-color: var(--gold); color: var(--gold); }
