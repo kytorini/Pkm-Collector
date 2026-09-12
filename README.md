@@ -144,7 +144,9 @@ which you have from your headers:
 | **A column per print run** | `# · Card · 1st Edition · Shadowless · Unlimited`, each cell holding `X`, `NM`, `PSA 9`… |
 
 Column names don't need to match anything — the mapping is guessed from your
-headers and every field is a dropdown you can correct. It's forgiving about
+headers and every field is a dropdown you can correct. Each tab is mapped from
+its own header row, since tabs in a real workbook rarely share a column order,
+and the review breaks results down per tab so a badly read one is obvious. It's forgiving about
 how things are written:
 
 - **Sets**: `Base Set`, `base1`, `BS`, `1999 Jungle`, `Base Set 1st Edition`

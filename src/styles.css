@@ -891,3 +891,30 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .sheet-set { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; font-size: 0.82rem; color: var(--text-dim); }
 .sheet-set strong { color: var(--text); }
 .sheet-set select { width: 100%; }
+
+/* ---------- per-tab mapping + results ---------- */
+.mapping-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.sheet-tab.is-bad { border-color: color-mix(in srgb, var(--red) 50%, var(--line)); color: #f0a09d; }
+
+.tab-results { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.tab-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+.tab-result:hover { border-color: var(--gold-dim); }
+.tab-result.is-bad { border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+.tab-result-name { color: var(--text); font-weight: 600; }
+.tab-result strong { color: var(--green); }
+.tab-result-bad { font-style: normal; color: #f0a09d; }

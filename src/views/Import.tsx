@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { parseCsv } from '../lib/csv'
 import { looksLikeXlsx, parseXlsx, type WorkbookSheet } from '../lib/xlsx'
@@ -43,7 +43,12 @@ export function Import() {
    */
   const [sheetSets, setSheetSets] = useState<Record<number, string | null>>({})
   const [fileName, setFileName] = useState('')
-  const [mapping, setMapping] = useState<ColumnMapping | null>(null)
+  /**
+   * Column meanings per tab, keyed by index. Tabs in a real workbook don't
+   * share a layout, and reusing one tab's mapping for the rest silently read
+   * the wrong columns — a checkbox column as the card name, and so on.
+   */
+  const [mappings, setMappings] = useState<Record<number, ColumnMapping>>({})
   const [mode, setMode] = useState<MergeMode>('keep')
   const [done, setDone] = useState<{ entries: number } | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -51,25 +56,41 @@ export function Import() {
 
   const index = useMemo(() => buildCardIndex(allCards), [allCards])
   const sheet = sheets?.[activeSheet] ?? null
+  const mapping = mappings[activeSheet] ?? null
 
   /** A tab named "Jungle" tells us the set as well as a Set column would. */
   const setIdFromName = (name: string) => matchSet(name).set?.id ?? null
 
+  /** Each tab is planned with its own column mapping. */
+  const planFor = useCallback(
+    (s: WorkbookSheet, i: number) => {
+      const m = mappings[i]
+      if (!m) return null
+      const withSet = m.set == null ? { ...m, fallbackSetId: sheetSets[i] ?? null } : m
+      return labelPlanRows(buildPlan(s.rows, withSet, index, collection, defaultCondition), s.name)
+    },
+    [mappings, sheetSets, index, collection, defaultCondition],
+  )
+
+  /** Per-tab outcome, so a badly mapped tab stands out instead of hiding in a total. */
+  const perSheet = useMemo(() => {
+    if (!sheets || !allSheets) return []
+    return sheets.map((s, i) => {
+      const usable = mappings[i]?.set != null || sheetSets[i]
+      const p = usable ? planFor(s, i) : null
+      return { name: s.name, index: i, rows: s.rows.length, plan: p, skippedWholeTab: !usable }
+    })
+  }, [sheets, allSheets, mappings, sheetSets, planFor])
+
   const plan = useMemo(() => {
     if (!sheets || !mapping) return null
-    const forSheet = (s: WorkbookSheet, i: number) => {
-      const m = mapping.set == null ? { ...mapping, fallbackSetId: sheetSets[i] ?? null } : mapping
-      return labelPlanRows(buildPlan(s.rows, m, index, collection, defaultCondition), s.name)
-    }
     if (allSheets) {
-      // A tab left unassigned contributes nothing rather than a page of
-      // "no card named…" noise.
-      const usable = sheets.map((s, i) => [s, i] as const).filter(([, i]) => mapping.set != null || sheetSets[i])
-      return combinePlans(usable.map(([s, i]) => forSheet(s, i)))
+      const plans = perSheet.map((s) => s.plan).filter((p): p is NonNullable<typeof p> => p != null)
+      return combinePlans(plans)
     }
     const current = sheets[activeSheet]
-    return current ? forSheet(current, activeSheet) : null
-  }, [sheets, activeSheet, allSheets, mapping, index, collection, defaultCondition, sheetSets])
+    return current ? planFor(current, activeSheet) : null
+  }, [sheets, activeSheet, allSheets, mapping, perSheet, planFor])
 
   const onFile = async (file: File) => {
     setParseError(null)
@@ -91,12 +112,12 @@ export function Import() {
       setSheets(parsed)
       setActiveSheet(0)
       setSheetSets(Object.fromEntries(parsed.map((s, i) => [i, setIdFromName(s.name)])))
+      setMappings(Object.fromEntries(parsed.map((s, i) => [i, guessMapping(s.headers)])))
       // Any multi-tab workbook starts in all-tabs mode. It used to require two
       // tabs to auto-match a set first, which hid the tab mapper from exactly
       // the workbooks whose tab names needed mapping by hand.
       setAllSheets(parsed.length > 1)
       setFileName(file.name)
-      setMapping(guessMapping(first.headers))
     } catch (err) {
       setParseError(err instanceof Error ? err.message : 'Could not read that file.')
     }
@@ -106,7 +127,10 @@ export function Import() {
   // is setting up another pass, so give them the button back.
   const patch = (next: Partial<ColumnMapping>) => {
     setDone(null)
-    setMapping((m) => (m ? { ...m, ...next } : m))
+    setMappings((prev) => {
+      const current = prev[activeSheet]
+      return current ? { ...prev, [activeSheet]: { ...current, ...next } } : prev
+    })
   }
 
   const chooseMode = (next: MergeMode) => {
@@ -122,7 +146,7 @@ export function Import() {
 
   const reset = () => {
     setSheets(null)
-    setMapping(null)
+    setMappings({})
     setDone(null)
     setFileName('')
     setAllSheets(false)
@@ -231,7 +255,6 @@ export function Import() {
                         onClick={() => {
                           setDone(null)
                           setActiveSheet(i)
-                          setMapping(guessMapping(sheets[i].headers))
                         }}
                       >
                         {s.name}
@@ -297,7 +320,33 @@ export function Import() {
           {/* ---- step 2: the columns ---- */}
           <section className="panel">
             <h2>2. What your columns mean</h2>
-            <p className="muted">Guessed from your headers — correct anything that's wrong.</p>
+            <p className="muted">
+              Guessed from your headers — correct anything that's wrong.
+              {sheets.length > 1 && ' Each tab is read with its own columns, so check the ones that matter.'}
+            </p>
+
+            {sheets.length > 1 && allSheets && (
+              <div className="mapping-tabs" role="tablist">
+                {sheets.map((s, i) => {
+                  const outcome = perSheet[i]
+                  const bad = outcome?.plan && outcome.plan.unmatched.length > outcome.plan.ready.length
+                  return (
+                    <button
+                      key={s.name + i}
+                      role="tab"
+                      aria-selected={i === activeSheet}
+                      className={`sheet-tab ${i === activeSheet ? 'is-active' : ''} ${bad ? 'is-bad' : ''}`}
+                      onClick={() => {
+                        setDone(null)
+                        setActiveSheet(i)
+                      }}
+                    >
+                      {bad ? '⚠ ' : ''}{s.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
 
             <div className="layout-toggle">
               <label className={mapping.layout === 'long' ? 'is-active' : ''}>
@@ -444,6 +493,46 @@ export function Import() {
                   <span>skipped</span>
                 </div>
               </div>
+
+              {allSheets && perSheet.length > 1 && (
+                <>
+                  <h3>By tab</h3>
+                  <div className="tab-results">
+                    {perSheet.map((s) => {
+                      const imported = s.plan?.entryCount ?? 0
+                      const failed = s.plan?.unmatched.length ?? 0
+                      const bad = failed > (s.plan?.ready.length ?? 0)
+                      return (
+                        <button
+                          key={s.name + s.index}
+                          className={`tab-result ${bad ? 'is-bad' : ''}`}
+                          onClick={() => {
+                            setDone(null)
+                            setActiveSheet(s.index)
+                            document.querySelector('.mapping-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }}
+                        >
+                          <span className="tab-result-name">{s.name}</span>
+                          {s.skippedWholeTab ? (
+                            <span className="muted">no set assigned — skipped</span>
+                          ) : (
+                            <span>
+                              <strong>{imported}</strong> to import
+                              {failed > 0 && <em className="tab-result-bad"> · {failed} unmatched</em>}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {perSheet.some((s) => s.plan && s.plan.unmatched.length > s.plan.ready.length) && (
+                    <p className="warn-note">
+                      A tab with more unmatched rows than matched ones usually means its columns were read
+                      wrongly. Tap it above to check its mapping in step 2.
+                    </p>
+                  )}
+                </>
+              )}
 
               {plan.entryCount > 0 && (
                 <>
