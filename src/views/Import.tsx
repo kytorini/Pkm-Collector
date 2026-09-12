@@ -9,6 +9,7 @@ import {
   buildCardIndex,
   buildPlan,
   combinePlans,
+  findHeaderRow,
   guessMapping,
   labelPlanRows,
   matchSet,
@@ -125,9 +126,15 @@ export function Import() {
       // drive may not carry a .xlsx name or type by the time it reaches here.
       const buffer = await file.arrayBuffer()
       const head = new Uint8Array(buffer.slice(0, 4))
-      const parsed: WorkbookSheet[] = looksLikeXlsx(file, head)
+      const raw: WorkbookSheet[] = looksLikeXlsx(file, head)
         ? parseXlsx(buffer).filter((s) => s.headers.length > 0 && s.rows.length > 0)
         : [{ name: file.name, ...parseCsv(new TextDecoder().decode(buffer)) }]
+
+      // Tabs often start with a title or legend before the real header row.
+      const parsed: WorkbookSheet[] = raw.map((s) => {
+        const found = findHeaderRow(s.headers, s.rows)
+        return found.shiftedBy > 0 ? { ...s, headers: found.headers, rows: found.rows } : s
+      })
 
       if (parsed.length === 0) throw new Error('No sheet in that file had a header row and data.')
       const first = parsed[0]

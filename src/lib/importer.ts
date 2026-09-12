@@ -341,7 +341,12 @@ function resolveCard(row: string[], mapping: ColumnMapping, index: CardIndex): C
     }
     if (matches.length === 0) return { card: null, set: null, variantHint, reason: `No card named “${nameCell}”` }
     const sets = [...new Set(matches.map((c) => c.set.name))]
-    return { card: null, set: null, variantHint, reason: `“${nameCell}” appears in ${sets.length} sets — add a Set column` }
+    // More than one card of this name can mean several sets, or one set that
+    // prints the card twice (a holo and a non-holo share a name). Those need
+    // different fixes, so don't report them the same way.
+    return sets.length > 1
+      ? { card: null, set: null, variantHint, reason: `“${nameCell}” is in ${sets.length} sets (${sets.slice(0, 3).join(', ')}) — assign this tab a set, or map a Set column` }
+      : { card: null, set: null, variantHint, reason: `${sets[0]} has ${matches.length} cards named “${nameCell}” — map your card-number column in step 2` }
   }
 
   const setIndex = index.bySet.get(set.id)
@@ -363,7 +368,14 @@ function resolveCard(row: string[], mapping: ColumnMapping, index: CardIndex): C
       return { card: byName[0], set, variantHint, warning }
     }
     if (byName.length > 1) {
-      return { card: null, set, variantHint, reason: `${set.name} has ${byName.length} cards named “${nameCell}” — add a Number column` }
+      // Jungle, Fossil and Base Set 2 each print holo and non-holo versions of
+      // the same card, so a name alone genuinely cannot pick between them.
+      return {
+        card: null,
+        set,
+        variantHint,
+        reason: `${set.name} has ${byName.length} cards named “${nameCell}” — map your card-number column in step 2`,
+      }
     }
   }
 
@@ -615,6 +627,52 @@ export function guessMapping(headers: string[]): ColumnMapping {
   if (mapping.layout === 'wide') mapping.owned = null
 
   return mapping
+}
+
+/**
+ * How much of a mapping a candidate header row yields. Card name and number
+ * are what matching actually needs, so they count for more than the extras.
+ */
+function mappingScore(headers: string[]): number {
+  if (headers.length === 0) return 0
+  const m = guessMapping(headers)
+  let score = 0
+  if (m.name != null) score += 3
+  if (m.number != null) score += 3
+  if (m.set != null) score += 1
+  if (m.condition != null) score += 1
+  if (m.variation != null) score += 1
+  if (m.quantity != null) score += 1
+  if (m.notes != null) score += 1
+  score += Object.keys(m.variantColumns).length
+  return score
+}
+
+/**
+ * Finds the row that actually holds the headers. Sheets often open with a
+ * title, a blank line, or a legend before the real header row, and taking row
+ * one on faith leaves every column unmapped — so every row then fails for
+ * having "no card name or number".
+ */
+export function findHeaderRow(
+  headers: string[],
+  rows: string[][],
+  maxLookahead = 5,
+): { headers: string[]; rows: string[][]; shiftedBy: number } {
+  let best = { headers, rows, shiftedBy: 0 }
+  let bestScore = mappingScore(headers)
+
+  for (let i = 0; i < Math.min(maxLookahead, rows.length - 1); i++) {
+    const candidate = rows[i]
+    const score = mappingScore(candidate)
+    // Strictly better, so an equally good row further down never wins and the
+    // earliest plausible header keeps its place.
+    if (score > bestScore) {
+      bestScore = score
+      best = { headers: candidate, rows: rows.slice(i + 1), shiftedBy: i + 1 }
+    }
+  }
+  return best
 }
 
 export const MAPPABLE_FIELDS = [
