@@ -48,7 +48,9 @@ h2 { font-size: 1.05rem; }
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+  /* The same gutter as the page below it, so the mark and the title line up
+     with the back link and the cards rather than sitting 6px further in. */
+  padding: 0 max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left));
   height: 56px;
   padding-top: env(safe-area-inset-top);
   box-sizing: content-box;
@@ -109,7 +111,12 @@ h2 { font-size: 1.05rem; }
 }
 
 /* Everything that pins sits under the top bar. */
-:root { --stick-top: calc(56px + env(safe-area-inset-top)); }
+:root {
+  --stick-top: calc(56px + env(safe-area-inset-top));
+  /* The page's side gutter. A full-bleed bar cancels it, then puts it back as
+     padding, so its contents still line up with the rest of the page. */
+  --gutter: 20px;
+}
 
 .main { flex: 1; }
 
@@ -176,8 +183,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
-  margin: 0 -20px 14px;
-  padding: 7px 20px;
+  margin: 0 calc(-1 * var(--gutter)) 14px;
+  padding: 7px var(--gutter);
   background: rgba(14, 16, 22, 0.94);
   backdrop-filter: blur(12px);
 }
@@ -431,12 +438,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  margin: 0 -20px 14px;
-  padding: 7px 20px;
+  margin: 0 calc(-1 * var(--gutter)) 14px;
+  padding: 7px var(--gutter);
   background: rgba(14, 16, 22, 0.94);
   backdrop-filter: blur(12px);
   scrollbar-width: none;
   scroll-snap-type: x proximity;
+  /* Without this the snapport starts inside the padding, so snapping to the
+     first tab scrolls the gutter away and the row sits flush to the screen
+     edge while every other row is inset. */
+  scroll-padding-inline: var(--gutter);
 }
 .variant-tabs::-webkit-scrollbar { display: none; }
 /* Tighter again once it's actually pinned, where every pixel is the grid's. */
@@ -792,6 +803,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
  * compresses so cards start above the fold instead of a screen down.
  */
 @media (max-width: 700px) {
+  :root { --gutter: 14px; }
   .topbar { gap: 12px; }
   /* The wordmark gives its room to the set and run you're actually in. */
   .topbar.has-title .brand-name { display: none; }
@@ -862,8 +874,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .back-link { margin-bottom: 2px; font-size: 0.8rem; }
   .variant-tabs {
     -webkit-overflow-scrolling: touch;
-    margin: 0 -14px 10px;
-    padding: 6px 14px;
+    margin-bottom: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
   .variant-tab { min-height: 40px; padding: 6px 12px; }
   .variant-tab-name { font-size: 0.85rem; }
@@ -891,7 +904,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .summary-stats dd { font-size: 0.82rem; margin: 0; }
   .summary-stats .small { display: none; }
 
-  .toolbar { gap: 6px; margin: 0 -14px 10px; padding: 6px 14px; }
+  .toolbar { gap: 6px; margin-bottom: 10px; padding-top: 6px; padding-bottom: 6px; }
   .search-input { min-height: 38px; flex: 1 1 100%; padding: 7px 12px; }
   .segmented { flex: 1 1 auto; }
   .segmented button { min-height: 38px; padding: 7px 12px; flex: 1; }
