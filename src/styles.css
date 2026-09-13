@@ -678,6 +678,91 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .chip.is-on { border-color: var(--gold); color: var(--gold); }
 .chip-price { opacity: 0.7; font-variant-numeric: tabular-nums; }
 
+/* ---------- the lot ---------- */
+.lot-bar {
+  position: sticky;
+  top: var(--stick-top);
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 calc(-1 * var(--gutter)) 12px;
+  padding: 10px var(--gutter);
+  background: rgba(14, 16, 22, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line-soft);
+}
+.lot-total { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lot-total-value {
+  font-size: 1.45rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.lot-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lot-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+.lot-row.is-missing { color: var(--text-dim); }
+.lot-row img { border-radius: 4px; flex: 0 0 auto; }
+.lot-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lot-row-main > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lot-row-each { font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.lot-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }
+.lot-row-line { font-size: 0.95rem; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.qty { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 99px; }
+.qty-btn {
+  width: 30px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 99px;
+}
+.qty-btn:hover { color: var(--gold); }
+.qty-value { min-width: 20px; text-align: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+.lot-remove {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.lot-remove:hover { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
+
+/* A chip in the results is the way into the lot, so it says which way it goes. */
+.chip.is-pinned { background: var(--gold); border-color: var(--gold); color: #201803; font-weight: 620; }
+.chip.is-pinned .chip-price { opacity: 0.72; }
+.chip-mark { font-size: 0.95rem; line-height: 1; opacity: 0.75; }
+.chip-owned { color: var(--gold-dim); font-size: 0.78rem; }
+.chip.is-pinned .chip-owned { color: rgba(32, 24, 3, 0.66); }
+
 /* ---------- modal ---------- */
 .modal-backdrop {
   position: fixed;
@@ -848,7 +933,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
     justify-content: center;
   }
   .nav-link.is-active { background: transparent; }
-  .nav-icon { font-size: 1.2rem; line-height: 1; }
+  .nav-icon { font-size: 1.3rem; line-height: 1; }
   .nav-label { display: block; font-size: 0.66rem; letter-spacing: 0.01em; }
 
   /* Clear the fixed bottom bar. */

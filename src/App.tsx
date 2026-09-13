@@ -7,13 +7,13 @@ import { LibraryProvider, useLibrary } from './store/library'
 import { SyncProvider } from './store/sync'
 import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
-import { Search } from './views/Search'
+import { Lot } from './views/Lot'
 import { SetDetail } from './views/SetDetail'
 import { Settings } from './views/Settings'
 
 const NAV = [
   { href: routeHref.dashboard, label: 'Collection', icon: '◆', match: 'dashboard' },
-  { href: routeHref.search, label: 'Search', icon: '⌕', match: 'search' },
+  { href: routeHref.lot, label: 'Lot', icon: '⧉', match: 'lot' },
   { href: routeHref.settings, label: 'Settings', icon: '⚙', match: 'settings' },
 ] as const
 
@@ -22,14 +22,14 @@ function Shell() {
   const phone = usePhone()
   const { progress } = useLibrary()
 
-  // "/" jumps to search from anywhere, the way a binder index would.
+  // "/" jumps to the lot's search from anywhere, the way a binder index would.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
       const typing = el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)
       if (e.key === '/' && !typing) {
         e.preventDefault()
-        navigate(routeHref.search)
+        navigate(routeHref.lot)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -103,7 +103,7 @@ function Shell() {
       <main className="main">
         {route.name === 'dashboard' && <Dashboard />}
         {route.name === 'set' && <SetDetail setId={route.setId} variantId={route.variantId} />}
-        {route.name === 'search' && <Search />}
+        {route.name === 'lot' && <Lot />}
         {route.name === 'settings' && <Settings />}
         {route.name === 'import' && <Import />}
       </main>

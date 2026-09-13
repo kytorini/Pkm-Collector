@@ -240,6 +240,24 @@ On clashes you choose whether the collection or the spreadsheet wins, or
 replace the collection outright. Export a backup from Settings first if you
 pick replace.
 
+## The Lot tab
+
+A scratch pile for pricing up a batch someone is offering you. Search a name,
+tap the print run they're actually holding, and it lands in the lot with its
+price; the running total sits pinned at the top as you go, so you know what the
+batch is worth at market before you name a figure.
+
+- **A print run is pinned, not a card.** A 1st Edition Charizard and an
+  Unlimited one are different markets, and both can sit in the same lot.
+- **Quantities**, because a box is as likely to hold three of something as one.
+  Taking the last copy away removes the line.
+- **A tick on a run you already own**, which is worth knowing before paying for
+  another.
+- **Prices follow your own price sources**, including any figures you typed in
+  yourself, so the total is the same number the rest of the app would give.
+- **Nothing here touches your collection.** Pinning is not owning. The lot is
+  kept per device and isn't synced — it's a note for the next ten minutes.
+
 ## Honest notes on pricing
 
 - **There is one scan per card, not one per print run.** The API keys prices
