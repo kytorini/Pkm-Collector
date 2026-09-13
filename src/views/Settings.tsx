@@ -27,6 +27,7 @@ export function Settings() {
   const [use, setUse] = useState<StorageUse | null>(null)
   const priceRules = usePriceRules()
   const perSetCount = Object.keys(priceRules.bySet).length
+  const perRunCount = Object.keys(priceRules.byVariant ?? {}).length
   const perCardCount = Object.values(collection).filter((e) => e.priceSource).length
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -337,27 +338,30 @@ create policy "sync" on collections
           chosen source doesn't cover shows no price rather than a substituted one.
         </p>
         <p className="muted">
-          A set can override this from its own page, and a single card from its panel — where you can also
-          type a figure you read on PriceCharting or eBay, which those sites don't publish in a form the app
-          can read. Per-card prices are part of your collection and sync between devices; the two choices
-          above are per device, like grid density.
+          A set page overrides this per print run — 1st Edition and Unlimited are different markets, and one
+          can have no feed of its own while the other is priced fine — or for the whole set at once. A single
+          card overrides both from its panel, where you can also type a figure you read on PriceCharting or
+          eBay, which those sites don't publish in a form the app can read. The most specific setting wins:
+          card, then print run, then set, then here. Per-card prices are part of your collection and sync
+          between devices; everything else here is per device, like grid density.
         </p>
-        {(perSetCount > 0 || perCardCount > 0) && (
+        {(perSetCount > 0 || perRunCount > 0 || perCardCount > 0) && (
           <>
             <p className="muted">
-              {perSetCount > 0 && `${perSetCount} set${perSetCount === 1 ? '' : 's'} override this. `}
+              {perRunCount > 0 && `${perRunCount} print run${perRunCount === 1 ? '' : 's'} override this. `}
+              {perSetCount > 0 && `${perSetCount} whole set${perSetCount === 1 ? '' : 's'} override this. `}
               {perCardCount > 0 && `${perCardCount} card${perCardCount === 1 ? '' : 's'} have their own source.`}
             </p>
-            {perSetCount > 0 && (
+            {perSetCount + perRunCount > 0 && (
               <button
                 className="btn"
                 onClick={() => {
-                  if (!confirm(`Clear the price source on all ${perSetCount} sets? Per-card prices are kept.`)) return
+                  if (!confirm(`Clear the price source on all ${perSetCount + perRunCount} sets and print runs? Prices you typed in are kept, and so are per-card sources.`)) return
                   resetPriceRules()
-                  setMessage('Every set is back to the collection default.')
+                  setMessage('Every set and print run is back to the collection default.')
                 }}
               >
-                Clear the per-set choices
+                Clear the per-set and per-run choices
               </button>
             )}
           </>

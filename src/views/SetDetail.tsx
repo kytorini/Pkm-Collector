@@ -7,7 +7,7 @@ import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
 import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
-import { setSetSource, usePriceRules } from '../lib/priceRules'
+import { setSetSource, setVariantSource, usePriceRules, variantRuleKey } from '../lib/priceRules'
 import {
   AUTO,
   RECORDED_SOURCES,
@@ -90,10 +90,15 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const stats = statsForVariant(cards, activeVariant, collection, price)
   const openCard = openCardId ? cards.find((c) => c.id === openCardId) ?? null : null
 
-  // Which site's prices the "type them in" button offers: the one the set
-  // already reads from, or PriceCharting, which is the usual reason to be here.
-  const chosenSetSource = rules.bySet[setId] ?? rules.collection ?? AUTO
-  const enterKey = isRecorded(chosenSetSource) ? recordedKey(chosenSetSource) : 'pricecharting'
+  // What each level falls back to, so the pickers can say what "inherit" means
+  // and the coverage counts can resolve it.
+  const setFallback = rules.bySet[setId] ?? rules.collection ?? AUTO
+  const variantRule = rules.byVariant?.[variantRuleKey(setId, activeVariant.id)] ?? 'inherit'
+  const effectiveVariantSource = variantRule === 'inherit' ? setFallback : variantRule
+
+  // Which site's prices the "type them in" button offers: the one this run
+  // already reads from, or PriceCharting, the usual reason to be here.
+  const enterKey = isRecorded(effectiveVariantSource) ? recordedKey(effectiveVariantSource) : 'pricecharting'
 
   /**
    * A whole print run in one pass: every card, its link, and a box for the
@@ -107,7 +112,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     const filled = cards.filter(
       (c) => recordedPrice(collection[`${c.id}::${activeVariant.id}`], entering) != null,
     ).length
-    const alreadyUsing = chosenSetSource === recordedSourceId(entering)
+    const alreadyUsing = effectiveVariantSource === recordedSourceId(entering)
 
     return (
       <div className="price-entry">
@@ -122,8 +127,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           </div>
           <div className="btn-row">
             {!alreadyUsing && filled > 0 && (
-              <button className="btn primary small" onClick={() => setSetSource(setId, recordedSourceId(entering))}>
-                Use these for {set.name}
+              <button
+                className="btn primary small"
+                onClick={() => setVariantSource(setId, activeVariant.id, recordedSourceId(entering))}
+              >
+                Use these for {activeVariant.label}
               </button>
             )}
             <button className="btn small" onClick={() => setEntering(null)}>Done</button>
@@ -177,9 +185,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
    * on each option so the choice is made against the feed's real contents
    * rather than its promises.
    */
-  const coverage = (id: PriceSourceId): string | null => {
+  const coverage = (id: PriceSourceId, inheritsTo: PriceSourceId): string | null => {
     if (cards.length === 0) return null
-    const effective = id === 'inherit' ? rules.collection || AUTO : id
+    const effective = id === 'inherit' ? inheritsTo : id
     if (isRecorded(effective)) {
       const where = recordedKey(effective)
       const n = cards.filter(
@@ -235,12 +243,22 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             {(close) => (
               <div className="price-source-row">
                 <PriceSourceSelect
+                  level="variant"
+                  id="variant-price-source"
+                  label={`Prices for ${activeVariant.label}`}
+                  inheritLabel={`Use the ${set.name} setting`}
+                  value={variantRule}
+                  onChange={(id) => setVariantSource(setId, activeVariant.id, id)}
+                  annotate={(id) => coverage(id, setFallback)}
+                />
+                <PriceSourceSelect
                   level="set"
                   id="set-price-source"
-                  label={`Prices for ${set.name}`}
+                  label={`Prices for the rest of ${set.name}`}
+                  inheritLabel="Use the collection default"
                   value={rules.bySet[setId] ?? 'inherit'}
                   onChange={(id) => setSetSource(setId, id)}
-                  annotate={(id) => coverage(id)}
+                  annotate={(id) => coverage(id, rules.collection || AUTO)}
                 />
                 <p className="muted small">
                   {stats.unpriced > 0

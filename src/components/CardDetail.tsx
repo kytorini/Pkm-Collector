@@ -170,6 +170,7 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                     level="card"
                     id={`price-source-${card.id}-${variant.id}`}
                     label="Price from"
+                    inheritLabel={`Use the ${variant.label} setting`}
                     value={entry?.priceSource ?? 'inherit'}
                     onChange={(id) => setPriceOverride(card.id, variant.id, { priceSource: id })}
                     annotate={annotate}
@@ -204,7 +205,7 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                       ? chosenRecorded.site
                         ? `${chosenRecorded.site} publishes no feed this app can read, so the figure is yours: open the link above, read the price, type it here. It is used everywhere this card is valued and travels with your collection.`
                         : 'Type what a card is worth to you. It is used everywhere this card is valued, and travels with your collection.'
-                      : `Showing ${price.bucket ? `the ${price.bucket} price` : 'no price'}. This card only — the set and collection keep their own choice.`}
+                      : `Showing ${price.bucket ? `the ${price.bucket} price` : 'no price'}. This card only — the print run, set and collection keep their own choice.`}
                   </p>
                 </div>
 

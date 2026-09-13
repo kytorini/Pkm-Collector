@@ -81,12 +81,16 @@ export interface PriceSourceOption {
  * The sources offerable at a given level. "Your own price" is a per-card
  * figure, so it is only offered there.
  */
-export function sourceOptions(level: 'collection' | 'set' | 'card'): PriceSourceOption[] {
+export function sourceOptions(
+  level: 'collection' | 'set' | 'variant' | 'card',
+  /** What "inherit" means here, e.g. "Use the Base Set setting". */
+  inheritLabel?: string,
+): PriceSourceOption[] {
   const options: PriceSourceOption[] = [
-    { id: AUTO, label: level === 'card' ? 'Auto' : 'Auto (recommended)', group: 'Automatic' },
+    { id: AUTO, label: level === 'collection' ? 'Auto (recommended)' : 'Auto', group: 'Automatic' },
   ]
   if (level !== 'collection') {
-    options.push({ id: 'inherit', label: level === 'set' ? 'Use the collection default' : 'Use the set default', group: 'Automatic' })
+    options.push({ id: 'inherit', label: inheritLabel ?? 'Inherit', group: 'Automatic' })
   }
   for (const bucket of TCG_BUCKETS) {
     options.push({ id: `tcg:${bucket.key}`, label: bucket.label, group: 'TCGplayer' })

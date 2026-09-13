@@ -1,7 +1,9 @@
 import { sourceOptions, type PriceSourceId } from '../lib/priceSources'
 
 interface Props {
-  level: 'collection' | 'set' | 'card'
+  level: 'collection' | 'set' | 'variant' | 'card'
+  /** What the "inherit" option should read, e.g. "Use the Base Set setting". */
+  inheritLabel?: string
   /** The stored choice. 'inherit' when this level has made none. */
   value: PriceSourceId
   onChange: (id: PriceSourceId) => void
@@ -16,8 +18,8 @@ interface Props {
   id: string
 }
 
-export function PriceSourceSelect({ level, value, onChange, annotate, label, id }: Props) {
-  const options = sourceOptions(level)
+export function PriceSourceSelect({ level, inheritLabel, value, onChange, annotate, label, id }: Props) {
+  const options = sourceOptions(level, inheritLabel)
   const groups = [...new Set(options.map((o) => o.group))]
 
   return (

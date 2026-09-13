@@ -1,6 +1,6 @@
 import { convertEurToUsd } from './fx'
 import { AUTO, isRecorded, labelFor, matchesVariant, readBucket, recordedKey, recordedPrice } from './priceSources'
-import type { PriceRules } from './priceRules'
+import { variantRuleKey, type PriceRules } from './priceRules'
 import type { PriceSourceId } from './priceSources'
 import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../types'
 
@@ -39,15 +39,23 @@ function pick(bucket: TcgPriceBucket): number | null {
 }
 
 /**
- * Which source applies to one slot: the card's own choice, else the set's,
- * else the collection's, else automatic.
+ * Which source applies to one slot, most specific first: the card's own
+ * choice, else this print run's, else the set's, else the collection's, else
+ * automatic.
  */
 export function resolveSourceId(
   setId: string,
+  variantId: string,
   entry: CollectionEntry | undefined,
   rules: PriceRules,
 ): PriceSourceId {
-  return entry?.priceSource ?? rules.bySet[setId] ?? rules.collection ?? AUTO
+  return (
+    entry?.priceSource ??
+    rules.byVariant?.[variantRuleKey(setId, variantId)] ??
+    rules.bySet[setId] ??
+    rules.collection ??
+    AUTO
+  )
 }
 
 /**
@@ -62,7 +70,10 @@ export function makePriceResolver(
 ): PriceResolver {
   return (card, variant) => {
     const entry = entryFor(card.id, variant.id)
-    return priceFor(card, variant, { source: resolveSourceId(card.set.id, entry, rules), entry })
+    return priceFor(card, variant, {
+      source: resolveSourceId(card.set.id, variant.id, entry, rules),
+      entry,
+    })
   }
 }
 

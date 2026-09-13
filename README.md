@@ -228,9 +228,12 @@ pick replace.
 - **A missing bucket shows `—`, not a guess.** If a card has no 1st Edition
   listing, the 1st Edition slot shows no price rather than borrowing the
   Unlimited one. "Cost to finish" says how many slots it had to skip.
-- **You can choose where prices come from**, at three levels: the whole
-  collection (Settings), one set (its own page), or one card (its panel). The
-  most specific choice wins — card, then set, then collection, then Auto.
+- **You can choose where prices come from**, at four levels: the whole
+  collection (Settings), one set, one print run within a set (both on the set
+  page), or one card (its panel). The most specific choice wins — card, then
+  print run, then set, then collection, then Auto. The print run is usually
+  the one you want: 1st Edition and Unlimited are different markets, and one
+  can have no listing of its own while the other is priced perfectly.
   Auto is the behaviour above. Any other source is read literally: pick the
   Holofoil bucket for a 1st Edition run and that is what you get, flagged `~`
   as another run's price, and a card the source doesn't cover shows no price
@@ -250,8 +253,10 @@ pick replace.
   history and a box for the figure, with a running count of how many are done.
   The filter and search narrow that list too, so you can do only the cards you
   own, or work through a set in sittings. When you're done, one button points
-  the whole set at those prices. This is the answer when a print run has no
-  listing of its own anywhere in the feed.
+  that print run at those prices — the run you filled in, not the whole set,
+  so the other runs aren't dragged onto figures that don't exist for them.
+  This is the answer when a print run has no listing of its own anywhere in
+  the feed.
 - Recorded prices are collection data, not a preference: they're used
   everywhere the card is valued and sync between your devices. The collection
   and per-set source choices are per device, like grid density.
