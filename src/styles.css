@@ -414,15 +414,24 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 30px;
-  height: 30px;
+  /* Sized from one value so width and height can't drift apart and turn the
+     border-radius into an oval. */
+  --close-size: 34px;
+  display: grid;
+  place-items: center;
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--bg-sunken);
   color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1;
   cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
 }
-.modal-close:hover { color: var(--text); }
+.modal-close:hover { color: var(--text); border-color: var(--gold-dim); }
 
 .modal-art { position: relative; }
 .modal-art img { width: 100%; border-radius: 12px; display: block; }
@@ -440,6 +449,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .modal-nav button:hover { color: var(--text); border-color: var(--gold-dim); }
 
 .modal-body { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.modal-head { padding-right: 44px; }
 .modal-head p { margin: 5px 0 0; font-size: 0.87rem; }
 
 .variant-row {
@@ -642,7 +652,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
     animation: sheet-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .modal-art { max-width: 200px; margin: 0 auto; }
-  .modal-close { width: 40px; height: 40px; }
+  .modal-close { --close-size: 40px; }
   .variant-fields input, .variant-fields select { min-height: 42px; }
   .modal-nav button { width: 56px; height: 44px; }
 
@@ -707,7 +717,6 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .select,
   .search-input,
   .variant-tab,
-  .modal-close,
   .modal-nav button,
   .issue-head,
   input[type='text'],
@@ -717,6 +726,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
     min-height: 44px;
   }
   .link-btn, .back-link { display: inline-flex; align-items: center; min-height: 44px; }
+  /* Both dimensions, so it stays a circle at the 44pt target size. */
+  .modal-close { --close-size: 44px; }
   .variant-toggle input { width: 22px; height: 22px; }
   .brand { min-height: 44px; display: inline-flex; align-items: center; }
 }
