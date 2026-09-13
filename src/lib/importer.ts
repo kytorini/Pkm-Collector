@@ -46,16 +46,31 @@ const SET_ALIASES: Record<string, string> = {
   rocket: 'base5',
   'gym heroes': 'gym1',
   g1: 'gym1',
+  gh: 'gym1',
   'gym challenge': 'gym2',
   g2: 'gym2',
+  gc: 'gym2',
   'neo genesis': 'neo1',
   n1: 'neo1',
+  ng: 'neo1',
+  'neo gen': 'neo1',
   'neo discovery': 'neo2',
   n2: 'neo2',
+  ndis: 'neo2',
+  ndisc: 'neo2',
+  'neo dis': 'neo2',
+  'neo disc': 'neo2',
   'neo revelation': 'neo3',
   n3: 'neo3',
+  nr: 'neo3',
+  nrev: 'neo3',
+  'neo rev': 'neo3',
   'neo destiny': 'neo4',
   n4: 'neo4',
+  ndes: 'neo4',
+  ndest: 'neo4',
+  'neo des': 'neo4',
+  'neo dest': 'neo4',
   'legendary collection': 'base6',
   lc: 'base6',
   expedition: 'ecard1',
@@ -422,7 +437,17 @@ function resolveCard(row: string[], mapping: ColumnMapping, index: CardIndex): C
   if (!set) {
     // No set to work from — a unique name across the whole library will do.
     if (!nameCell) return { card: null, set: null, variantHint, reason: 'No set and no card name' }
-    const matches = index.byNameGlobal.get(norm(nameCell)) ?? []
+    const all = index.byNameGlobal.get(norm(nameCell)) ?? []
+    // Narrow by the row's own card number first — "Espeon" is ambiguous across
+    // sets, but "Espeon 1/75" usually isn't.
+    const matches = numberCell && all.length > 1
+      ? (() => {
+          const wanted = normNumber(numberCell)
+          const byNumber = all.filter((c) => normNumber(c.number) === wanted)
+          return byNumber.length > 0 ? byNumber : all
+        })()
+      : all
+
     if (matches.length === 1) {
       return { card: matches[0], set: getSet(matches[0].set.id) ?? null, variantHint }
     }
@@ -433,12 +458,14 @@ function resolveCard(row: string[], mapping: ColumnMapping, index: CardIndex): C
     // prints the card twice (a holo and a non-holo share a name). Those need
     // different fixes, so don't report them the same way.
     return sets.length > 1
-      ? { card: null, set: null, variantHint, reason: `“${nameCell}” is in ${sets.length} sets (${sets.slice(0, 3).join(', ')}) — assign this tab a set, or map a Set column` }
+      ? { card: null, set: null, variantHint, reason: `“${nameCell}” is in ${sets.length} sets (${sets.slice(0, 3).join(', ')}) — assign this tab a set above` }
       : {
           card: null,
           set: null,
           variantHint,
-          reason: `${sets[0]} has ${matches.length} cards named “${nameCell}” — map your card-number column in step 2`,
+          reason: numberCell
+            ? `${sets[0]} has ${matches.length} cards named “${nameCell}” and none numbered ${numberCell} — assign this tab a set above`
+            : `${sets[0]} has ${matches.length} cards named “${nameCell}” — assign this tab a set, or map your card-number column`,
         }
   }
 
