@@ -96,6 +96,9 @@ h2 { font-size: 1.05rem; }
   font-size: 0.85rem;
 }
 
+/* Everything that pins sits under the top bar. */
+:root { --stick-top: calc(56px + env(safe-area-inset-top)); }
+
 .main { flex: 1; }
 
 .view {
@@ -152,7 +155,20 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   outline-offset: 2px;
 }
 
-.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+/* Pinned directly beneath the print-run tabs, whose height it is told. */
+.toolbar {
+  position: sticky;
+  top: calc(var(--stick-top) + var(--tabs-h, 0px));
+  z-index: 15;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 -20px 14px;
+  padding: 7px 20px;
+  background: rgba(14, 16, 22, 0.94);
+  backdrop-filter: blur(12px);
+}
 .check-inline { display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: 0.88rem; }
 
 .segmented { display: flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
@@ -390,12 +406,37 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .price-entry-list li.is-waiting { background: #1b202a; }
 
 /* ---------- set detail ---------- */
-.variant-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+/*
+ * The print run you're looking at is the thing you most want to change while
+ * scrolling a set, so it stays put. One row rather than two: the label and its
+ * count read fine side by side, and the pinned bar is half the height for it.
+ */
+.variant-tabs {
+  position: sticky;
+  top: var(--stick-top);
+  z-index: 16;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin: 0 -20px 14px;
+  padding: 7px 20px;
+  background: rgba(14, 16, 22, 0.94);
+  backdrop-filter: blur(12px);
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.variant-tabs::-webkit-scrollbar { display: none; }
+/* Tighter again once it's actually pinned, where every pixel is the grid's. */
+.variant-tabs.is-stuck { padding-top: 4px; padding-bottom: 4px; }
 .variant-tab {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 9px 16px;
+  flex-direction: row;
+  align-items: baseline;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  gap: 7px;
+  padding: 7px 13px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg-sunken);
@@ -407,8 +448,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .variant-tab:hover { border-color: var(--gold-dim); }
 .variant-tab.is-active { background: var(--bg-raised); border-color: var(--gold); color: var(--text); }
-.variant-tab-name { font-size: 0.9rem; font-weight: 600; }
+.variant-tab-name { font-size: 0.88rem; font-weight: 600; }
 .variant-tab-count { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.variant-tabs.is-stuck .variant-tab { padding: 5px 11px; }
+.variant-tabs.is-stuck .variant-tab-name { font-size: 0.82rem; }
+.variant-tabs.is-stuck .variant-tab-count { font-size: 0.74rem; }
 
 .set-summary {
   display: flex;
@@ -797,18 +841,14 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .set-head .overflow-btn { min-width: 44px; min-height: 44px; padding: 8px; font-size: 1rem; }
   .back-link { margin-bottom: 2px; font-size: 0.8rem; }
   .variant-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
-    margin: 0 -14px 12px;
-    padding: 0 14px 4px;
-    scrollbar-width: none;
+    margin: 0 -14px 10px;
+    padding: 6px 14px;
   }
-  .variant-tabs::-webkit-scrollbar { display: none; }
-  .variant-tab { flex: 0 0 auto; scroll-snap-align: start; min-height: 44px; padding: 7px 14px; }
+  .variant-tab { min-height: 40px; padding: 6px 12px; }
   .variant-tab-name { font-size: 0.85rem; }
+  /* A pinned tab gives up a little of its tap height to the cards. */
+  .variant-tabs.is-stuck .variant-tab { min-height: 34px; padding: 4px 10px; }
 
   /* Drop the panel chrome: the numbers matter, the box around them doesn't. */
   .set-summary {
@@ -831,16 +871,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .summary-stats dd { font-size: 0.82rem; margin: 0; }
   .summary-stats .small { display: none; }
 
-  .toolbar {
-    position: sticky;
-    top: calc(56px + env(safe-area-inset-top));
-    z-index: 15;
-    gap: 6px;
-    margin: 0 -14px 10px;
-    padding: 6px 14px;
-    background: rgba(14, 16, 22, 0.94);
-    backdrop-filter: blur(12px);
-  }
+  .toolbar { gap: 6px; margin: 0 -14px 10px; padding: 6px 14px; }
   .search-input { min-height: 38px; flex: 1 1 100%; padding: 7px 12px; }
   .segmented { flex: 1 1 auto; }
   .segmented button { min-height: 38px; padding: 7px 12px; flex: 1; }

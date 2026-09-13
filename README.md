@@ -81,6 +81,13 @@ specific model:
   never buy. Nothing is deleted — the cards stay cached, a direct link still
   opens a hidden set, and the page says how many are hidden with a way to
   bring them back. Stored per device.
+- **The print-run tabs and the filter bar stay put while you scroll**, pinned
+  under the top bar, so switching between 1st Edition and Unlimited or
+  narrowing the grid never means scrolling back up. The tabs are one row — the
+  label and its count sit side by side — and compact themselves further once
+  pinned, giving the cards the difference. The toolbar is told the tabs' height
+  rather than assuming it, so a wrapped label or an extra print run can't make
+  the two overlap.
 - **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
   5 or 6 per row. Auto fills the width, which on an iPad means six and rather
   small artwork. The choice is stored per device, since a tablet and a phone

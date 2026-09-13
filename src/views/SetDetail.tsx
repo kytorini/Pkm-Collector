@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardTile } from '../components/CardTile'
@@ -165,6 +165,53 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // The card whose price you went off to look up, so the row you left from is
   // the one waiting for you when you come back.
   const [lookedUp, setLookedUp] = useState<string | null>(null)
+
+  // The print-run tabs pin under the top bar, and the toolbar pins under them.
+  // Their height is measured rather than assumed: it changes with the tab
+  // count, with a wrapped label, and when the pinned bar compacts itself.
+  const tabsRef = useRef<HTMLElement>(null)
+  const [stuck, setStuck] = useState(false)
+
+  useEffect(() => {
+    const el = tabsRef.current
+    if (!el) return
+
+    const onScroll = () => {
+      // Compare against the resolved sticky offset rather than a constant, so
+      // this keeps working behind a notch, where the inset is part of it.
+      const stickTop = parseFloat(getComputedStyle(el).top) || 0
+      setStuck(el.getBoundingClientRect().top <= stickTop + 0.5)
+    }
+
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
+
+  // Tell the toolbar how far down to pin. Published on the shared parent, not
+  // on the tabs: the toolbar is a sibling, and a custom property inherits down
+  // the tree rather than across it.
+  //
+  // Measured after every render, and again through a ResizeObserver for the
+  // changes React doesn't cause — a font arriving, a rotation, a label
+  // wrapping. The observer watches the border box on purpose: compacting the
+  // pinned bar is mostly its own padding, which leaves the content box the
+  // same size and would otherwise go unreported.
+  useLayoutEffect(() => {
+    const el = tabsRef.current
+    const scope = el?.parentElement
+    if (!el || !scope) return
+    const publishHeight = () =>
+      scope.style.setProperty('--tabs-h', `${el.getBoundingClientRect().height}px`)
+    publishHeight()
+    const observer = new ResizeObserver(publishHeight)
+    observer.observe(el, { box: 'border-box' })
+    return () => observer.disconnect()
+  })
 
   useEffect(() => {
     if (!lookedUp) return
@@ -334,7 +381,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         </div>
       </header>
 
-      <nav className="variant-tabs" aria-label="Print variation">
+      <nav
+        ref={tabsRef}
+        className={`variant-tabs ${stuck ? 'is-stuck' : ''}`}
+        aria-label="Print variation"
+      >
         {set.variants.map((variant) => {
           const s = statsForVariant(cards, variant, collection, price)
           return (
