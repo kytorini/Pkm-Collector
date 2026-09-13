@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { UNASSESSED } from '../lib/condition'
 import { entryKey, type CollectionEntry, type CollectionMap, type ConditionId } from '../types'
 
 const STORAGE_KEY = 'pkm-collector:collection:v1'
@@ -16,6 +17,8 @@ interface CollectionContextValue {
   replaceAll: (next: CollectionMap) => void
   /** Sets every quantity back to one, for undoing a bad import mapping. */
   resetQuantities: () => number
+  /** Puts every ungraded card back to the unassessed state. */
+  resetConditions: () => number
   ownedCount: number
 }
 
@@ -115,6 +118,26 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
 
   const replaceAll = useCallback((next: CollectionMap) => setCollection(next), [])
 
+  const resetConditions = useCallback(() => {
+    let changed = 0
+    setCollection((prev) => {
+      const next: CollectionMap = {}
+      const now = new Date().toISOString()
+      for (const [key, entry] of Object.entries(prev)) {
+        // A graded card has already been assessed, by someone with a loupe.
+        const skip = Boolean(entry.graded) || entry.condition === UNASSESSED
+        if (skip) {
+          next[key] = entry
+          continue
+        }
+        changed++
+        next[key] = { ...entry, condition: UNASSESSED, updatedAt: now }
+      }
+      return next
+    })
+    return changed
+  }, [])
+
   const resetQuantities = useCallback(() => {
     let changed = 0
     setCollection((prev) => {
@@ -134,8 +157,8 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, ownedCount }),
-    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, ownedCount],
+    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, resetConditions, ownedCount }),
+    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, resetConditions, ownedCount],
   )
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>

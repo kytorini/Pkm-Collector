@@ -234,6 +234,8 @@ function inferFromContent(mapping: ColumnMapping, headers: string[], rows: strin
  * ------------------------------------------------------------------ */
 
 const CONDITION_ALIASES: Record<string, ConditionId> = {
+  // Cells that say "not looked at yet" rather than naming a grade.
+  tbd: '-', unknown: '-', unrated: '-', na: '-', 'n a': '-', 'not assessed': '-',
   m: 'M', mint: 'M', 'gem mint': 'M', 'nm mt': 'NM', 'nm m': 'NM',
   nm: 'NM', 'near mint': 'NM', 'near mint mint': 'NM',
   lp: 'LP', 'lightly played': 'LP', 'light play': 'LP', 'slightly played': 'LP', sp: 'LP',
@@ -253,6 +255,8 @@ export interface ConditionGuess {
 export function matchCondition(raw: string): ConditionGuess {
   const value = raw.trim()
   if (!value) return { condition: null, graded: null }
+  // A dash or question mark is a deliberate "not assessed", not a blank cell.
+  if (/^[-–—?]+$/.test(value)) return { condition: '-', graded: null }
 
   const graded = value.match(/\b(psa|bgs|cgc|sgc|ace)\b\s*\.?\s*(\d{1,2}(?:\.\d)?)?/i)
   if (graded) {

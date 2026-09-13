@@ -1,4 +1,4 @@
-import { adjustedValue } from './condition'
+import { adjustedValue, isUnassessed } from './condition'
 import { priceFor } from './pricing'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
@@ -17,9 +17,11 @@ export interface VariantStats {
   spend: number
   /** Cards with no price feed at all, so the totals above understate reality. */
   unpriced: number
+  /** Owned copies whose condition hasn't been judged yet. */
+  unassessed: number
 }
 
-const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0 }
+const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0, unassessed: 0 }
 
 export function statsForVariant(cards: ApiCard[], variant: SetVariant, collection: CollectionMap): VariantStats {
   if (cards.length === 0) return { ...ZERO }
@@ -29,6 +31,7 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
   let missingValue = 0
   let spend = 0
   let unpriced = 0
+  let unassessed = 0
 
   for (const card of cards) {
     const entry = collection[entryKey(card.id, variant.id)]
@@ -36,6 +39,7 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
     if (price == null) unpriced++
     if (entry?.owned) {
       owned++
+      if (isUnassessed(entry)) unassessed++
       const quantity = Math.max(1, entry.quantity || 1)
       copies += quantity
       // Condition matters: a played copy is not worth the near-mint quote.
@@ -55,6 +59,7 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
     missingValue,
     spend,
     unpriced,
+    unassessed,
   }
 }
 
@@ -71,6 +76,7 @@ export function statsForSet(cards: ApiCard[], set: VintageSet, collection: Colle
         missingValue: acc.missingValue + s.missingValue,
         spend: acc.spend + s.spend,
         unpriced: acc.unpriced + s.unpriced,
+        unassessed: acc.unassessed + s.unassessed,
       }),
       { ...ZERO },
     )
@@ -94,6 +100,7 @@ export function statsForCollection(
       missingValue: acc.missingValue + s.missingValue,
       spend: acc.spend + s.spend,
       unpriced: acc.unpriced + s.unpriced,
+      unassessed: acc.unassessed + s.unassessed,
       setsStarted: acc.setsStarted + (s.owned > 0 ? 1 : 0),
     }
   }

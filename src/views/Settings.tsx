@@ -11,7 +11,8 @@ import { routeHref } from '../lib/router'
 import { CONDITIONS, type ConditionId } from '../types'
 
 export function Settings() {
-  const { collection, replaceAll, resetQuantities, defaultCondition, setDefaultCondition, ownedCount } = useCollection()
+  const { collection, replaceAll, resetQuantities, resetConditions, defaultCondition, setDefaultCondition, ownedCount } =
+    useCollection()
   const { allCards, syncAll, progress } = useLibrary()
   const [key, setKey] = useState(getApiKey())
   const [saved, setSaved] = useState(false)
@@ -49,6 +50,7 @@ export function Settings() {
   const owned = Object.values(collection).filter((e) => e.owned)
   const multiCopy = owned.filter((e) => e.quantity > 1).length
   const totalCopies = owned.reduce((n, e) => n + Math.max(1, e.quantity || 1), 0)
+  const assessed = owned.filter((e) => !e.graded && e.condition !== '-').length
   // Naming the worst offenders makes the cause obvious: a count of 6936 beside
   // a card that books at $69.36 says the Quantity column was a price column.
   const cardNames = new Map(allCards.map((c) => [c.id, `${c.name} #${c.number}`]))
@@ -109,16 +111,6 @@ export function Settings() {
           />
         </div>
         {message && <p className="note">{message}</p>}
-      </section>
-
-      <section className="panel">
-        <h2>Default condition</h2>
-        <p className="muted">Applied when you tick a card straight from the grid.</p>
-        <select className="select" value={defaultCondition} onChange={(e) => setDefaultCondition(e.target.value as ConditionId)}>
-          {CONDITIONS.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
-          ))}
-        </select>
       </section>
 
       <section className="panel">
@@ -321,6 +313,43 @@ create policy "sync" on collections
             Clear card cache
           </button>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Condition</h2>
+        <label className="labelled-select">
+          <span>Applied when you tick a card straight from the grid</span>
+          <select
+            className="select"
+            value={defaultCondition}
+            onChange={(e) => setDefaultCondition(e.target.value as ConditionId)}
+          >
+            {CONDITIONS.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <p className="muted">
+          “Not assessed yet” is the zero state — owned, but not yet graded by eye. Unassessed cards count at
+          the quoted market price, and every set shows how many are still waiting, so a total that leans on
+          them reads as provisional.{' '}
+          {assessed > 0
+            ? `${assessed} of your ${ownedCount} cards have a condition set.`
+            : 'None of your cards have a condition set yet.'}
+        </p>
+        {assessed > 0 && (
+          <button
+            className="btn"
+            onClick={() => {
+              if (!confirm(`Put all ${assessed} assessed cards back to “not assessed yet”? Graded cards keep their grade, and nothing else changes.`)) return
+              const changed = resetConditions()
+              setMessage(`${changed} ${changed === 1 ? 'card is' : 'cards are'} back to not assessed.`)
+            }}
+          >
+            Set every condition to “not assessed yet”
+          </button>
+        )}
       </section>
 
       <section className="panel">

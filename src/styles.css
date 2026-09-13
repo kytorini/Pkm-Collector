@@ -970,3 +970,6 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .your-copy strong { color: var(--gold); font-variant-numeric: tabular-nums; }
 .your-copy.is-adjusted { border-left: 2px solid var(--gold-dim); }
+
+.labelled-select { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; font-size: 0.82rem; color: var(--text-dim); }
+.labelled-select .select { width: 100%; }

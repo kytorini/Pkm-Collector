@@ -1,5 +1,9 @@
-/** Condition grades, ordered best -> worst. Raw (ungraded) cards only. */
+/**
+ * Condition grades, ordered best -> worst, with an unassessed state first.
+ * Raw (ungraded) cards only.
+ */
 export const CONDITIONS = [
+  { id: '-', label: 'Not assessed yet' },
   { id: 'M', label: 'Mint' },
   { id: 'NM', label: 'Near Mint' },
   { id: 'LP', label: 'Lightly Played' },

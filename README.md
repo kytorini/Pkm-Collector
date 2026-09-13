@@ -214,7 +214,12 @@ pick replace.
   deliberately not factored into value at all.
 - **Condition is applied to value.** Market prices track Near Mint sales, so a
   played copy is counted below the quote: Mint 110%, Near Mint 100%, Lightly
-  Played 80%, Moderately Played 60%, Heavily Played 40%, Damaged 25%. These are
+  Played 80%, Moderately Played 60%, Heavily Played 40%, Damaged 25%.
+  **Not assessed yet** is the zero state for a card you own but haven't graded
+  by eye. Its condition is unknown, so no discount is invented — it counts at
+  the quoted price, and each set reports how many are still waiting so a total
+  leaning on them reads as provisional. The **Unrated** filter in a set lists
+  them, and Settings can put every card back to it in one tap. These are
   rough spreads, not market data — the comp links are there for a real answer.
   The multipliers live in `src/lib/condition.ts` if you disagree with them.
 - **Everything is shown in USD.** A card with no TCGplayer listing falls back to

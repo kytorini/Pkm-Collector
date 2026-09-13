@@ -5,12 +5,13 @@ import { ProgressBar } from '../components/ProgressBar'
 import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { navigate, routeHref } from '../lib/router'
+import { isUnassessed } from '../lib/condition'
 import { statsForVariant } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 import type { ApiCard } from '../types'
 
-type Filter = 'all' | 'owned' | 'missing'
+type Filter = 'all' | 'owned' | 'missing' | 'unassessed'
 type Sort = 'number' | 'name' | 'price-desc' | 'price-asc'
 
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
@@ -47,6 +48,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       const owned = Boolean(entry?.owned)
       if (filter === 'owned' && !owned) return false
       if (filter === 'missing' && owned) return false
+      if (filter === 'unassessed' && !isUnassessed(entry)) return false
       if (q && !card.name.toLowerCase().includes(q) && !card.number.toLowerCase().includes(q)) return false
       return true
     })
@@ -126,6 +128,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           <div>
             <dt>Owned value</dt>
             <dd>{formatMoney(stats.ownedValue)}</dd>
+            {stats.unassessed > 0 && (
+              <span className="copies-note">{stats.unassessed} not assessed yet</span>
+            )}
             {stats.copies > stats.owned && (
               <span className="copies-note">
                 {stats.copies} copies of {stats.owned} cards — value counts every copy
@@ -150,9 +155,14 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="segmented">
-          {(['all', 'owned', 'missing'] as Filter[]).map((f) => (
+          {([
+            ['all', 'All'],
+            ['owned', 'Owned'],
+            ['missing', 'Missing'],
+            ['unassessed', 'Unrated'],
+          ] as [Filter, string][]).map(([f, label]) => (
             <button key={f} className={filter === f ? 'is-active' : ''} onClick={() => setFilter(f)}>
-              {f[0].toUpperCase() + f.slice(1)}
+              {label}
             </button>
           ))}
         </div>
