@@ -141,7 +141,10 @@ survive; only edits to the same card need a winner, and the most recent one
 takes it. Devices sync when the app opens, when you switch back to it, and
 shortly after changes settle.
 
-Deletions are handled separately, because an absent entry can't be told from
+Un-marking a card records it as not owned, with the time it happened, rather
+than dropping the entry. An absent key carries no timestamp, so a sold card
+removed on one device would simply be pulled back from the other. Deletions are
+handled separately for the same reason: an absent entry can't be told from
 one the other device hasn't seen yet. A card is only treated as deleted when
 the remote copy is demonstrably newer than this device's last sync and the
 entry hasn't been touched here since. Wholesale removals are refused outright:

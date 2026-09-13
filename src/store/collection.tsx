@@ -94,27 +94,37 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
             },
           }
         }
-        // Un-marking a card that carries no other detail removes it outright,
-        // so the stored collection stays a list of things actually owned.
-        const isBare = !existing.notes && existing.pricePaid == null && !existing.graded && existing.quantity <= 1
-        if (existing.owned && isBare) {
-          const next = { ...prev }
-          delete next[key]
-          return next
-        }
+        // Un-marking records owned: false rather than dropping the entry. A
+        // deletion has to carry a timestamp to survive syncing: an absent key
+        // is indistinguishable from one the other device hasn't seen yet, so a
+        // removed entry would simply be pulled back from the server.
         return { ...prev, [key]: { ...existing, owned: !existing.owned, updatedAt: new Date().toISOString() } }
       })
     },
     [defaultCondition],
   )
 
-  const remove = useCallback((cardId: string, variantId: string) => {
-    setCollection((prev) => {
-      const next = { ...prev }
-      delete next[entryKey(cardId, variantId)]
-      return next
-    })
-  }, [])
+  /**
+   * Clears everything recorded about a card. Like un-marking, this leaves a
+   * dated "not owned" entry behind rather than removing the key, so the
+   * clearing propagates instead of being undone by the next sync.
+   */
+  const remove = useCallback(
+    (cardId: string, variantId: string) => {
+      setCollection((prev) => ({
+        ...prev,
+        [entryKey(cardId, variantId)]: {
+          cardId,
+          variantId,
+          owned: false,
+          quantity: 1,
+          condition: defaultCondition,
+          updatedAt: new Date().toISOString(),
+        },
+      }))
+    },
+    [defaultCondition],
+  )
 
   const replaceAll = useCallback((next: CollectionMap) => setCollection(next), [])
 
