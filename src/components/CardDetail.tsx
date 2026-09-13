@@ -31,7 +31,13 @@ interface Props {
  * Detail panel for one card. Every print variation of the set is editable here,
  * so a card you own in two runs is one screen rather than two.
  */
+/** "Black \"Edition 1\" stamp…" reads better mid-sentence than at the start. */
+const lowerFirst = (text: string | undefined): string =>
+  text ? text.charAt(0).toLowerCase() + text.slice(1) : ''
+
 export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Props) {
+  // The run you arrived on, which is the one the picture is standing in for.
+  const viewing = set.variants.find((v) => v.id === activeVariantId) ?? set.variants[0]
   const { get, update, toggleOwned, remove, setPriceOverride } = useCollection()
   const resolvePrice = usePrices()
 
@@ -56,6 +62,16 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
             <button onClick={() => onStep(-1)} aria-label="Previous card">‹</button>
             <button onClick={() => onStep(1)} aria-label="Next card">›</button>
           </div>
+          {/*
+            The card feed publishes one scan per card, not one per print run:
+            prices are keyed by printing, images are not. So this picture is
+            the same whichever run you are looking at, and saying so beats
+            letting it pass as a photo of a 1st Edition copy.
+          */}
+          <p className="art-note muted">
+            One scan per card is all the feed publishes, so this artwork stands in for every print run.
+            {viewing ? ` To spot a real ${viewing.label}: ${lowerFirst(viewing.note)}` : ''}
+          </p>
         </div>
 
         <div className="modal-body">

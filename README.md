@@ -221,6 +221,13 @@ pick replace.
 
 ## Honest notes on pricing
 
+- **There is one scan per card, not one per print run.** The API keys prices
+  by printing but publishes a single `images` pair per card, so the same
+  artwork stands in for 1st Edition, Shadowless and Unlimited alike — no
+  Unlimited scan exists in the feed to show. The card panel says so under the
+  picture and gives the tell-tale for the run you're looking at (the stamp,
+  the drop shadow), rather than letting a generic scan pass as a photo of that
+  printing.
 - **Shadowless has no separate price feed.** TCGplayer sells it as its own
   product, but the API doesn't expose it as its own bucket. Shadowless prices
   are shown as `~` against the Unlimited number, with a caveat in the card

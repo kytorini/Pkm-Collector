@@ -385,6 +385,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .price-input.is-highlight .paste-btn { border-color: var(--gold); color: var(--gold); }
 .price-input-note { font-size: 0.72rem; color: var(--text-dim); text-align: right; }
 .price-input-note.is-stale { color: var(--gold-dim); }
+
+.art-note { margin: 12px 0 0; font-size: 0.72rem; line-height: 1.45; text-align: center; }
 .price-entry-list li.is-waiting { background: #1b202a; }
 
 /* ---------- set detail ---------- */
