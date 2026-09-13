@@ -70,6 +70,11 @@ specific model:
 
 - **Navigation sits at the bottom on phones**, where a thumb reaches on a 6.3"
   screen, and at the top on tablets and desktops.
+- **The Collection page shows only the sets you chase.** "Choose sets" ticks
+  them off; hidden ones leave the list and the totals, so completion and cost
+  to finish answer "how am I doing on what I collect" rather than counting sets
+  you'll never buy. The Sets tab still lists everything, and the page says how
+  many are hidden with a way to bring them back. Stored per device.
 - **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
   5 or 6 per row. Auto fills the width, which on an iPad means six and rather
   small artwork. The choice is stored per device, since a tablet and a phone

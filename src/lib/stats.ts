@@ -85,9 +85,13 @@ export function statsForSet(cards: ApiCard[], set: VintageSet, collection: Colle
 export function statsForCollection(
   cardsBySet: Record<string, ApiCard[]>,
   collection: CollectionMap,
+  /** Limits the totals to these sets. Omit to count every tracked set. */
+  onlySetIds?: readonly string[],
 ): VariantStats & { setsStarted: number } {
   let acc = { ...ZERO, setsStarted: 0 }
+  const included = onlySetIds ? new Set(onlySetIds) : null
   for (const set of VINTAGE_SETS) {
+    if (included && !included.has(set.id)) continue
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue
     const s = statsForSet(cards, set, collection)

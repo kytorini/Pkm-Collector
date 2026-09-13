@@ -989,3 +989,20 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 .labelled-select { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; font-size: 0.82rem; color: var(--text-dim); }
 .labelled-select .select { width: 100%; }
+
+/* ---------- choosing which sets to follow ---------- */
+.choose-hint { margin: 0 0 10px; }
+.progress-row.is-choosing { cursor: pointer; }
+.progress-row.is-choosing .progress-row-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.progress-row.is-choosing input { accent-color: var(--gold); width: 18px; height: 18px; flex: 0 0 auto; }
+.progress-row.is-hidden { opacity: 0.45; }
+.progress-row.is-hidden .progress-row-value { color: var(--text-dim); }
+
+@media (hover: none) {
+  .progress-row.is-choosing { min-height: 48px; }
+  .progress-row.is-choosing input { width: 22px; height: 22px; }
+}
