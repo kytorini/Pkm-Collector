@@ -25,6 +25,7 @@ import { usePrices } from '../store/prices'
 import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
 import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
+import { usePhone } from '../lib/useMediaQuery'
 import { statsForVariant } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
@@ -159,6 +160,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // doesn't sit under a Loading message forever.
   const [loadFailed, setLoadFailed] = useState(false)
   const [density, setDensity] = useState<Density>(loadDensity)
+  // A phone has no room for a row of set-once preferences; they go in the menu.
+  const phone = usePhone()
   // Which site's prices are being typed in, if any. Filling a run in one pass
   // beats opening a hundred card panels.
   const [entering, setEntering] = useState<string | null>(null)
@@ -166,10 +169,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // the one waiting for you when you come back.
   const [lookedUp, setLookedUp] = useState<string | null>(null)
 
-  // The print-run tabs pin under the top bar, and the toolbar pins under them.
-  // Their height is measured rather than assumed: it changes with the tab
-  // count, with a wrapped label, and when the pinned bar compacts itself.
-  const tabsRef = useRef<HTMLElement>(null)
+  // The pinned bar (print-run tabs, plus the options menu on a phone) sits
+  // under the top bar, and the toolbar pins under it. Its height is measured
+  // rather than assumed: it changes with the tab count, with a wrapped label,
+  // and when the bar compacts itself.
+  const tabsRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
 
   useEffect(() => {
@@ -319,6 +323,105 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
   const stamp = fetchedAt[setId]
 
+  const optionsMenu = (
+        <OverflowMenu
+          id="set-options"
+          label="Pricing options"
+          // A source that can't price the set is worth noticing without
+          // opening the menu to find out.
+          flagged={cards.length > 0 && stats.unpriced > 0}
+        >
+          {(close) => (
+            <div className="price-source-row">
+              {phone && (
+                <>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      void onRefresh()
+                      close()
+                    }}
+                    disabled={refreshing}
+                  >
+                    {refreshing ? 'Refreshing…' : 'Refresh prices'}
+                  </button>
+                  <label className="labelled-select">
+                    <span>Sort</span>
+                    {sortSelect}
+                  </label>
+                  <label className="labelled-select">
+                    <span>Cards per row</span>
+                    {densitySelect}
+                  </label>
+                  <hr className="menu-rule" />
+                </>
+              )}
+              <PriceSourceSelect
+                level="variant"
+                id="variant-price-source"
+                label={`Prices for ${activeVariant.label}`}
+                inheritLabel={`Use the ${set.name} setting`}
+                value={variantRule}
+                onChange={(id) => setVariantSource(setId, activeVariant.id, id)}
+                annotate={(id) => coverage(id, setFallback)}
+              />
+              <PriceSourceSelect
+                level="set"
+                id="set-price-source"
+                label={`Prices for the rest of ${set.name}`}
+                inheritLabel="Use the collection default"
+                value={rules.bySet[setId] ?? 'inherit'}
+                onChange={(id) => setSetSource(setId, id)}
+                annotate={(id) => coverage(id, rules.collection || AUTO)}
+              />
+              <p className="muted small">
+                {stats.unpriced > 0
+                  ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this ` +
+                    'source. Try another, or type the prices in yourself.'
+                  : `Every ${activeVariant.label} card has a price from this source.`}
+              </p>
+              {cards.length > 0 && !entering && (
+                <button
+                  className="btn small"
+                  onClick={() => {
+                    setEntering(enterKey)
+                    close()
+                  }}
+                >
+                  Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
+                </button>
+              )}
+            </div>
+          )}
+        </OverflowMenu>
+  )
+
+  const sortSelect = (
+    <select className="select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
+      <option value="number">Set order</option>
+      <option value="name">Name</option>
+      <option value="price-desc">Price, high to low</option>
+      <option value="price-asc">Price, low to high</option>
+    </select>
+  )
+
+  const densitySelect = (
+    <select
+      className="select select-compact"
+      value={density}
+      aria-label="Cards per row"
+      onChange={(e) => {
+        const next = e.target.value as Density
+        setDensity(next)
+        saveDensity(next)
+      }}
+    >
+      {DENSITIES.map((d) => (
+        <option key={d.value} value={d.value}>{d.label}</option>
+      ))}
+    </select>
+  )
+
   return (
     <div className="view">
       <header className="view-head set-head">
@@ -327,79 +430,34 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           <h1>{set.name}</h1>
           <p className="muted">{set.series} series · {set.year} · {cards.length || set.total} cards</p>
         </div>
-        <div className="set-head-actions">
-          <button className="btn ghost" onClick={onRefresh} disabled={refreshing}>
-            {refreshing ? 'Refreshing…' : 'Refresh prices'}
-          </button>
-          <OverflowMenu
-            id="set-options"
-            label="Pricing options"
-            // A source that can't price the set is worth noticing without
-            // opening the menu to find out.
-            flagged={cards.length > 0 && stats.unpriced > 0}
-          >
-            {(close) => (
-              <div className="price-source-row">
-                <PriceSourceSelect
-                  level="variant"
-                  id="variant-price-source"
-                  label={`Prices for ${activeVariant.label}`}
-                  inheritLabel={`Use the ${set.name} setting`}
-                  value={variantRule}
-                  onChange={(id) => setVariantSource(setId, activeVariant.id, id)}
-                  annotate={(id) => coverage(id, setFallback)}
-                />
-                <PriceSourceSelect
-                  level="set"
-                  id="set-price-source"
-                  label={`Prices for the rest of ${set.name}`}
-                  inheritLabel="Use the collection default"
-                  value={rules.bySet[setId] ?? 'inherit'}
-                  onChange={(id) => setSetSource(setId, id)}
-                  annotate={(id) => coverage(id, rules.collection || AUTO)}
-                />
-                <p className="muted small">
-                  {stats.unpriced > 0
-                    ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this ` +
-                      'source. Try another, or type the prices in yourself.'
-                    : `Every ${activeVariant.label} card has a price from this source.`}
-                </p>
-                {cards.length > 0 && !entering && (
-                  <button
-                    className="btn small"
-                    onClick={() => {
-                      setEntering(enterKey)
-                      close()
-                    }}
-                  >
-                    Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
-                  </button>
-                )}
-              </div>
-            )}
-          </OverflowMenu>
-        </div>
+        {!phone && (
+          <div className="set-head-actions">
+            <button className="btn ghost" onClick={onRefresh} disabled={refreshing}>
+              {refreshing ? 'Refreshing…' : 'Refresh prices'}
+            </button>
+            {optionsMenu}
+          </div>
+        )}
       </header>
 
-      <nav
-        ref={tabsRef}
-        className={`variant-tabs ${stuck ? 'is-stuck' : ''}`}
-        aria-label="Print variation"
-      >
-        {set.variants.map((variant) => {
-          const s = statsForVariant(cards, variant, collection, price)
-          return (
-            <button
-              key={variant.id}
-              className={`variant-tab ${variant.id === activeVariant.id ? 'is-active' : ''}`}
-              onClick={() => navigate(routeHref.set(setId, variant.id))}
-            >
-              <span className="variant-tab-name">{variant.label}</span>
-              <span className="variant-tab-count">{s.owned}/{s.total || set.total}</span>
-            </button>
-          )
-        })}
-      </nav>
+      <div ref={tabsRef} className={`variant-bar ${stuck ? 'is-stuck' : ''}`}>
+        <nav className="variant-tabs" aria-label="Print variation">
+          {set.variants.map((variant) => {
+            const s = statsForVariant(cards, variant, collection, price)
+            return (
+              <button
+                key={variant.id}
+                className={`variant-tab ${variant.id === activeVariant.id ? 'is-active' : ''}`}
+                onClick={() => navigate(routeHref.set(setId, variant.id))}
+              >
+                <span className="variant-tab-name">{variant.label}</span>
+                <span className="variant-tab-count">{s.owned}/{s.total || set.total}</span>
+              </button>
+            )
+          })}
+        </nav>
+        {phone && optionsMenu}
+      </div>
 
       <div className="set-summary">
         <div className="summary-progress">
@@ -424,7 +482,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             <dd>{formatMoney(stats.missingValue)}</dd>
             {stats.unpriced > 0 && <span className="muted small">{stats.unpriced} card{stats.unpriced === 1 ? '' : 's'} with no price feed</span>}
           </div>
-          <div><dt>Spent</dt><dd>{stats.spend ? formatMoney(stats.spend) : '—'}</dd></div>
+          {/* An em-dash costs a phone a whole wrapped line to say nothing. It
+              comes back the moment there is a figure to show. */}
+          {(!phone || stats.spend > 0) && (
+            <div><dt>Spent</dt><dd>{stats.spend ? formatMoney(stats.spend) : '—'}</dd></div>
+          )}
         </dl>
       </div>
 
@@ -448,26 +510,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             </button>
           ))}
         </div>
-        <select className="select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
-          <option value="number">Set order</option>
-          <option value="name">Name</option>
-          <option value="price-desc">Price, high to low</option>
-          <option value="price-asc">Price, low to high</option>
-        </select>
-        <select
-          className="select select-compact"
-          value={density}
-          aria-label="Cards per row"
-          onChange={(e) => {
-            const next = e.target.value as Density
-            setDensity(next)
-            saveDensity(next)
-          }}
-        >
-          {DENSITIES.map((d) => (
-            <option key={d.value} value={d.value}>{d.label}</option>
-          ))}
-        </select>
+        {!phone && sortSelect}
+        {!phone && densitySelect}
       </div>
 
       {cards.length === 0 && loadFailed ? (

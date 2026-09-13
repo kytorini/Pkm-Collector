@@ -81,6 +81,15 @@ specific model:
   never buy. Nothing is deleted — the cards stay cached, a direct link still
   opens a hidden set, and the page says how many are hidden with a way to
   bring them back. Stored per device.
+- **A phone's set header carries only what a phone needs.** It was spending
+  46% of the screen before the first card. The top bar already names the set,
+  so the heading isn't drawn again (it stays in the document for screen
+  readers) and the mark becomes the way back, which retires the page's own
+  back link. Refresh, sort and cards-per-row move into the "…" menu — which
+  moves into the pinned bar, so they're still one tap away mid-scroll rather
+  than a scroll to the top. An empty "Spent" doesn't take a line to say
+  nothing. Same functions, 288px instead of 406px. A tablet has the room, so
+  it keeps all of it in place.
 - **The top bar names the set and print run you're in.** With one scan per
   card, an Unlimited grid and a 1st Edition grid are pixel-identical, so once
   the page header scrolls away nothing else tells them apart. The run is the

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { getSet } from './data/vintageSets'
 import { navigate, routeHref, useRoute } from './lib/router'
+import { usePhone } from './lib/useMediaQuery'
 import { CollectionProvider } from './store/collection'
 import { LibraryProvider, useLibrary } from './store/library'
 import { SyncProvider } from './store/sync'
@@ -18,6 +19,7 @@ const NAV = [
 
 function Shell() {
   const route = useRoute()
+  const phone = usePhone()
   const { progress } = useLibrary()
 
   // "/" jumps to search from anywhere, the way a binder index would.
@@ -55,8 +57,19 @@ function Shell() {
   return (
     <div className="app">
       <header className={`topbar ${here ? 'has-title' : ''}`}>
-        <a className="brand" href={routeHref.dashboard}>
-          <span className="brand-mark" aria-hidden>◈</span>
+        {/*
+          On a phone inside a set, the mark becomes the way back. It already
+          led here, and saying so lets the page drop its own back link — a
+          whole row of a small screen for something the bar can carry free.
+        */}
+        <a
+          className="brand"
+          href={routeHref.dashboard}
+          aria-label={here && phone ? 'Back to your collection' : 'Pkm Collector, your collection'}
+        >
+          <span className={`brand-mark ${here && phone ? 'is-back' : ''}`} aria-hidden>
+            {here && phone ? '‹' : '◈'}
+          </span>
           <span className="brand-name">Pkm Collector</span>
         </a>
         {here && (

@@ -60,7 +60,9 @@ h2 { font-size: 1.05rem; }
 }
 
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.02em; }
-.brand-mark { color: var(--gold); font-size: 1.1rem; }
+.brand-mark { color: var(--gold); font-size: 1.1rem; line-height: 1; }
+/* A chevron is a smaller glyph than the diamond, so it takes a size up. */
+.brand-mark.is-back { font-size: 1.35rem; }
 
 /* Where you are, in the one bar that never scrolls. */
 .topbar-title { display: flex; align-items: baseline; gap: 9px; min-width: 0; margin: 0; }
@@ -314,6 +316,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .price-source .select { width: 100%; max-width: 420px; }
 
 .price-source-row { display: flex; flex-direction: column; gap: 9px; }
+.price-source-row .labelled-select { margin-bottom: 0; }
+.menu-rule { width: 100%; height: 1px; margin: 2px 0; border: 0; background: var(--line-soft); }
 .price-source-row p { margin: 0; }
 .price-source-row .select { max-width: none; }
 
@@ -430,28 +434,34 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
  * scrolling a set, so it stays put. One row rather than two: the label and its
  * count read fine side by side, and the pinned bar is half the height for it.
  */
-.variant-tabs {
+.variant-bar {
   position: sticky;
   top: var(--stick-top);
   z-index: 16;
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
   margin: 0 calc(-1 * var(--gutter)) 14px;
   padding: 7px var(--gutter);
   background: rgba(14, 16, 22, 0.94);
   backdrop-filter: blur(12px);
+}
+/* Tighter again once it's actually pinned, where every pixel is the grid's. */
+.variant-bar.is-stuck { padding-top: 4px; padding-bottom: 4px; }
+/* The menu sits outside the scroller, so it stays put as the tabs slide. */
+.variant-bar .overflow { flex: 0 0 auto; }
+
+.variant-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
-  /* Without this the snapport starts inside the padding, so snapping to the
-     first tab scrolls the gutter away and the row sits flush to the screen
-     edge while every other row is inset. */
-  scroll-padding-inline: var(--gutter);
 }
 .variant-tabs::-webkit-scrollbar { display: none; }
-/* Tighter again once it's actually pinned, where every pixel is the grid's. */
-.variant-tabs.is-stuck { padding-top: 4px; padding-bottom: 4px; }
 .variant-tab {
   display: flex;
   flex-direction: row;
@@ -484,9 +494,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .variant-tab.is-active .variant-tab-count { color: rgba(32, 24, 3, 0.7); }
 .variant-tab-name { font-size: 0.88rem; font-weight: 600; }
 .variant-tab-count { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.variant-tabs.is-stuck .variant-tab { padding: 5px 11px; }
-.variant-tabs.is-stuck .variant-tab-name { font-size: 0.82rem; }
-.variant-tabs.is-stuck .variant-tab-count { font-size: 0.74rem; }
+.variant-bar.is-stuck .variant-tab { padding: 5px 11px; }
+.variant-bar.is-stuck .variant-tab-name { font-size: 0.82rem; }
+.variant-bar.is-stuck .variant-tab-count { font-size: 0.74rem; }
 
 .set-summary {
   display: flex;
@@ -866,6 +876,25 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   /* The set's subtitle only — not any paragraph that lands in the header,
      such as the one inside the overflow panel. */
   .set-head > div > p { display: none; }
+  /*
+   * The top bar already reads "Base Set · Shadowless", so repeating it as a
+   * heading costs a phone 64px to say nothing new. Kept for screen readers and
+   * for the document outline, just not drawn.
+   */
+  .set-head > div > h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* The top bar's mark is the way back here, so this row has nothing left
+     to draw. The heading stays in the document, just not on the screen. */
+  .set-head { margin-bottom: 0; }
+  .set-head .back-link { display: none; }
 
   /*
    * Set header, tabs, summary and filters used to fill the screen before a
@@ -877,16 +906,15 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .set-head .btn { padding: 8px 12px; min-height: 40px; font-size: 0.8rem; white-space: nowrap; }
   .set-head .overflow-btn { min-width: 44px; min-height: 44px; padding: 8px; font-size: 1rem; }
   .back-link { margin-bottom: 2px; font-size: 0.8rem; }
-  .variant-tabs {
-    -webkit-overflow-scrolling: touch;
-    margin-bottom: 10px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
+  .variant-tabs { -webkit-overflow-scrolling: touch; }
+  .variant-bar { margin-bottom: 10px; padding-top: 6px; padding-bottom: 6px; }
+  /* Square and compact: it shares the pinned row with the tabs. */
+  .variant-bar .overflow-btn { min-width: 40px; min-height: 40px; padding: 6px; font-size: 0.95rem; }
+  .variant-bar.is-stuck .overflow-btn { min-height: 34px; }
   .variant-tab { min-height: 40px; padding: 6px 12px; }
   .variant-tab-name { font-size: 0.85rem; }
   /* A pinned tab gives up a little of its tap height to the cards. */
-  .variant-tabs.is-stuck .variant-tab { min-height: 34px; padding: 4px 10px; }
+  .variant-bar.is-stuck .variant-tab { min-height: 34px; padding: 4px 10px; }
 
   /* Drop the panel chrome: the numbers matter, the box around them doesn't. */
   .set-summary {
