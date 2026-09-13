@@ -238,13 +238,23 @@ pick replace.
   what it would actually give you — a price for that card, or "4 of 102" for
   that set — so a source is chosen against the feed's real contents. This is
   the fix when a whole print run comes back unpriced.
-- **PriceCharting and eBay can't be read automatically.** Neither publishes a
-  free interface a static web app can call from a browser, so there is nothing
-  to wire up. Instead every card panel links out to both, and "Your own price"
-  records what you read there. That figure is collection data, not a
-  preference: it's used everywhere the card is valued and syncs between your
-  devices. The collection and per-set choices are per device, like grid
-  density.
+- **PriceCharting and eBay are sources, but you read them.** Neither publishes
+  a free interface a static web app can call from a browser — there is no key
+  to paste and no endpoint to hit — so nothing is fetched from them. What they
+  are instead is first-class *recorded* sources: pick PriceCharting for a card,
+  set or the whole collection, and it values things from figures you typed in.
+  Each site keeps its own number per card, so a PriceCharting reading and an
+  eBay comp sit side by side rather than overwriting each other.
+- **A run can be filled in one pass.** "Type in PriceCharting prices" on a set
+  page swaps the grid for a list: every card with a link straight to its price
+  history and a box for the figure, with a running count of how many are done.
+  The filter and search narrow that list too, so you can do only the cards you
+  own, or work through a set in sittings. When you're done, one button points
+  the whole set at those prices. This is the answer when a print run has no
+  listing of its own anywhere in the feed.
+- Recorded prices are collection data, not a preference: they're used
+  everywhere the card is valued and sync between your devices. The collection
+  and per-set source choices are per device, like grid density.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is
   deliberately not factored into value at all.

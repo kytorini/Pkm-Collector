@@ -1,5 +1,5 @@
 import { convertEurToUsd } from './fx'
-import { AUTO, MANUAL, labelFor, matchesVariant, readBucket } from './priceSources'
+import { AUTO, isRecorded, labelFor, matchesVariant, readBucket, recordedKey, recordedPrice } from './priceSources'
 import type { PriceRules } from './priceRules'
 import type { PriceSourceId } from './priceSources'
 import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../types'
@@ -82,18 +82,21 @@ export interface PriceOptions {
 export function priceFor(card: ApiCard, variant: SetVariant, options: PriceOptions = {}): VariantPrice {
   const source = options.source ?? AUTO
 
-  if (source === MANUAL) {
-    const manual = options.entry?.manualPrice
-    if (manual == null) return { ...EMPTY, url: card.tcgplayer?.url, sourceId: MANUAL, sourceEmpty: true }
+  if (isRecorded(source)) {
+    const value = recordedPrice(options.entry, recordedKey(source))
+    if (value == null) {
+      return { ...EMPTY, url: card.tcgplayer?.url, sourceId: source, sourceEmpty: true }
+    }
     return {
-      market: manual,
+      market: value,
       low: null,
       high: null,
-      bucket: 'your own price',
+      // A figure you read off the site itself is not an approximation of it.
+      bucket: `${labelFor(source)} price you recorded`,
       approximate: false,
       url: card.tcgplayer?.url,
       currency: 'USD',
-      sourceId: MANUAL,
+      sourceId: source,
     }
   }
 

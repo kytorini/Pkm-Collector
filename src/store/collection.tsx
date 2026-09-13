@@ -21,7 +21,7 @@ interface CollectionContextValue {
   setPriceOverride: (
     cardId: string,
     variantId: string,
-    patch: { priceSource?: string; manualPrice?: number },
+    patch: { priceSource?: string; recorded?: { key: string; value: number | undefined } },
   ) => void
   remove: (cardId: string, variantId: string) => void
   replaceAll: (next: CollectionMap) => void
@@ -115,7 +115,11 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
   )
 
   const setPriceOverride = useCallback(
-    (cardId: string, variantId: string, patch: { priceSource?: string; manualPrice?: number }) => {
+    (
+      cardId: string,
+      variantId: string,
+      patch: { priceSource?: string; recorded?: { key: string; value: number | undefined } },
+    ) => {
       setCollection((prev) => {
         const key = entryKey(cardId, variantId)
         const existing = prev[key]
@@ -127,10 +131,25 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
           condition: defaultCondition,
           updatedAt: new Date().toISOString(),
         }
-        const next: CollectionEntry = { ...base, ...patch, updatedAt: new Date().toISOString() }
-        // "Inherit" is the absence of a choice, not a choice of its own.
-        if (next.priceSource === 'inherit' || next.priceSource === undefined) delete next.priceSource
-        if (next.manualPrice == null || Number.isNaN(next.manualPrice)) delete next.manualPrice
+        const next: CollectionEntry = { ...base, updatedAt: new Date().toISOString() }
+
+        if (patch.priceSource !== undefined) {
+          // "Inherit" is the absence of a choice, not a choice of its own.
+          if (patch.priceSource === 'inherit') delete next.priceSource
+          else next.priceSource = patch.priceSource
+        }
+
+        if (patch.recorded) {
+          const { key: where, value } = patch.recorded
+          const prices = { ...(next.manualPrices ?? {}) }
+          if (value == null || Number.isNaN(value)) delete prices[where]
+          else prices[where] = value
+          if (Object.keys(prices).length > 0) next.manualPrices = prices
+          else delete next.manualPrices
+          // The single pre-tagging field is superseded once one is written.
+          if (where === 'own') delete next.manualPrice
+        }
+
         return { ...prev, [key]: next }
       })
     },

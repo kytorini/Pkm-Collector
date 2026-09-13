@@ -7,7 +7,16 @@ import { ProgressBar } from '../components/ProgressBar'
 import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { setSetSource, usePriceRules } from '../lib/priceRules'
-import { AUTO, type PriceSourceId } from '../lib/priceSources'
+import {
+  AUTO,
+  RECORDED_SOURCES,
+  isRecorded,
+  recordedKey,
+  recordedPrice,
+  recordedSourceId,
+  type PriceSourceId,
+} from '../lib/priceSources'
+import { externalLinks } from '../lib/externalLinks'
 import { usePrices } from '../store/prices'
 import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
@@ -23,7 +32,7 @@ type Sort = 'number' | 'name' | 'price-desc' | 'price-asc'
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
   const set = getSet(setId)
   const { cardsBySet, fetchedAt, syncSet, progress, error } = useLibrary()
-  const { collection } = useCollection()
+  const { collection, setPriceOverride } = useCollection()
   const price = usePrices()
   const rules = usePriceRules()
   const [filter, setFilter] = useState<Filter>('all')
@@ -35,6 +44,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // doesn't sit under a Loading message forever.
   const [loadFailed, setLoadFailed] = useState(false)
   const [density, setDensity] = useState<Density>(loadDensity)
+  // Which site's prices are being typed in, if any. Filling a run in one pass
+  // beats opening a hundred card panels.
+  const [entering, setEntering] = useState<string | null>(null)
 
   const cards = useMemo(() => cardsBySet[setId] ?? [], [cardsBySet, setId])
   const activeVariant = useMemo(
@@ -77,6 +89,88 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const stats = statsForVariant(cards, activeVariant, collection, price)
   const openCard = openCardId ? cards.find((c) => c.id === openCardId) ?? null : null
 
+  // Which site's prices the "type them in" button offers: the one the set
+  // already reads from, or PriceCharting, which is the usual reason to be here.
+  const chosenSetSource = rules.bySet[setId] ?? rules.collection ?? AUTO
+  const enterKey = isRecorded(chosenSetSource) ? recordedKey(chosenSetSource) : 'pricecharting'
+
+  /**
+   * A whole print run in one pass: every card, its link, and a box for the
+   * figure. The filter and search above narrow this list too, so a run can be
+   * filled in a few sittings, or only for the cards that matter.
+   */
+  function PriceEntryList() {
+    if (!set || !activeVariant || !entering) return null
+    const source = RECORDED_SOURCES.find((r) => r.key === entering)
+    if (!source) return null
+    const filled = cards.filter(
+      (c) => recordedPrice(collection[`${c.id}::${activeVariant.id}`], entering) != null,
+    ).length
+    const alreadyUsing = chosenSetSource === recordedSourceId(entering)
+
+    return (
+      <div className="price-entry">
+        <div className="price-entry-head">
+          <div>
+            <h3>{source.site || 'Your own'} prices · {activeVariant.label}</h3>
+            <p className="muted small">
+              {source.site
+                ? `Open a card's link, read the price, type it here. ${filled} of ${cards.length} filled in.`
+                : `${filled} of ${cards.length} filled in.`}
+            </p>
+          </div>
+          <div className="btn-row">
+            {!alreadyUsing && filled > 0 && (
+              <button className="btn primary small" onClick={() => setSetSource(setId, recordedSourceId(entering))}>
+                Use these for {set.name}
+              </button>
+            )}
+            <button className="btn small" onClick={() => setEntering(null)}>Done</button>
+          </div>
+        </div>
+
+        <ul className="price-entry-list">
+          {visible.map((card) => {
+            const entry = collection[`${card.id}::${activeVariant.id}`]
+            const link = source.linkId
+              ? externalLinks(card, set, activeVariant, entry).find((l) => l.id === source.linkId)
+              : undefined
+            return (
+              <li key={card.id}>
+                <span className="pe-num muted">#{card.number}</span>
+                <span className="pe-name">{card.name}</span>
+                {link && (
+                  <a className="pe-link" href={link.url} target="_blank" rel="noreferrer noopener">
+                    Look up ↗
+                  </a>
+                )}
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="—"
+                  aria-label={`${source.site || 'Your'} price for ${card.name}`}
+                  value={recordedPrice(entry, entering) ?? ''}
+                  onChange={(e) =>
+                    setPriceOverride(card.id, activeVariant.id, {
+                      recorded: {
+                        key: entering,
+                        value: e.target.value === '' ? undefined : Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </li>
+            )
+          })}
+        </ul>
+        {visible.length === 0 && <p className="muted pad">Nothing matches those filters.</p>}
+        <BackToTop />
+      </div>
+    )
+  }
+
   /**
    * How many cards of the active print run a source can actually price. Shown
    * on each option so the choice is made against the feed's real contents
@@ -85,9 +179,12 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const coverage = (id: PriceSourceId): string | null => {
     if (cards.length === 0) return null
     const effective = id === 'inherit' ? rules.collection || AUTO : id
-    if (effective === 'manual') {
-      const n = cards.filter((c) => collection[`${c.id}::${activeVariant.id}`]?.manualPrice != null).length
-      return `${n} of ${cards.length} priced by you`
+    if (isRecorded(effective)) {
+      const where = recordedKey(effective)
+      const n = cards.filter(
+        (c) => recordedPrice(collection[`${c.id}::${activeVariant.id}`], where) != null,
+      ).length
+      return `${n} of ${cards.length} recorded`
     }
     const n = cards.filter((c) => priceFor(c, activeVariant, { source: effective }).market != null).length
     return `${n} of ${cards.length}`
@@ -183,9 +280,16 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         <p className="muted small">
           {stats.unpriced > 0
             ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this source. ` +
-              'Try another, or set a price per card from the card panel.'
+              'Try another, or type the prices in yourself.'
             : `Every ${activeVariant.label} card has a price from this source.`}
         </p>
+        {cards.length > 0 && !entering && (
+          <div className="btn-row">
+            <button className="btn small" onClick={() => setEntering(enterKey)}>
+              Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="toolbar">
@@ -247,6 +351,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         </div>
       ) : cards.length === 0 ? (
         <p className="muted pad">Loading cards from the Pokémon TCG API…</p>
+      ) : entering ? (
+        <PriceEntryList />
       ) : visible.length === 0 ? (
         <p className="muted pad">Nothing matches those filters.</p>
       ) : (

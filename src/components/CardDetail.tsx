@@ -3,7 +3,14 @@ import { CONDITION_NOTE, adjustedValue, valueMultiplier } from '../lib/condition
 import { externalLinks } from '../lib/externalLinks'
 import { convertEurToUsd } from '../lib/fx'
 import { formatMoney, priceFor } from '../lib/pricing'
-import { previewSource, type PriceSourceId } from '../lib/priceSources'
+import {
+  RECORDED_SOURCES,
+  isRecorded,
+  previewSource,
+  recordedKey,
+  recordedPrice,
+  type PriceSourceId,
+} from '../lib/priceSources'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { PriceSourceSelect } from './PriceSourceSelect'
@@ -63,12 +70,17 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
             const owned = Boolean(entry?.owned)
             const price = resolvePrice(card, variant)
             const isActive = variant.id === activeVariantId
+            const chosenRecorded =
+              entry?.priceSource && isRecorded(entry.priceSource)
+                ? RECORDED_SOURCES.find((r) => r.key === recordedKey(entry.priceSource!)) ?? null
+                : null
             // Each option says what it would actually give you for this card,
             // so a source with nothing to offer is visible before it's chosen.
             const annotate = (id: PriceSourceId): string | null => {
               if (id === 'inherit') return null
-              if (id === 'manual') {
-                return entry?.manualPrice != null ? formatMoney(entry.manualPrice) : 'not set yet'
+              if (isRecorded(id)) {
+                const value = recordedPrice(entry, recordedKey(id))
+                return value == null ? 'not recorded yet' : formatMoney(value)
               }
               if (id === 'auto') {
                 const auto = priceFor(card, variant).market
@@ -162,27 +174,36 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                     onChange={(id) => setPriceOverride(card.id, variant.id, { priceSource: id })}
                     annotate={annotate}
                   />
-                  {entry?.priceSource === 'manual' && (
+                  {chosenRecorded && (
                     <label className="manual-price">
-                      <span>Your price (USD)</span>
+                      <span>
+                        {chosenRecorded.site
+                          ? `${chosenRecorded.site} price for this card (USD)`
+                          : 'Your price (USD)'}
+                      </span>
                       <input
                         type="number"
                         min={0}
                         step="0.01"
                         inputMode="decimal"
                         placeholder="—"
-                        value={entry.manualPrice ?? ''}
+                        value={recordedPrice(entry, chosenRecorded.key) ?? ''}
                         onChange={(e) =>
                           setPriceOverride(card.id, variant.id, {
-                            manualPrice: e.target.value === '' ? undefined : Number(e.target.value),
+                            recorded: {
+                              key: chosenRecorded.key,
+                              value: e.target.value === '' ? undefined : Number(e.target.value),
+                            },
                           })
                         }
                       />
                     </label>
                   )}
                   <p className="muted small">
-                    {entry?.priceSource === 'manual'
-                      ? 'Check a link above, then type what it says. Your figure is used everywhere this card is valued, and travels with your collection.'
+                    {chosenRecorded
+                      ? chosenRecorded.site
+                        ? `${chosenRecorded.site} publishes no feed this app can read, so the figure is yours: open the link above, read the price, type it here. It is used everywhere this card is valued and travels with your collection.`
+                        : 'Type what a card is worth to you. It is used everywhere this card is valued, and travels with your collection.'
                       : `Showing ${price.bucket ? `the ${price.bucket} price` : 'no price'}. This card only — the set and collection keep their own choice.`}
                   </p>
                 </div>

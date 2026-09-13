@@ -107,7 +107,13 @@ export interface CollectionEntry {
    * choices. See lib/priceSources.ts. Absent means "whatever those say".
    */
   priceSource?: string
-  /** The figure behind a 'manual' price source, in USD. */
+  /**
+    * Prices you read on a site and recorded, in USD, keyed by where you read
+    * them: 'pricecharting', 'ebay', 'own'. Each is kept separately so a
+    * PriceCharting figure and an eBay comp don't overwrite each other.
+    */
+  manualPrices?: Record<string, number>
+  /** Pre-dates `manualPrices`; still read as the 'own' figure. */
   manualPrice?: number
   updatedAt: string
 }
