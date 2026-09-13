@@ -110,12 +110,41 @@ TCGplayer bucket — 1st Edition prices off `1stEditionHolofoil`, Unlimited off
 `unlimitedHolofoil`/`holofoil`. The set and collection views roll that up into
 what you hold, what finishing costs, and what you're up against what you paid.
 
+**Comp pricing is one tap away.** Each print run in the card panel links out to
+TCGplayer, PriceCharting and eBay sold listings, with the set, card number and
+print run already in the query — a 1st Edition and an Unlimited copy are
+different markets, and a search that ignores that returns the wrong comps.
+"Unlimited" is deliberately left out of marketplace searches, since sellers
+rarely write it and including it hides real listings.
+
 **Your data is yours.** The collection lives in this browser's localStorage. The
 app asks for persistent storage on start, which exempts it from the browser's
 low-disk eviction; Settings shows whether that was granted and nudges you to
 keep a JSON backup if it wasn't.
 Settings exports a JSON backup (re-importable) and a CSV that opens straight in
 a spreadsheet.
+
+## Syncing an iPhone and an iPad
+
+Off by default; everything works on one device without it. Settings → **Sync
+across devices** walks through a one-time Supabase setup (free tier, a table
+and one policy) and then keeps devices carrying the same collection.
+
+Sync merges rather than overwrites. Every entry carries the time it was last
+edited, so a card marked on the phone and a note added on the tablet both
+survive; only edits to the same card need a winner, and the most recent one
+takes it. Devices sync when the app opens, when you switch back to it, and
+shortly after changes settle.
+
+Deletions are handled separately, because an absent entry can't be told from
+one the other device hasn't seen yet. A card is only treated as deleted when
+the remote copy is demonstrably newer than this device's last sync and the
+entry hasn't been touched here since.
+
+The **sync code is the secret** — anyone holding it and the anon key can read
+the collection. Generate one rather than choosing something memorable. Nothing
+is committed to the repository; the URL, key and code live in each device's
+own browser storage.
 
 ## Importing your existing spreadsheet
 

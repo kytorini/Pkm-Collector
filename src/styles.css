@@ -921,3 +921,41 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .tab-result { align-items: flex-start; }
 .tab-result-figures { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; text-align: right; }
 .tab-result-why { font-style: normal; font-size: 0.74rem; color: var(--text-dim); max-width: 22ch; }
+
+/* ---------- comp pricing links ---------- */
+.comp-links { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.comp-link {
+  flex: 1 1 0;
+  min-width: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  transition: border-color 0.15s;
+}
+.comp-link:hover { border-color: var(--gold-dim); }
+.comp-link-label { font-size: 0.82rem; font-weight: 600; color: var(--blue); }
+.comp-link-hint { font-size: 0.68rem; color: var(--text-dim); }
+
+@media (hover: none) { .comp-link { min-height: 44px; justify-content: center; } }
+
+/* ---------- sync setup ---------- */
+.setup-steps { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--bg-sunken); }
+.setup-steps summary { padding: 10px 13px; cursor: pointer; font-size: 0.86rem; }
+.setup-steps ol { margin: 0; padding: 0 13px 4px 30px; font-size: 0.85rem; color: var(--text-dim); }
+.setup-steps li { margin-bottom: 10px; }
+.setup-steps p { padding: 0 13px 12px; margin: 0; }
+.setup-steps pre {
+  margin: 8px 0 0;
+  padding: 10px;
+  overflow-x: auto;
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text);
+}

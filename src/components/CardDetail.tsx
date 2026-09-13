@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { externalLinks } from '../lib/externalLinks'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { useCollection } from '../store/collection'
 import { CONDITIONS, GRADERS, type ApiCard, type ConditionId, type Grader, type VintageSet } from '../types'
@@ -84,6 +85,21 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                     {price.bucket ? ` (showing “${price.bucket}”)` : ''}. Real {variant.label} copies usually trade higher.
                   </p>
                 )}
+
+                <div className="comp-links">
+                  {externalLinks(card, set, variant, entry).map((link) => (
+                    <a
+                      key={link.id}
+                      className="comp-link"
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      <span className="comp-link-label">{link.label}</span>
+                      <span className="comp-link-hint">{link.hint}</span>
+                    </a>
+                  ))}
+                </div>
 
                 {owned && entry && (
                   <div className="variant-fields">
@@ -179,9 +195,6 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
           })}
 
           <footer className="modal-foot">
-            {card.tcgplayer?.url && (
-              <a href={card.tcgplayer.url} target="_blank" rel="noreferrer noopener">Open on TCGplayer ↗</a>
-            )}
             {card.cardmarket?.url && (
               <a href={card.cardmarket.url} target="_blank" rel="noreferrer noopener">Cardmarket ↗</a>
             )}

@@ -3,6 +3,8 @@ import { checkConnection, getApiKey, setApiKey, type ConnectionCheck } from '../
 import { idbClear } from '../lib/idb'
 import { collectionToCsv, collectionToJson, download, parseBackup } from '../lib/exporters'
 import { useCollection } from '../store/collection'
+import { useSync } from '../store/sync'
+import { generateSyncCode } from '../lib/sync'
 import { useLibrary } from '../store/library'
 import { formatBytes, getPersistState, getStorageUse, requestPersistentStorage, type PersistState, type StorageUse } from '../lib/storage'
 import { routeHref } from '../lib/router'
@@ -15,6 +17,8 @@ export function Settings() {
   const [saved, setSaved] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [persist, setPersist] = useState<PersistState | null>(null)
+  const sync = useSync()
+  const [showKey, setShowKey] = useState(false)
   const [check, setCheck] = useState<ConnectionCheck | null>(null)
   const [checking, setChecking] = useState(false)
   const [use, setUse] = useState<StorageUse | null>(null)
@@ -127,6 +131,127 @@ export function Settings() {
           <input className="search-input" type="password" placeholder="Paste key" value={key} onChange={(e) => setKey(e.target.value)} />
           <button className="btn" onClick={onSaveKey}>{saved ? 'Saved' : 'Save key'}</button>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Sync across devices</h2>
+        <p className="muted">
+          Your collection lives on this device. Turning on sync keeps an iPhone and iPad carrying the same
+          collection: each device merges rather than overwrites, so a card marked on one and a note added on
+          the other both survive.
+        </p>
+
+        <details className="setup-steps">
+          <summary>One-time setup (about five minutes)</summary>
+          <ol>
+            <li>
+              Create a free project at{' '}
+              <a href="https://supabase.com" target="_blank" rel="noreferrer noopener">supabase.com</a>.
+            </li>
+            <li>
+              Open the SQL editor and run this:
+              <pre>{`create table collections (
+  id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table collections enable row level security;
+create policy "sync" on collections
+  for all using (true) with check (true);`}</pre>
+            </li>
+            <li>In Project Settings → API, copy the Project URL and the <strong>anon</strong> key into the boxes below.</li>
+            <li>On your other device, open Settings and enter the same three values, including the sync code.</li>
+          </ol>
+          <p className="muted small">
+            The sync code is the secret: anyone holding it and the key can read this collection. Use the
+            generated one rather than something memorable, and don't post it anywhere. The anon key is meant
+            to live in a browser, and nothing here is ever committed to the repository.
+          </p>
+        </details>
+
+        <div className="map-grid" style={{ marginTop: 14 }}>
+          <label>
+            <span>Project URL</span>
+            <input
+              type="url"
+              placeholder="https://xxxx.supabase.co"
+              value={sync.settings.url}
+              onChange={(e) => sync.update({ url: e.target.value })}
+            />
+          </label>
+          <label>
+            <span>Anon key</span>
+            <input
+              type={showKey ? 'text' : 'password'}
+              placeholder="eyJhbGciOi…"
+              value={sync.settings.anonKey}
+              onChange={(e) => sync.update({ anonKey: e.target.value })}
+            />
+            <button className="link-btn" onClick={() => setShowKey((v) => !v)}>
+              {showKey ? 'Hide key' : 'Show key'}
+            </button>
+          </label>
+          <label className="full">
+            <span>Sync code — the same on every device</span>
+            <input
+              type="text"
+              placeholder="tap Generate"
+              value={sync.settings.syncCode}
+              onChange={(e) => sync.update({ syncCode: e.target.value.trim() })}
+            />
+            <div className="btn-row" style={{ marginTop: 6 }}>
+              <button className="link-btn" onClick={() => sync.update({ syncCode: generateSyncCode() })}>
+                Generate a new code
+              </button>
+              {sync.settings.syncCode && (
+                <button
+                  className="link-btn"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(sync.settings.syncCode)
+                    setMessage('Sync code copied.')
+                  }}
+                >
+                  Copy code
+                </button>
+              )}
+            </div>
+          </label>
+        </div>
+
+        <label className={`sheet-all ${sync.settings.enabled ? 'is-active' : ''}`} style={{ marginTop: 14 }}>
+          <input
+            type="checkbox"
+            checked={sync.settings.enabled}
+            disabled={!sync.configured}
+            onChange={(e) => sync.update({ enabled: e.target.checked })}
+          />
+          <span>
+            <strong>Keep this device in sync</strong>
+            <em>
+              {sync.configured
+                ? 'Syncs when the app opens, when you switch back to it, and shortly after you make changes'
+                : 'Fill in all three boxes above to enable'}
+            </em>
+          </span>
+        </label>
+
+        <div className="btn-row" style={{ marginTop: 12 }}>
+          <button className="btn" disabled={!sync.configured || sync.state === 'syncing'} onClick={() => void sync.syncNow()}>
+            {sync.state === 'syncing' ? 'Syncing…' : 'Sync now'}
+          </button>
+        </div>
+
+        {sync.error && <p className="warn-note">{sync.error}</p>}
+        {!sync.error && sync.state === 'ok' && sync.lastResult && (
+          <p className="note">
+            Synced{sync.lastSyncedAt ? ` at ${new Date(sync.lastSyncedAt).toLocaleTimeString()}` : ''} —
+            {' '}{sync.lastResult.pulled} in, {sync.lastResult.pushed} out
+            {sync.lastResult.conflicts > 0 && `, ${sync.lastResult.conflicts} resolved by most recent edit`}.
+          </p>
+        )}
+        {!sync.error && sync.state !== 'ok' && sync.lastSyncedAt > 0 && (
+          <p className="muted small">Last synced {new Date(sync.lastSyncedAt).toLocaleString()}.</p>
+        )}
       </section>
 
       <section className="panel">

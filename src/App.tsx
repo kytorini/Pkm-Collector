@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { CollectionProvider } from './store/collection'
 import { LibraryProvider, useLibrary } from './store/library'
+import { SyncProvider } from './store/sync'
 import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
 import { Search } from './views/Search'
@@ -80,9 +81,11 @@ function Shell() {
 export default function App() {
   return (
     <CollectionProvider>
-      <LibraryProvider>
-        <Shell />
-      </LibraryProvider>
+      <SyncProvider>
+        <LibraryProvider>
+          <Shell />
+        </LibraryProvider>
+      </SyncProvider>
     </CollectionProvider>
   )
 }
