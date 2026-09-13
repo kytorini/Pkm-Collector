@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardTile } from '../components/CardTile'
 import { ProgressBar } from '../components/ProgressBar'
@@ -210,11 +211,14 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       ) : visible.length === 0 ? (
         <p className="muted pad">Nothing matches those filters.</p>
       ) : (
-        <div className="card-grid" style={{ '--grid-template': gridTemplate(density) } as CSSProperties}>
-          {visible.map((card) => (
-            <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => setOpenCardId(c.id)} />
-          ))}
-        </div>
+        <>
+          <div className="card-grid" style={{ '--grid-template': gridTemplate(density) } as CSSProperties}>
+            {visible.map((card) => (
+              <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => setOpenCardId(c.id)} />
+            ))}
+          </div>
+          <BackToTop />
+        </>
       )}
 
       {stamp && <p className="muted pad small">Prices last updated {new Date(stamp).toLocaleString()}.</p>}

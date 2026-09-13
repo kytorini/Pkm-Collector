@@ -27,7 +27,7 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
     <div className={`tile ${owned ? 'is-owned' : ''}`}>
       <button className="tile-art" onClick={() => onOpen(card)} aria-label={`Open ${card.name}`}>
         <img src={card.images.small} alt={card.name} loading="lazy" decoding="async" width={245} height={342} />
-        {!owned && <span className="tile-veil" aria-hidden />}
+        <span className={`tile-veil ${owned ? 'is-clear' : ''}`} aria-hidden />
       </button>
 
       <button

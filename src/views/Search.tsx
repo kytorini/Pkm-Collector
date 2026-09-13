@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { BackToTop } from '../components/BackToTop'
 import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { routeHref } from '../lib/router'
@@ -90,6 +91,8 @@ export function Search() {
           })}
         </ul>
       )}
+
+      {results.length > 0 && <BackToTop />}
     </div>
   )
 }
