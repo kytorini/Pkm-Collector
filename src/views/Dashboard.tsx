@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { VINTAGE_SETS } from '../data/vintageSets'
-import { loadHiddenSets, saveHiddenSets } from '../lib/hiddenSets'
+import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { statsForCollection, statsForSet } from '../lib/stats'
@@ -11,24 +11,13 @@ import { useLibrary } from '../store/library'
 export function Dashboard() {
   const { cardsBySet, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
   const { collection } = useCollection()
-  const [hidden, setHidden] = useState<string[]>(loadHiddenSets)
+  const hidden = useHiddenSets()
   const [choosing, setChoosing] = useState(false)
 
   const shown = useMemo(() => VINTAGE_SETS.filter((s) => !hidden.includes(s.id)), [hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
   const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id))
-
-  const toggleSet = (id: string) => {
-    const next = hidden.includes(id) ? hidden.filter((h) => h !== id) : [...hidden, id]
-    setHidden(next)
-    saveHiddenSets(next)
-  }
-
-  const showEvery = () => {
-    setHidden([])
-    saveHiddenSets([])
-  }
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
@@ -75,7 +64,7 @@ export function Dashboard() {
             <>
               {' · '}
               {hidden.length} set{hidden.length === 1 ? '' : 's'} hidden, left out of these totals{' '}
-              <button className="link-btn" onClick={showEvery}>show all</button>
+              <button className="link-btn" onClick={showAllSets}>show all</button>
             </>
           )}
           .
@@ -139,7 +128,8 @@ export function Dashboard() {
 
         {choosing && (
           <p className="muted small choose-hint">
-            Untick a set to keep it off this page and out of the totals. The Sets tab still lists them all.
+            Untick a set to hide it from this page and the Sets tab, and leave it out of your totals.
+            Nothing is deleted — tick it again whenever you start chasing it.
           </p>
         )}
 
@@ -154,7 +144,7 @@ export function Dashboard() {
               return (
                 <label key={set.id} className={`progress-row is-choosing ${isHidden ? 'is-hidden' : ''}`}>
                   <span className="progress-row-name">
-                    <input type="checkbox" checked={!isHidden} onChange={() => toggleSet(set.id)} />
+                    <input type="checkbox" checked={!isHidden} onChange={() => toggleHiddenSet(set.id)} />
                     {set.name}
                   </span>
                   <ProgressBar value={s.owned} total={denom} />
@@ -175,7 +165,7 @@ export function Dashboard() {
           })}
           {!choosing && shown.length === 0 && (
             <p className="muted pad" style={{ padding: '16px' }}>
-              Every set is hidden. <button className="link-btn" onClick={showEvery}>Show all</button>
+              Every set is hidden. <button className="link-btn" onClick={showAllSets}>Show all</button>
             </p>
           )}
         </div>
