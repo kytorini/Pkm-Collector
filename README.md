@@ -210,7 +210,18 @@ pick replace.
   listing, the 1st Edition slot shows no price rather than borrowing the
   Unlimited one. "Cost to finish" says how many slots it had to skip.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
-  PSA 10 is a different market from the raw price shown here.
+  PSA 10 is a different market from the raw price shown here, so grading is
+  deliberately not factored into value at all.
+- **Condition is applied to value.** Market prices track Near Mint sales, so a
+  played copy is counted below the quote: Mint 110%, Near Mint 100%, Lightly
+  Played 80%, Moderately Played 60%, Heavily Played 40%, Damaged 25%. These are
+  rough spreads, not market data — the comp links are there for a real answer.
+  The multipliers live in `src/lib/condition.ts` if you disagree with them.
+- **Everything is shown in USD.** A card with no TCGplayer listing falls back to
+  Cardmarket, which quotes euros; those are converted at the current ECB rate
+  (refreshed daily, cached, with a built-in rate as backstop) and labelled as
+  converted. Before this, euro figures were being added to dollar figures, which
+  made collection totals meaningless.
 - Prices refresh automatically when the cache is over a day old, or on demand
   via "Refresh prices".
 - The API is occasionally flaky. Requests time out after 25s and retry

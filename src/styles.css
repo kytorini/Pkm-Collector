@@ -959,3 +959,14 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   line-height: 1.5;
   color: var(--text);
 }
+
+/* ---------- per-copy value ---------- */
+.your-copy {
+  margin: 8px 0 0;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  font-size: 0.82rem;
+}
+.your-copy strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.your-copy.is-adjusted { border-left: 2px solid var(--gold-dim); }

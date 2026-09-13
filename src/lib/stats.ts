@@ -1,3 +1,4 @@
+import { adjustedValue } from './condition'
 import { priceFor } from './pricing'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
@@ -37,7 +38,8 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
       owned++
       const quantity = Math.max(1, entry.quantity || 1)
       copies += quantity
-      ownedValue += (price ?? 0) * quantity
+      // Condition matters: a played copy is not worth the near-mint quote.
+      ownedValue += (adjustedValue(price, entry) ?? 0) * quantity
       spend += (entry.pricePaid ?? 0) * quantity
     } else {
       missingValue += price ?? 0

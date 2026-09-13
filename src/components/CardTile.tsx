@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { adjustedValue } from '../lib/condition'
 import { priceFor, formatMoney } from '../lib/pricing'
 import { useCollection } from '../store/collection'
 import type { ApiCard, SetVariant } from '../types'
@@ -18,6 +19,9 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
   const entry = get(card.id, variant.id)
   const owned = Boolean(entry?.owned)
   const price = priceFor(card, variant)
+  // Once a copy is owned, show what that copy is worth rather than the
+  // near-mint quote, so the grid agrees with the set's totals.
+  const shown = owned ? adjustedValue(price.market, entry) : price.market
 
   return (
     <div className={`tile ${owned ? 'is-owned' : ''}`}>
@@ -46,7 +50,7 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
         <span className="tile-number">#{card.number}</span>
         <span className="tile-name" title={card.name}>{card.name}</span>
         <span className={`tile-price ${price.approximate ? 'is-approx' : ''}`}>
-          {price.market == null ? '—' : `${price.approximate ? '~' : ''}${formatMoney(price.market, price.currency)}`}
+          {shown == null ? '—' : `${price.approximate ? '~' : ''}${formatMoney(shown)}`}
         </span>
       </div>
     </div>

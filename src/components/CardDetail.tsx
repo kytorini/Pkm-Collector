@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { CONDITION_NOTE, adjustedValue, valueMultiplier } from '../lib/condition'
 import { externalLinks } from '../lib/externalLinks'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { useCollection } from '../store/collection'
@@ -69,9 +70,9 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                       <span className="muted">no price feed</span>
                     ) : (
                       <>
-                        <strong>{price.approximate ? '~' : ''}{formatMoney(price.market, price.currency)}</strong>
+                        <strong>{price.approximate ? '~' : ''}{formatMoney(price.market)}</strong>
                         {price.low != null && price.high != null && (
-                          <span className="muted"> ({formatMoney(price.low, price.currency)}–{formatMoney(price.high, price.currency)})</span>
+                          <span className="muted"> ({formatMoney(price.low)}–{formatMoney(price.high)})</span>
                         )}
                       </>
                     )}
@@ -79,6 +80,28 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                 </div>
 
                 {variant.note && <p className="variant-note">{variant.note}</p>}
+                {/* What this particular copy is worth, which is what the
+                    collection totals actually count. */}
+                {owned && entry && price.market != null && (
+                  <p className={`your-copy ${valueMultiplier(entry) !== 1 ? 'is-adjusted' : ''}`}>
+                    Your copy:{' '}
+                    <strong>{formatMoney(adjustedValue(price.market, entry))}</strong>
+                    {entry.quantity > 1 && (
+                      <span className="muted"> each · {formatMoney((adjustedValue(price.market, entry) ?? 0) * entry.quantity)} for {entry.quantity}</span>
+                    )}
+                    <span className="muted">
+                      {' — '}
+                      {entry.graded
+                        ? `graded copies aren’t estimated; this is ${CONDITION_NOTE.NM}`
+                        : CONDITION_NOTE[entry.condition]}
+                    </span>
+                  </p>
+                )}
+
+                {price.converted && price.market != null && (
+                  <p className="variant-note">Converted from a euro listing — no US price is published for this one.</p>
+                )}
+
                 {price.approximate && price.market != null && (
                   <p className="variant-note warn">
                     Reference price only — the feed has no separate {variant.label} listing

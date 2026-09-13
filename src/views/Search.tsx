@@ -78,7 +78,7 @@ export function Search() {
                         >
                           {owned ? '✓ ' : ''}{variant.short}
                           <span className="chip-price">
-                            {price.market == null ? '—' : `${price.approximate ? '~' : ''}${formatMoney(price.market, price.currency)}`}
+                            {price.market == null ? '—' : `${price.approximate ? '~' : ''}${formatMoney(price.market)}`}
                           </span>
                         </button>
                       )

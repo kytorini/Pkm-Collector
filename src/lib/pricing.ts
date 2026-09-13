@@ -1,3 +1,4 @@
+import { convertEurToUsd } from './fx'
 import type { ApiCard, SetVariant, TcgPriceBucket } from '../types'
 
 export interface VariantPrice {
@@ -11,11 +12,16 @@ export interface VariantPrice {
   approximate: boolean
   updatedAt?: string
   url?: string
-  /** Set when we could only fall back to Cardmarket (EUR). */
-  currency: 'USD' | 'EUR'
+  /** Everything is reported in USD; euro sources are converted. */
+  currency: 'USD'
+  /** True when the figure came from a euro source and was converted. */
+  converted?: boolean
 }
 
 const EMPTY: VariantPrice = { market: null, low: null, high: null, bucket: null, approximate: false, currency: 'USD' }
+
+const toUsd = (value: number | null | undefined): number | null =>
+  value == null ? null : convertEurToUsd(value)
 
 function pick(bucket: TcgPriceBucket): number | null {
   return bucket.market ?? bucket.mid ?? bucket.low ?? null
@@ -52,22 +58,25 @@ export function priceFor(card: ApiCard, variant: SetVariant): VariantPrice {
   const cm = card.cardmarket?.prices
   const cmPrice = cm?.trendPrice ?? cm?.averageSellPrice ?? null
   if (cmPrice != null) {
+    // Cardmarket quotes euros. Convert so this can be added to USD prices
+    // without producing a total that means nothing.
     return {
-      market: cmPrice,
-      low: cm?.lowPrice ?? null,
+      market: toUsd(cmPrice),
+      low: toUsd(cm?.lowPrice),
       high: null,
       bucket: 'cardmarket',
       approximate: true,
+      converted: true,
       updatedAt: card.cardmarket?.updatedAt,
       url: card.cardmarket?.url,
-      currency: 'EUR',
+      currency: 'USD',
     }
   }
 
   return { ...EMPTY, url: card.tcgplayer?.url }
 }
 
-export function formatMoney(value: number | null | undefined, currency: 'USD' | 'EUR' = 'USD'): string {
+export function formatMoney(value: number | null | undefined, currency: 'USD' = 'USD'): string {
   if (value == null || Number.isNaN(value)) return '—'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

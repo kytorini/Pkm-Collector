@@ -1,4 +1,5 @@
 import { getSet, getVariant } from '../data/vintageSets'
+import { adjustedValue } from './condition'
 import { priceFor } from './pricing'
 import type { ApiCard, CollectionMap } from '../types'
 
@@ -22,7 +23,7 @@ export function collectionToCsv(collection: CollectionMap, allCards: ApiCard[]):
   const header = [
     'Set', 'Year', 'Variation', 'Number', 'Card', 'Rarity',
     'Owned', 'Quantity', 'Condition', 'Grader', 'Grade',
-    'Price paid', 'Market price', 'Price is approximate', 'Notes', 'Updated',
+    'Price paid', 'Market price (USD)', 'Value at condition (USD)', 'Price is approximate', 'Notes', 'Updated',
   ]
   const rows = Object.values(collection)
     .filter((e) => e.owned)
@@ -46,6 +47,7 @@ export function collectionToCsv(collection: CollectionMap, allCards: ApiCard[]):
         entry.graded?.grade ?? '',
         entry.pricePaid ?? '',
         price?.market ?? '',
+        adjustedValue(price?.market ?? null, entry) ?? '',
         price?.approximate ? 'Yes' : '',
         entry.notes ?? '',
         entry.updatedAt,
