@@ -632,8 +632,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .stat { padding: 13px; }
   .stat-value { font-size: 1.4rem; }
 
-  .progress-row { grid-template-columns: 1fr 60px; row-gap: 8px; padding: 14px 14px; }
-  .progress-row .progress { grid-column: 1 / -1; }
+  /* Heading on its own line; the actions share the width beneath it. */
+  .section-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .section-head .btn-row { flex-wrap: nowrap; }
+  .section-head .btn-row .btn { flex: 1 1 0; min-width: 0; }
+
+  /* Name and count share the first line, the bar spans the second. */
+  .progress-row { grid-template-columns: 1fr auto; row-gap: 7px; column-gap: 12px; padding: 13px 14px; }
+  .progress-row-name { grid-column: 1; grid-row: 1; }
+  .progress-row-count { grid-column: 2; grid-row: 1; }
+  .progress-row .progress { grid-column: 1 / -1; grid-row: 2; }
   .progress-row-value { display: none; }
 
   .set-grid { grid-template-columns: 1fr; }
