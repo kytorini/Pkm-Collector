@@ -1,8 +1,12 @@
 import { useEffect } from 'react'
 import { CONDITION_NOTE, adjustedValue, valueMultiplier } from '../lib/condition'
 import { externalLinks } from '../lib/externalLinks'
+import { convertEurToUsd } from '../lib/fx'
 import { formatMoney, priceFor } from '../lib/pricing'
+import { previewSource, type PriceSourceId } from '../lib/priceSources'
 import { useCollection } from '../store/collection'
+import { usePrices } from '../store/prices'
+import { PriceSourceSelect } from './PriceSourceSelect'
 import { CONDITIONS, GRADERS, type ApiCard, type ConditionId, type Grader, type VintageSet } from '../types'
 
 interface Props {
@@ -18,7 +22,8 @@ interface Props {
  * so a card you own in two runs is one screen rather than two.
  */
 export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Props) {
-  const { get, update, toggleOwned, remove } = useCollection()
+  const { get, update, toggleOwned, remove, setPriceOverride } = useCollection()
+  const resolvePrice = usePrices()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,8 +61,25 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
           {set.variants.map((variant) => {
             const entry = get(card.id, variant.id)
             const owned = Boolean(entry?.owned)
-            const price = priceFor(card, variant)
+            const price = resolvePrice(card, variant)
             const isActive = variant.id === activeVariantId
+            // Each option says what it would actually give you for this card,
+            // so a source with nothing to offer is visible before it's chosen.
+            const annotate = (id: PriceSourceId): string | null => {
+              if (id === 'inherit') return null
+              if (id === 'manual') {
+                return entry?.manualPrice != null ? formatMoney(entry.manualPrice) : 'not set yet'
+              }
+              if (id === 'auto') {
+                const auto = priceFor(card, variant).market
+                return auto == null ? 'no price' : formatMoney(auto)
+              }
+              const value = previewSource(card, id)
+              if (value == null) return 'no price'
+              // Cardmarket quotes euros; showing the raw number as dollars
+              // would make the wrong option look like the cheap one.
+              return id.startsWith('cm:') ? formatMoney(convertEurToUsd(value)) : formatMoney(value)
+            }
             return (
               <section key={variant.id} className={`variant-row ${owned ? 'is-owned' : ''} ${isActive ? 'is-active' : ''}`}>
                 <div className="variant-head">
@@ -102,6 +124,13 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                   <p className="variant-note">Converted from a euro listing — no US price is published for this one.</p>
                 )}
 
+                {price.sourceEmpty && (
+                  <p className="variant-note warn">
+                    The price source chosen for this card has nothing for it. Pick another below, or record
+                    your own figure from one of the links.
+                  </p>
+                )}
+
                 {price.approximate && price.market != null && (
                   <p className="variant-note warn">
                     Reference price only — the feed has no separate {variant.label} listing
@@ -122,6 +151,40 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                       <span className="comp-link-hint">{link.hint}</span>
                     </a>
                   ))}
+                </div>
+
+                <div className="price-source-card">
+                  <PriceSourceSelect
+                    level="card"
+                    id={`price-source-${card.id}-${variant.id}`}
+                    label="Price from"
+                    value={entry?.priceSource ?? 'inherit'}
+                    onChange={(id) => setPriceOverride(card.id, variant.id, { priceSource: id })}
+                    annotate={annotate}
+                  />
+                  {entry?.priceSource === 'manual' && (
+                    <label className="manual-price">
+                      <span>Your price (USD)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder="—"
+                        value={entry.manualPrice ?? ''}
+                        onChange={(e) =>
+                          setPriceOverride(card.id, variant.id, {
+                            manualPrice: e.target.value === '' ? undefined : Number(e.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                  )}
+                  <p className="muted small">
+                    {entry?.priceSource === 'manual'
+                      ? 'Check a link above, then type what it says. Your figure is used everywhere this card is valued, and travels with your collection.'
+                      : `Showing ${price.bucket ? `the ${price.bucket} price` : 'no price'}. This card only — the set and collection keep their own choice.`}
+                  </p>
                 </div>
 
                 {owned && entry && (

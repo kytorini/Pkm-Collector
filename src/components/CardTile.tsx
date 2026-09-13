@@ -1,7 +1,8 @@
 import { memo } from 'react'
 import { adjustedValue } from '../lib/condition'
-import { priceFor, formatMoney } from '../lib/pricing'
+import { formatMoney } from '../lib/pricing'
 import { useCollection } from '../store/collection'
+import { usePrices } from '../store/prices'
 import type { ApiCard, SetVariant } from '../types'
 
 interface Props {
@@ -16,9 +17,10 @@ interface Props {
  */
 export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props) {
   const { get, toggleOwned } = useCollection()
+  const resolvePrice = usePrices()
   const entry = get(card.id, variant.id)
   const owned = Boolean(entry?.owned)
-  const price = priceFor(card, variant)
+  const price = resolvePrice(card, variant)
   // Once a copy is owned, show what that copy is worth rather than the
   // near-mint quote, so the grid agrees with the set's totals.
   const shown = owned ? adjustedValue(price.market, entry) : price.market

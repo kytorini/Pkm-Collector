@@ -8,6 +8,8 @@ import { generateSyncCode } from '../lib/sync'
 import { useLibrary } from '../store/library'
 import { formatBytes, getPersistState, getStorageUse, requestPersistentStorage, type PersistState, type StorageUse } from '../lib/storage'
 import { routeHref } from '../lib/router'
+import { resetPriceRules, setCollectionSource, usePriceRules } from '../lib/priceRules'
+import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { CONDITIONS, type ConditionId } from '../types'
 
 export function Settings() {
@@ -23,6 +25,9 @@ export function Settings() {
   const [check, setCheck] = useState<ConnectionCheck | null>(null)
   const [checking, setChecking] = useState(false)
   const [use, setUse] = useState<StorageUse | null>(null)
+  const priceRules = usePriceRules()
+  const perSetCount = Object.keys(priceRules.bySet).length
+  const perCardCount = Object.values(collection).filter((e) => e.priceSource).length
   const fileInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -313,6 +318,50 @@ create policy "sync" on collections
             Clear card cache
           </button>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Pricing</h2>
+        <PriceSourceSelect
+          level="collection"
+          id="collection-price-source"
+          label="Where prices come from, unless a set or card says otherwise"
+          value={priceRules.collection}
+          onChange={setCollectionSource}
+        />
+
+        <p className="muted">
+          Auto reads each print run's own TCGplayer listing, and never borrows another run's — a 1st Edition
+          card is not priced off the Unlimited listing. When a run has no listing of its own that leaves a
+          gap, and naming a source here fills it. Anything other than Auto is taken literally: a card the
+          chosen source doesn't cover shows no price rather than a substituted one.
+        </p>
+        <p className="muted">
+          A set can override this from its own page, and a single card from its panel — where you can also
+          type a figure you read on PriceCharting or eBay, which those sites don't publish in a form the app
+          can read. Per-card prices are part of your collection and sync between devices; the two choices
+          above are per device, like grid density.
+        </p>
+        {(perSetCount > 0 || perCardCount > 0) && (
+          <>
+            <p className="muted">
+              {perSetCount > 0 && `${perSetCount} set${perSetCount === 1 ? '' : 's'} override this. `}
+              {perCardCount > 0 && `${perCardCount} card${perCardCount === 1 ? '' : 's'} have their own source.`}
+            </p>
+            {perSetCount > 0 && (
+              <button
+                className="btn"
+                onClick={() => {
+                  if (!confirm(`Clear the price source on all ${perSetCount} sets? Per-card prices are kept.`)) return
+                  resetPriceRules()
+                  setMessage('Every set is back to the collection default.')
+                }}
+              >
+                Clear the per-set choices
+              </button>
+            )}
+          </>
+        )}
       </section>
 
       <section className="panel">

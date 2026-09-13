@@ -273,6 +273,47 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 @keyframes panel-open { from { opacity: 0; transform: translateY(-4px); } }
 
+/* ---------- price source ---------- */
+.price-source { display: flex; flex-direction: column; gap: 6px; }
+.price-source-label { font-size: 0.82rem; color: var(--text-dim); }
+.price-source .select { width: 100%; max-width: 420px; }
+
+.price-source-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.price-source-row p { margin: 0; }
+
+.price-source-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 11px 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.price-source-card p { margin: 0; }
+.manual-price { display: flex; flex-direction: column; gap: 5px; font-size: 0.82rem; color: var(--text-dim); }
+.manual-price input {
+  width: 100%;
+  max-width: 180px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- set detail ---------- */
 .variant-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
 .variant-tab {

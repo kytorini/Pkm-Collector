@@ -2,9 +2,13 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardTile } from '../components/CardTile'
+import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
 import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
+import { setSetSource, usePriceRules } from '../lib/priceRules'
+import { AUTO, type PriceSourceId } from '../lib/priceSources'
+import { usePrices } from '../store/prices'
 import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
 import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
@@ -20,6 +24,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const set = getSet(setId)
   const { cardsBySet, fetchedAt, syncSet, progress, error } = useLibrary()
   const { collection } = useCollection()
+  const price = usePrices()
+  const rules = usePriceRules()
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<Sort>('number')
   const [query, setQuery] = useState('')
@@ -59,17 +65,33 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     if (sort === 'price-desc' || sort === 'price-asc') {
       const dir = sort === 'price-desc' ? -1 : 1
       list = [...list].sort(
-        (a, b) => dir * ((priceFor(a, activeVariant).market ?? 0) - (priceFor(b, activeVariant).market ?? 0)),
+        (a, b) => dir * ((price(a, activeVariant).market ?? 0) - (price(b, activeVariant).market ?? 0)),
       )
     }
     return list
-  }, [cards, collection, activeVariant, filter, sort, query])
+  }, [cards, collection, activeVariant, filter, sort, query, price])
 
   if (!set) return <div className="view"><p>Unknown set. <a href={routeHref.dashboard}>Back to your collection</a></p></div>
   if (!activeVariant) return <div className="view"><p>This set has no print variations configured.</p></div>
 
-  const stats = statsForVariant(cards, activeVariant, collection)
+  const stats = statsForVariant(cards, activeVariant, collection, price)
   const openCard = openCardId ? cards.find((c) => c.id === openCardId) ?? null : null
+
+  /**
+   * How many cards of the active print run a source can actually price. Shown
+   * on each option so the choice is made against the feed's real contents
+   * rather than its promises.
+   */
+  const coverage = (id: PriceSourceId): string | null => {
+    if (cards.length === 0) return null
+    const effective = id === 'inherit' ? rules.collection || AUTO : id
+    if (effective === 'manual') {
+      const n = cards.filter((c) => collection[`${c.id}::${activeVariant.id}`]?.manualPrice != null).length
+      return `${n} of ${cards.length} priced by you`
+    }
+    const n = cards.filter((c) => priceFor(c, activeVariant, { source: effective }).market != null).length
+    return `${n} of ${cards.length}`
+  }
 
   const step = (delta: number) => {
     if (!openCard) return
@@ -108,7 +130,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
       <nav className="variant-tabs" aria-label="Print variation">
         {set.variants.map((variant) => {
-          const s = statsForVariant(cards, variant, collection)
+          const s = statsForVariant(cards, variant, collection, price)
           return (
             <button
               key={variant.id}
@@ -147,6 +169,23 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           </div>
           <div><dt>Spent</dt><dd>{stats.spend ? formatMoney(stats.spend) : '—'}</dd></div>
         </dl>
+      </div>
+
+      <div className="price-source-row">
+        <PriceSourceSelect
+          level="set"
+          id="set-price-source"
+          label={`Prices for ${set.name}`}
+          value={rules.bySet[setId] ?? 'inherit'}
+          onChange={(id) => setSetSource(setId, id)}
+          annotate={(id) => coverage(id)}
+        />
+        <p className="muted small">
+          {stats.unpriced > 0
+            ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this source. ` +
+              'Try another, or set a price per card from the card panel.'
+            : `Every ${activeVariant.label} card has a price from this source.`}
+        </p>
       </div>
 
       <div className="toolbar">

@@ -1,5 +1,5 @@
 import { adjustedValue, isUnassessed } from './condition'
-import { priceFor } from './pricing'
+import { priceFor, type PriceResolver } from './pricing'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
 
@@ -23,7 +23,15 @@ export interface VariantStats {
 
 const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0, unassessed: 0 }
 
-export function statsForVariant(cards: ApiCard[], variant: SetVariant, collection: CollectionMap): VariantStats {
+/** Reads the default source. Callers with price rules pass their own resolver. */
+const AUTO_PRICE: PriceResolver = (card, variant) => priceFor(card, variant)
+
+export function statsForVariant(
+  cards: ApiCard[],
+  variant: SetVariant,
+  collection: CollectionMap,
+  price: PriceResolver = AUTO_PRICE,
+): VariantStats {
   if (cards.length === 0) return { ...ZERO }
   let owned = 0
   let copies = 0
@@ -35,18 +43,18 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
 
   for (const card of cards) {
     const entry = collection[entryKey(card.id, variant.id)]
-    const price = priceFor(card, variant).market
-    if (price == null) unpriced++
+    const market = price(card, variant).market
+    if (market == null) unpriced++
     if (entry?.owned) {
       owned++
       if (isUnassessed(entry)) unassessed++
       const quantity = Math.max(1, entry.quantity || 1)
       copies += quantity
       // Condition matters: a played copy is not worth the near-mint quote.
-      ownedValue += (adjustedValue(price, entry) ?? 0) * quantity
+      ownedValue += (adjustedValue(market, entry) ?? 0) * quantity
       spend += (entry.pricePaid ?? 0) * quantity
     } else {
-      missingValue += price ?? 0
+      missingValue += market ?? 0
     }
   }
 
@@ -63,9 +71,14 @@ export function statsForVariant(cards: ApiCard[], variant: SetVariant, collectio
   }
 }
 
-export function statsForSet(cards: ApiCard[], set: VintageSet, collection: CollectionMap): VariantStats {
+export function statsForSet(
+  cards: ApiCard[],
+  set: VintageSet,
+  collection: CollectionMap,
+  price: PriceResolver = AUTO_PRICE,
+): VariantStats {
   return set.variants
-    .map((v) => statsForVariant(cards, v, collection))
+    .map((v) => statsForVariant(cards, v, collection, price))
     .reduce(
       (acc, s) => ({
         total: acc.total + s.total,
@@ -87,6 +100,7 @@ export function statsForCollection(
   collection: CollectionMap,
   /** Limits the totals to these sets. Omit to count every tracked set. */
   onlySetIds?: readonly string[],
+  price: PriceResolver = AUTO_PRICE,
 ): VariantStats & { setsStarted: number } {
   let acc = { ...ZERO, setsStarted: 0 }
   const included = onlySetIds ? new Set(onlySetIds) : null
@@ -94,7 +108,7 @@ export function statsForCollection(
     if (included && !included.has(set.id)) continue
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue
-    const s = statsForSet(cards, set, collection)
+    const s = statsForSet(cards, set, collection, price)
     acc = {
       total: acc.total + s.total,
       owned: acc.owned + s.owned,

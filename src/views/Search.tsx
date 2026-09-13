@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { getSet } from '../data/vintageSets'
-import { formatMoney, priceFor } from '../lib/pricing'
+import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
+import { usePrices } from '../store/prices'
 
 /** Cross-set lookup: type a Pokémon, mark every print you own from one screen. */
 export function Search() {
   const { allCards } = useLibrary()
   const { get, toggleOwned } = useCollection()
+  const price = usePrices()
   const [query, setQuery] = useState('')
   const [ownedOnly, setOwnedOnly] = useState(false)
 
@@ -69,7 +71,7 @@ export function Search() {
                   <div className="chip-row">
                     {set.variants.map((variant) => {
                       const owned = Boolean(get(card.id, variant.id)?.owned)
-                      const price = priceFor(card, variant)
+                      const p = price(card, variant)
                       return (
                         <button
                           key={variant.id}
@@ -79,7 +81,7 @@ export function Search() {
                         >
                           {owned ? '✓ ' : ''}{variant.short}
                           <span className="chip-price">
-                            {price.market == null ? '—' : `${price.approximate ? '~' : ''}${formatMoney(price.market)}`}
+                            {p.market == null ? '—' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
                           </span>
                         </button>
                       )

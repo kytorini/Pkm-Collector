@@ -6,6 +6,7 @@ import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
+import { usePrices } from '../store/prices'
 import { useLibrary } from '../store/library'
 
 /**
@@ -22,6 +23,7 @@ function remainderNote(s: VariantStats): string {
 export function Dashboard() {
   const { cardsBySet, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
   const { collection } = useCollection()
+  const price = usePrices()
   const hidden = useHiddenSets()
   const [choosing, setChoosing] = useState(false)
   // Sets opened in place. More than one at a time, so two runs can be compared
@@ -34,7 +36,7 @@ export function Dashboard() {
   const shown = useMemo(() => VINTAGE_SETS.filter((s) => !hidden.includes(s.id)), [hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
-  const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id))
+  const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
@@ -153,7 +155,7 @@ export function Dashboard() {
         <div className="progress-table">
           {(choosing ? VINTAGE_SETS : shown).map((set) => {
             const cards = cardsBySet[set.id] ?? []
-            const s = statsForSet(cards, set, collection)
+            const s = statsForSet(cards, set, collection, price)
             const denom = s.total || set.total * set.variants.length
             const isHidden = hidden.includes(set.id)
 
@@ -210,7 +212,7 @@ export function Dashboard() {
                     </div>
                     <div className="set-variants">
                       {set.variants.map((variant) => {
-                        const vs = statsForVariant(cards, variant, collection)
+                        const vs = statsForVariant(cards, variant, collection, price)
                         const vDenom = vs.total || set.total
                         return (
                           <a

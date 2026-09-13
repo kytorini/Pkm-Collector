@@ -13,6 +13,16 @@ interface CollectionContextValue {
   /** Flips owned on/off, creating the entry on first touch. */
   toggleOwned: (cardId: string, variantId: string) => void
   update: (cardId: string, variantId: string, patch: Partial<CollectionEntry>) => void
+  /**
+   * Sets where this slot's price comes from. Unlike `update`, recording a
+   * price is not a claim to own the card: a source can be chosen for a card
+   * that is still missing, so the cost to finish is right too.
+   */
+  setPriceOverride: (
+    cardId: string,
+    variantId: string,
+    patch: { priceSource?: string; manualPrice?: number },
+  ) => void
   remove: (cardId: string, variantId: string) => void
   replaceAll: (next: CollectionMap) => void
   /** Sets every quantity back to one, for undoing a bad import mapping. */
@@ -104,6 +114,29 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
     [defaultCondition],
   )
 
+  const setPriceOverride = useCallback(
+    (cardId: string, variantId: string, patch: { priceSource?: string; manualPrice?: number }) => {
+      setCollection((prev) => {
+        const key = entryKey(cardId, variantId)
+        const existing = prev[key]
+        const base: CollectionEntry = existing ?? {
+          cardId,
+          variantId,
+          owned: false,
+          quantity: 1,
+          condition: defaultCondition,
+          updatedAt: new Date().toISOString(),
+        }
+        const next: CollectionEntry = { ...base, ...patch, updatedAt: new Date().toISOString() }
+        // "Inherit" is the absence of a choice, not a choice of its own.
+        if (next.priceSource === 'inherit' || next.priceSource === undefined) delete next.priceSource
+        if (next.manualPrice == null || Number.isNaN(next.manualPrice)) delete next.manualPrice
+        return { ...prev, [key]: next }
+      })
+    },
+    [defaultCondition],
+  )
+
   /**
    * Clears everything recorded about a card. Like un-marking, this leaves a
    * dated "not owned" entry behind rather than removing the key, so the
@@ -167,8 +200,8 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, resetConditions, ownedCount }),
-    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, remove, replaceAll, resetQuantities, resetConditions, ownedCount],
+    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount }),
+    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount],
   )
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>

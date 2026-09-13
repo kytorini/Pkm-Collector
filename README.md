@@ -228,6 +228,23 @@ pick replace.
 - **A missing bucket shows `—`, not a guess.** If a card has no 1st Edition
   listing, the 1st Edition slot shows no price rather than borrowing the
   Unlimited one. "Cost to finish" says how many slots it had to skip.
+- **You can choose where prices come from**, at three levels: the whole
+  collection (Settings), one set (its own page), or one card (its panel). The
+  most specific choice wins — card, then set, then collection, then Auto.
+  Auto is the behaviour above. Any other source is read literally: pick the
+  Holofoil bucket for a 1st Edition run and that is what you get, flagged `~`
+  as another run's price, and a card the source doesn't cover shows no price
+  rather than a substituted one. Every option in the picker is annotated with
+  what it would actually give you — a price for that card, or "4 of 102" for
+  that set — so a source is chosen against the feed's real contents. This is
+  the fix when a whole print run comes back unpriced.
+- **PriceCharting and eBay can't be read automatically.** Neither publishes a
+  free interface a static web app can call from a browser, so there is nothing
+  to wire up. Instead every card panel links out to both, and "Your own price"
+  records what you read there. That figure is collection data, not a
+  preference: it's used everywhere the card is valued and syncs between your
+  devices. The collection and per-set choices are per device, like grid
+  density.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is
   deliberately not factored into value at all.

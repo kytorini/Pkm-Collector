@@ -102,6 +102,13 @@ export interface CollectionEntry {
   pricePaid?: number
   acquiredOn?: string
   notes?: string
+  /**
+   * Where this slot's price comes from, overriding the set and collection
+   * choices. See lib/priceSources.ts. Absent means "whatever those say".
+   */
+  priceSource?: string
+  /** The figure behind a 'manual' price source, in USD. */
+  manualPrice?: number
   updatedAt: string
 }
 
