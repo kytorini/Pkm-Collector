@@ -70,6 +70,11 @@ specific model:
 
 - **Navigation sits at the bottom on phones**, where a thumb reaches on a 6.3"
   screen, and at the top on tablets and desktops.
+- **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
+  5 or 6 per row. Auto fills the width, which on an iPad means six and rather
+  small artwork. The choice is stored per device, since a tablet and a phone
+  want different answers, and it isn't synced: it's a viewing preference, not
+  collection data.
 - **Tap targets meet Apple's 44pt minimum**, applied under `@media (hover: none)`
   so a folding phone gets them at tablet widths too. The owned-check on a card
   keeps its compact look but takes a 44pt tap area via a `::before` overlay.

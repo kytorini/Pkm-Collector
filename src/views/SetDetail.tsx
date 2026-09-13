@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { CardDetail } from '../components/CardDetail'
 import { CardTile } from '../components/CardTile'
 import { ProgressBar } from '../components/ProgressBar'
@@ -6,6 +6,7 @@ import { getSet } from '../data/vintageSets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
+import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
 import { statsForVariant } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
@@ -26,6 +27,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // Distinguishes "still waiting" from "tried and failed", so a dead request
   // doesn't sit under a Loading message forever.
   const [loadFailed, setLoadFailed] = useState(false)
+  const [density, setDensity] = useState<Density>(loadDensity)
 
   const cards = useMemo(() => cardsBySet[setId] ?? [], [cardsBySet, setId])
   const activeVariant = useMemo(
@@ -172,6 +174,20 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           <option value="price-desc">Price, high to low</option>
           <option value="price-asc">Price, low to high</option>
         </select>
+        <select
+          className="select select-compact"
+          value={density}
+          aria-label="Cards per row"
+          onChange={(e) => {
+            const next = e.target.value as Density
+            setDensity(next)
+            saveDensity(next)
+          }}
+        >
+          {DENSITIES.map((d) => (
+            <option key={d.value} value={d.value}>{d.label}</option>
+          ))}
+        </select>
       </div>
 
       {cards.length === 0 && loadFailed ? (
@@ -194,7 +210,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       ) : visible.length === 0 ? (
         <p className="muted pad">Nothing matches those filters.</p>
       ) : (
-        <div className="card-grid">
+        <div className="card-grid" style={{ '--grid-template': gridTemplate(density) } as CSSProperties}>
           {visible.map((card) => (
             <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => setOpenCardId(c.id)} />
           ))}

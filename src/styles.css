@@ -271,7 +271,12 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .copies-note { display: block; margin-top: 2px; font-size: 0.72rem; color: var(--gold); }
 
 /* ---------- card grid ---------- */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 16px; }
+.card-grid {
+  display: grid;
+  grid-template-columns: var(--grid-template, repeat(auto-fill, minmax(158px, 1fr)));
+  gap: 16px;
+}
+.select-compact { flex: 0 0 auto; max-width: 8.5rem; }
 
 .tile { position: relative; }
 .tile-art {
@@ -607,7 +612,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .select { min-height: 38px; padding: 7px 10px; }
 
   /* Three across reads better than two — more of the set per screen. */
-  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .card-grid { grid-template-columns: var(--grid-template, repeat(3, 1fr)); gap: 10px; }
   .tile-meta { grid-template-columns: auto 1fr; row-gap: 1px; font-size: 0.72rem; }
   .tile-price { grid-column: 1 / -1; }
   .tile-check { width: 32px; height: 32px; top: 5px; right: 5px; }
@@ -650,7 +655,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 /* Small phones and the closed screen of a folding phone. */
 @media (max-width: 400px) {
-  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid { grid-template-columns: var(--grid-template, repeat(2, 1fr)); }
   .brand span:last-child { font-size: 0.92rem; }
   .summary-stats { gap: 10px; }
 }
@@ -676,7 +681,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 /* Unfolded: a phone that is suddenly tablet-shaped gets the roomier layout. */
 @media (min-width: 701px) and (max-width: 1024px) {
-  .card-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .card-grid { grid-template-columns: var(--grid-template, repeat(auto-fill, minmax(140px, 1fr))); }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
 }
 
