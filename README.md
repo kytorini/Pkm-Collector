@@ -139,7 +139,10 @@ shortly after changes settle.
 Deletions are handled separately, because an absent entry can't be told from
 one the other device hasn't seen yet. A card is only treated as deleted when
 the remote copy is demonstrably newer than this device's last sync and the
-entry hasn't been touched here since.
+entry hasn't been touched here since. Wholesale removals are refused outright:
+a device syncing while empty — a cleared browser, a fresh profile — would
+otherwise push an empty document and wipe every other device. Such a sync
+reports what it held back instead.
 
 The **sync code is the secret** — anyone holding it and the anon key can read
 the collection. Generate one rather than choosing something memorable. Nothing

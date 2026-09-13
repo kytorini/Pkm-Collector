@@ -243,11 +243,25 @@ create policy "sync" on collections
 
         {sync.error && <p className="warn-note">{sync.error}</p>}
         {!sync.error && sync.state === 'ok' && sync.lastResult && (
-          <p className="note">
-            Synced{sync.lastSyncedAt ? ` at ${new Date(sync.lastSyncedAt).toLocaleTimeString()}` : ''} —
-            {' '}{sync.lastResult.pulled} in, {sync.lastResult.pushed} out
-            {sync.lastResult.conflicts > 0 && `, ${sync.lastResult.conflicts} resolved by most recent edit`}.
-          </p>
+          <>
+            <p className="note">
+              Synced{sync.lastSyncedAt ? ` at ${new Date(sync.lastSyncedAt).toLocaleTimeString()}` : ''} —
+              {' '}<strong>{sync.lastResult.total} cards in sync</strong>
+              {sync.lastResult.pulled === 0 && sync.lastResult.pushed === 0
+                ? ' (already up to date)'
+                : ` (${sync.lastResult.pulled} in, ${sync.lastResult.pushed} out)`}
+              {sync.lastResult.conflicts > 0 && `, ${sync.lastResult.conflicts} resolved by most recent edit`}
+              {sync.lastResult.removed > 0 && `, ${sync.lastResult.removed} removed elsewhere`}.
+            </p>
+            {sync.lastResult.heldBack > 0 && (
+              <p className="warn-note">
+                {sync.lastResult.heldBack} cards are missing from the other device's copy — too many to be a
+                deliberate deletion, so nothing was removed here. This usually means the other device synced
+                while its collection was empty. Check it, then sync again from whichever device holds the
+                collection you want to keep.
+              </p>
+            )}
+          </>
         )}
         {!sync.error && sync.state !== 'ok' && sync.lastSyncedAt > 0 && (
           <p className="muted small">Last synced {new Date(sync.lastSyncedAt).toLocaleString()}.</p>

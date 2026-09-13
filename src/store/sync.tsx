@@ -15,13 +15,23 @@ const LAST_SYNCED_KEY = 'pkm-collector:lastSyncedAt'
 
 export type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
 
+export interface SyncResult {
+  pulled: number
+  pushed: number
+  conflicts: number
+  /** Cards in the collection after the sync — the number that reassures. */
+  total: number
+  removed: number
+  heldBack: number
+}
+
 interface SyncContextValue {
   settings: SyncSettings
   update: (patch: Partial<SyncSettings>) => void
   state: SyncState
   error: string | null
   lastSyncedAt: number
-  lastResult: { pulled: number; pushed: number; conflicts: number } | null
+  lastResult: SyncResult | null
   syncNow: () => Promise<void>
   configured: boolean
 }
@@ -36,7 +46,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SyncSettings>(loadSyncSettings)
   const [state, setState] = useState<SyncState>('idle')
   const [error, setError] = useState<string | null>(null)
-  const [lastResult, setLastResult] = useState<SyncContextValue['lastResult']>(null)
+  const [lastResult, setLastResult] = useState<SyncResult | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState(() => Number(localStorage.getItem(LAST_SYNCED_KEY) ?? 0))
 
   // The latest collection, for callbacks that must not re-run on every edit.
@@ -67,17 +77,26 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       if (!remote) {
         // First device on this code: seed it rather than merging with nothing.
         await pushRemote(settings, local)
-        setLastResult({ pulled: 0, pushed: Object.keys(local).length, conflicts: 0 })
+        const total = Object.keys(local).length
+        setLastResult({ pulled: 0, pushed: total, conflicts: 0, total, removed: 0, heldBack: 0 })
       } else {
         const result = mergeCollections(local, remote.collection)
-        const merged = applyDeletions(result.merged, remote.collection, remote.savedAt, lastSyncedAt)
+        const deletions = applyDeletions(result.merged, remote.collection, remote.savedAt, lastSyncedAt)
+        const merged = deletions.collection
         replaceAll(merged)
         collectionRef.current = merged
         // Only write back when this device actually has something to add.
         if (result.pushed > 0 || Object.keys(merged).length !== Object.keys(remote.collection).length) {
           await pushRemote(settings, merged)
         }
-        setLastResult({ pulled: result.pulled, pushed: result.pushed, conflicts: result.conflicts })
+        setLastResult({
+          pulled: result.pulled,
+          pushed: result.pushed,
+          conflicts: result.conflicts,
+          total: Object.keys(merged).length,
+          removed: deletions.removed,
+          heldBack: deletions.heldBack,
+        })
       }
 
       const now = Date.now()

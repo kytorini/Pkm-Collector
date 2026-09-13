@@ -67,22 +67,48 @@ export function mergeCollections(local: CollectionMap, remote: CollectionMap): M
  * from the other. Tracking when this device last synced lets a missing remote
  * key be read as a deletion only when the remote copy is demonstrably newer.
  */
+export interface DeletionResult {
+  collection: CollectionMap
+  /** Entries removed because the other device deleted them. */
+  removed: number
+  /**
+   * Removals refused as too large to be real. A device that syncs while empty
+   * — a cleared browser, a fresh profile, a failed restore — would otherwise
+   * push an empty document and wipe every other device's collection.
+   */
+  heldBack: number
+}
+
+/** Below this many entries, proportion is meaningless, so allow small deletes. */
+const ALWAYS_ALLOW_BELOW = 10
+/** Above this share of the collection, a deletion looks like an accident. */
+const MAX_DELETE_SHARE = 0.25
+
 export function applyDeletions(
   merged: CollectionMap,
   remote: CollectionMap,
   remoteSavedAt: number,
   lastSyncedAt: number,
-): CollectionMap {
-  if (!remoteSavedAt || !lastSyncedAt || remoteSavedAt <= lastSyncedAt) return merged
-
-  const next: CollectionMap = {}
-  for (const [key, entry] of Object.entries(merged)) {
-    const missingRemotely = !(key in remote)
-    // Only drop entries this device hasn't touched since its last sync;
-    // anything edited locally since then is a real local change.
-    const untouchedLocally = stamp(entry) <= lastSyncedAt
-    if (missingRemotely && untouchedLocally) continue
-    next[key] = entry
+): DeletionResult {
+  if (!remoteSavedAt || !lastSyncedAt || remoteSavedAt <= lastSyncedAt) {
+    return { collection: merged, removed: 0, heldBack: 0 }
   }
-  return next
+
+  const deletable = Object.entries(merged).filter(
+    ([key, entry]) =>
+      !(key in remote) &&
+      // Only entries untouched here since the last sync; anything edited
+      // locally since then is a real local change, not a remote deletion.
+      stamp(entry) <= lastSyncedAt,
+  )
+  if (deletable.length === 0) return { collection: merged, removed: 0, heldBack: 0 }
+
+  const total = Object.keys(merged).length
+  const wholesale = deletable.length > ALWAYS_ALLOW_BELOW && deletable.length > total * MAX_DELETE_SHARE
+  if (wholesale) return { collection: merged, removed: 0, heldBack: deletable.length }
+
+  const doomed = new Set(deletable.map(([key]) => key))
+  const next: CollectionMap = {}
+  for (const [key, entry] of Object.entries(merged)) if (!doomed.has(key)) next[key] = entry
+  return { collection: next, removed: doomed.size, heldBack: 0 }
 }
