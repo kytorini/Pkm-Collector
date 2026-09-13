@@ -237,9 +237,28 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   background: var(--bg-sunken);
   animation: panel-open 0.16s ease-out;
 }
-.set-panel-head { font-size: 0.78rem; margin: 0 0 12px; }
+.set-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-size: 0.78rem;
+  margin: 0 0 12px;
+}
 .set-variants { display: flex; flex-direction: column; gap: 10px; }
 .set-variant-line { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 5px; }
+/* What each print run is worth, and what finishing it would cost. */
+.set-variant-money {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+.set-panel-money { font-variant-numeric: tabular-nums; }
+.money-held { color: var(--gold); font-weight: 600; }
 /* Each print run is its own destination: the binder opens on that variation. */
 .set-variant-link {
   display: block;
@@ -718,12 +737,12 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .section-head .btn-row { flex-wrap: nowrap; }
   .section-head .btn-row .btn { flex: 1 1 0; min-width: 0; }
 
-  /* Name and count share the first line, the bar spans the second. */
+  /* Name and count share the first line; the bar and the value the second. */
   .progress-row { grid-template-columns: 1fr auto; row-gap: 7px; column-gap: 12px; padding: 13px 14px; }
   .progress-row-name { grid-column: 1; grid-row: 1; }
   .progress-row-count { grid-column: 2; grid-row: 1; }
-  .progress-row .progress { grid-column: 1 / -1; grid-row: 2; }
-  .progress-row-value { display: none; }
+  .progress-row .progress { grid-column: 1; grid-row: 2; }
+  .progress-row-value { grid-column: 2; grid-row: 2; font-size: 0.78rem; }
 
   .set-panel { padding: 2px 14px 14px; }
   .btn-row .btn { flex: 1 1 auto; }

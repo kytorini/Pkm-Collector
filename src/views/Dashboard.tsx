@@ -4,9 +4,20 @@ import { VINTAGE_SETS } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
-import { statsForCollection, statsForSet, statsForVariant } from '../lib/stats'
+import { statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
+
+/**
+ * What the rest of a print run would cost. A run with nothing left to buy is
+ * "complete"; one whose missing cards have no price feed says so rather than
+ * quoting a misleading $0.
+ */
+function remainderNote(s: VariantStats): string {
+  if (s.total > 0 && s.owned >= s.total) return 'complete'
+  if (s.missingValue > 0) return `${formatMoney(s.missingValue)} to finish`
+  return 'no price feed for the rest'
+}
 
 export function Dashboard() {
   const { cardsBySet, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
@@ -182,9 +193,21 @@ export function Dashboard() {
 
                 {isOpen && (
                   <div className="set-panel" id={`set-panel-${set.id}`}>
-                    <p className="set-panel-head muted">
-                      {set.series} series · {set.year} · {cards.length || set.total} cards
-                    </p>
+                    <div className="set-panel-head">
+                      <span className="muted">
+                        {set.series} series · {set.year} · {cards.length || set.total} cards
+                      </span>
+                      {cards.length > 0 && (
+                        <span className="set-panel-money">
+                          {s.ownedValue > 0 ? (
+                            <span className="money-held">{formatMoney(s.ownedValue)} held</span>
+                          ) : (
+                            <span className="muted">nothing held</span>
+                          )}
+                          <span className="muted"> · {remainderNote(s)}</span>
+                        </span>
+                      )}
+                    </div>
                     <div className="set-variants">
                       {set.variants.map((variant) => {
                         const vs = statsForVariant(cards, variant, collection)
@@ -200,6 +223,16 @@ export function Dashboard() {
                               <span className="muted">{vs.owned}/{vDenom}</span>
                             </span>
                             <ProgressBar value={vs.owned} total={vDenom} />
+                            {cards.length > 0 && (
+                              <span className="set-variant-money">
+                                {vs.ownedValue > 0 ? (
+                                  <span className="money-held">{formatMoney(vs.ownedValue)}</span>
+                                ) : (
+                                  <span className="muted">nothing held</span>
+                                )}
+                                <span className="muted">{remainderNote(vs)}</span>
+                              </span>
+                            )}
                           </a>
                         )
                       })}
