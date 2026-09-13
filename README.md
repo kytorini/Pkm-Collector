@@ -252,7 +252,12 @@ pick replace.
   page swaps the grid for a list: every card with a link straight to its price
   history and a box for the figure, with a running count of how many are done.
   The filter and search narrow that list too, so you can do only the cards you
-  own, or work through a set in sittings. When you're done, one button points
+  own, or work through a set in sittings. Coming back from a lookup, the row
+  you left from is highlighted and scrolled to, and a **Paste** button fills it
+  from whatever you copied — a copied "Ungraded $1,234.56" lands as 1234.56.
+  A copied link is refused rather than read as $4 off the end of its URL.
+  (The boxes are text, not `type="number"`, which silently rejects a pasted
+  "$1,234.56" and leaves you with nothing.) When you're done, one button points
   that print run at those prices — the run you filled in, not the whole set,
   so the other runs aren't dragged onto figures that don't exist for them.
   This is the answer when a print run has no listing of its own anywhere in

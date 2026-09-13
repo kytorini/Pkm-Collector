@@ -13,6 +13,7 @@ import {
 } from '../lib/priceSources'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
+import { PriceInput } from './PriceInput'
 import { PriceSourceSelect } from './PriceSourceSelect'
 import { CONDITIONS, GRADERS, type ApiCard, type ConditionId, type Grader, type VintageSet } from '../types'
 
@@ -182,19 +183,16 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                           ? `${chosenRecorded.site} price for this card (USD)`
                           : 'Your price (USD)'}
                       </span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        inputMode="decimal"
-                        placeholder="—"
-                        value={recordedPrice(entry, chosenRecorded.key) ?? ''}
-                        onChange={(e) =>
+                      <PriceInput
+                        label={
+                          chosenRecorded.site
+                            ? `${chosenRecorded.site} price for ${card.name}`
+                            : `Your price for ${card.name}`
+                        }
+                        value={recordedPrice(entry, chosenRecorded.key)}
+                        onChange={(value) =>
                           setPriceOverride(card.id, variant.id, {
-                            recorded: {
-                              key: chosenRecorded.key,
-                              value: e.target.value === '' ? undefined : Number(e.target.value),
-                            },
+                            recorded: { key: chosenRecorded.key, value },
                           })
                         }
                       />
