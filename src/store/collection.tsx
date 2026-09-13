@@ -142,10 +142,20 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
         if (patch.recorded) {
           const { key: where, value } = patch.recorded
           const prices = { ...(next.manualPrices ?? {}) }
-          if (value == null || Number.isNaN(value)) delete prices[where]
-          else prices[where] = value
+          // A hand-entered price never refreshes itself, so it is stamped with
+          // the day it was taken and re-stamped whenever it is changed.
+          const stamps = { ...(next.manualPricesAt ?? {}) }
+          if (value == null || Number.isNaN(value)) {
+            delete prices[where]
+            delete stamps[where]
+          } else {
+            prices[where] = value
+            stamps[where] = next.updatedAt
+          }
           if (Object.keys(prices).length > 0) next.manualPrices = prices
           else delete next.manualPrices
+          if (Object.keys(stamps).length > 0) next.manualPricesAt = stamps
+          else delete next.manualPricesAt
           // The single pre-tagging field is superseded once one is written.
           if (where === 'own') delete next.manualPrice
         }

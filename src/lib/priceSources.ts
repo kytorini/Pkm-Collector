@@ -52,6 +52,14 @@ export function recordedPrice(entry: CollectionEntry | undefined, key: string): 
   return null
 }
 
+/**
+ * When that figure was written down. Absent for prices recorded before they
+ * were dated — the price still counts, its age is simply unknown.
+ */
+export function recordedAt(entry: CollectionEntry | undefined, key: string): string | undefined {
+  return entry?.manualPricesAt?.[key]
+}
+
 /** Every bucket the API is known to publish, in the order they're offered. */
 export const TCG_BUCKETS: { key: string; label: string }[] = [
   { key: '1stEditionHolofoil', label: '1st Edition Holofoil' },

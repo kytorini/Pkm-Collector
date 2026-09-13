@@ -113,6 +113,12 @@ export interface CollectionEntry {
     * PriceCharting figure and an eBay comp don't overwrite each other.
     */
   manualPrices?: Record<string, number>
+  /**
+    * When each of those was written down, as an ISO date, under the same keys.
+    * A hand-entered price never refreshes itself, so it is only as good as the
+    * day it was taken.
+    */
+  manualPricesAt?: Record<string, string>
   /** Pre-dates `manualPrices`; still read as the 'own' figure. */
   manualPrice?: number
   updatedAt: string

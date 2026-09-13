@@ -13,11 +13,13 @@ import {
   AUTO,
   RECORDED_SOURCES,
   isRecorded,
+  recordedAt,
   recordedKey,
   recordedPrice,
   recordedSourceId,
   type PriceSourceId,
 } from '../lib/priceSources'
+import { STALE_DAYS, isStalePrice, recordedAgo } from '../lib/dates'
 import { externalLinks } from '../lib/externalLinks'
 import { usePrices } from '../store/prices'
 import { navigate, routeHref } from '../lib/router'
@@ -66,6 +68,9 @@ function PriceEntryList({
   const filled = cards.filter(
     (c) => recordedPrice(collection[`${c.id}::${variant.id}`], entering) != null,
   ).length
+  const stale = cards.filter((c) =>
+    isStalePrice(recordedAt(collection[`${c.id}::${variant.id}`], entering)),
+  ).length
   const alreadyUsing = effectiveSource === recordedSourceId(entering)
 
   return (
@@ -77,6 +82,7 @@ function PriceEntryList({
             {source.site
               ? `Open a card's link, read the price, type it here. ${filled} of ${cards.length} filled in.`
               : `${filled} of ${cards.length} filled in.`}
+            {stale > 0 && ` ${stale} ${stale === 1 ? 'is' : 'are'} over ${STALE_DAYS} days old.`}
           </p>
         </div>
         <div className="btn-row">
@@ -117,6 +123,8 @@ function PriceEntryList({
               <PriceInput
                 label={`${source.site || 'Your'} price for ${card.name}`}
                 highlight={waiting}
+                hint={recordedAgo(recordedAt(entry, entering))}
+                hintStale={isStalePrice(recordedAt(entry, entering))}
                 value={recordedPrice(entry, entering)}
                 onChange={(value) => {
                   setPriceOverride(card.id, variant.id, { recorded: { key: entering, value } })

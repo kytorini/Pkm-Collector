@@ -7,10 +7,12 @@ import {
   RECORDED_SOURCES,
   isRecorded,
   previewSource,
+  recordedAt,
   recordedKey,
   recordedPrice,
   type PriceSourceId,
 } from '../lib/priceSources'
+import { isStalePrice, recordedAgo } from '../lib/dates'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { PriceInput } from './PriceInput'
@@ -71,17 +73,24 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
             const owned = Boolean(entry?.owned)
             const price = resolvePrice(card, variant)
             const isActive = variant.id === activeVariantId
-            const chosenRecorded =
-              entry?.priceSource && isRecorded(entry.priceSource)
-                ? RECORDED_SOURCES.find((r) => r.key === recordedKey(entry.priceSource!)) ?? null
-                : null
+            // Based on the source actually in force, not just an override set
+            // on this card: with the whole print run reading PriceCharting,
+            // this is still where you type this card's figure in.
+            const chosenRecorded = isRecorded(price.sourceId)
+              ? RECORDED_SOURCES.find((r) => r.key === recordedKey(price.sourceId)) ?? null
+              : null
+            const recordedOn = chosenRecorded ? recordedAt(entry, chosenRecorded.key) : undefined
+            const recordedStamp = recordedAgo(recordedOn)
+            const recordedIsStale = isStalePrice(recordedOn)
             // Each option says what it would actually give you for this card,
             // so a source with nothing to offer is visible before it's chosen.
             const annotate = (id: PriceSourceId): string | null => {
               if (id === 'inherit') return null
               if (isRecorded(id)) {
                 const value = recordedPrice(entry, recordedKey(id))
-                return value == null ? 'not recorded yet' : formatMoney(value)
+                if (value == null) return 'not recorded yet'
+                const when = recordedAgo(recordedAt(entry, recordedKey(id)))
+                return when ? `${formatMoney(value)}, ${when}` : formatMoney(value)
               }
               if (id === 'auto') {
                 const auto = priceFor(card, variant).market
@@ -130,6 +139,15 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                         ? `graded copies aren’t estimated; this is ${CONDITION_NOTE.NM}`
                         : CONDITION_NOTE[entry.condition]}
                     </span>
+                  </p>
+                )}
+
+                {chosenRecorded && price.market != null && recordedStamp && (
+                  <p className={`variant-note ${recordedIsStale ? 'warn' : ''}`}>
+                    {chosenRecorded.site
+                      ? `Your ${chosenRecorded.site} reading, taken ${recordedStamp}.`
+                      : `Your own figure, entered ${recordedStamp}.`}
+                    {recordedIsStale && ' A hand-entered price never refreshes itself — worth checking again.'}
                   </p>
                 )}
 
@@ -189,6 +207,12 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                             ? `${chosenRecorded.site} price for ${card.name}`
                             : `Your price for ${card.name}`
                         }
+                        hint={
+                          recordedStamp
+                            ? `Recorded ${recordedStamp}${recordedIsStale ? ' — worth checking again' : ''}`
+                            : undefined
+                        }
+                        hintStale={recordedIsStale}
                         value={recordedPrice(entry, chosenRecorded.key)}
                         onChange={(value) =>
                           setPriceOverride(card.id, variant.id, {

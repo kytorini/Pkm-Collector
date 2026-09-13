@@ -7,6 +7,10 @@ interface Props {
   label: string
   /** Draws attention after you've been off to look a price up. */
   highlight?: boolean
+  /** When this figure was taken, shown under the box. */
+  hint?: string
+  /** Marks that hint as old enough to be worth checking again. */
+  hintStale?: boolean
   className?: string
 }
 
@@ -22,7 +26,7 @@ const canReadClipboard = () =>
  * the clipboard so coming back from a price site is one tap rather than
  * retyping the digits.
  */
-export function PriceInput({ value, onChange, label, highlight, className }: Props) {
+export function PriceInput({ value, onChange, label, highlight, hint, hintStale, className }: Props) {
   const [text, setText] = useState(value == null ? '' : String(value))
   const [note, setNote] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -103,7 +107,11 @@ export function PriceInput({ value, onChange, label, highlight, className }: Pro
           </button>
         )}
       </span>
-      {note && <span className="price-input-note">{note}</span>}
+      {note ? (
+        <span className="price-input-note">{note}</span>
+      ) : (
+        hint && <span className={`price-input-note ${hintStale ? 'is-stale' : ''}`}>{hint}</span>
+      )}
     </span>
   )
 }

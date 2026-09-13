@@ -384,6 +384,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .price-input.is-highlight input { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212, 175, 85, 0.16); }
 .price-input.is-highlight .paste-btn { border-color: var(--gold); color: var(--gold); }
 .price-input-note { font-size: 0.72rem; color: var(--text-dim); text-align: right; }
+.price-input-note.is-stale { color: var(--gold-dim); }
 .price-entry-list li.is-waiting { background: #1b202a; }
 
 /* ---------- set detail ---------- */

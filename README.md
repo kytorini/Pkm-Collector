@@ -262,6 +262,13 @@ pick replace.
   so the other runs aren't dragged onto figures that don't exist for them.
   This is the answer when a print run has no listing of its own anywhere in
   the feed.
+- **Every recorded price carries the day it was taken.** The feed refreshes
+  itself; a figure you read off a site in March is still March's figure in
+  September. Each one shows as "today", "5 days ago", or a plain date once a
+  day count stops helping, and one over 90 days old is marked as worth
+  checking again — the entry list says how many of a run have gone that way.
+  Changing a price re-stamps it; clearing one takes its date with it. Prices
+  recorded before this simply have no date, which is not the same as being old.
 - Recorded prices are collection data, not a preference: they're used
   everywhere the card is valued and sync between your devices. The collection
   and per-set source choices are per device, like grid density.
