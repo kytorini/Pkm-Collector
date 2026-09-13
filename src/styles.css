@@ -278,17 +278,41 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .price-source-label { font-size: 0.82rem; color: var(--text-dim); }
 .price-source .select { width: 100%; max-width: 420px; }
 
-.price-source-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 18px;
-  padding: 12px 14px;
-  background: var(--bg-sunken);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-}
+.price-source-row { display: flex; flex-direction: column; gap: 9px; }
 .price-source-row p { margin: 0; }
+.price-source-row .select { max-width: none; }
+
+/* ---------- overflow menu ---------- */
+.overflow { position: relative; }
+/* A "…" is a narrow glyph: the box has to be sized, not left to the text. */
+.overflow-btn { position: relative; min-width: 44px; padding: 9px 13px; font-size: 1.05rem; line-height: 1; }
+/* Says "there is something in here" without spending a line to say it. */
+.overflow-btn.is-flagged::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.overflow-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: max(260px, min(340px, calc(100vw - 28px)));
+  padding: 13px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  animation: overflow-open 0.13s ease-out;
+}
+@keyframes overflow-open { from { opacity: 0; transform: translateY(-5px); } }
+
+.set-head-actions { display: flex; align-items: center; gap: 8px; }
 
 .price-source-card {
   display: flex;
@@ -753,7 +777,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .view-head p { font-size: 0.8rem; }
   /* The set's series and card count are already on the sets list and the
    * print-run tabs; on a phone that line only pushes cards off-screen. */
-  .set-head p { display: none; }
+  /* The set's subtitle only — not any paragraph that lands in the header,
+     such as the one inside the overflow panel. */
+  .set-head > div > p { display: none; }
 
   /*
    * Set header, tabs, summary and filters used to fill the screen before a
@@ -763,6 +789,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
    */
   .set-head { align-items: center; gap: 10px; }
   .set-head .btn { padding: 8px 12px; min-height: 40px; font-size: 0.8rem; white-space: nowrap; }
+  .set-head .overflow-btn { min-width: 44px; min-height: 44px; padding: 8px; font-size: 1rem; }
   .back-link { margin-bottom: 2px; font-size: 0.8rem; }
   .variant-tabs {
     display: flex;

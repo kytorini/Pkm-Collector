@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardTile } from '../components/CardTile'
+import { OverflowMenu } from '../components/OverflowMenu'
 import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
 import { getSet } from '../data/vintageSets'
@@ -220,9 +221,48 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           <h1>{set.name}</h1>
           <p className="muted">{set.series} series · {set.year} · {cards.length || set.total} cards</p>
         </div>
-        <button className="btn ghost" onClick={onRefresh} disabled={refreshing}>
-          {refreshing ? 'Refreshing…' : 'Refresh prices'}
-        </button>
+        <div className="set-head-actions">
+          <button className="btn ghost" onClick={onRefresh} disabled={refreshing}>
+            {refreshing ? 'Refreshing…' : 'Refresh prices'}
+          </button>
+          <OverflowMenu
+            id="set-options"
+            label="Pricing options"
+            // A source that can't price the set is worth noticing without
+            // opening the menu to find out.
+            flagged={cards.length > 0 && stats.unpriced > 0}
+          >
+            {(close) => (
+              <div className="price-source-row">
+                <PriceSourceSelect
+                  level="set"
+                  id="set-price-source"
+                  label={`Prices for ${set.name}`}
+                  value={rules.bySet[setId] ?? 'inherit'}
+                  onChange={(id) => setSetSource(setId, id)}
+                  annotate={(id) => coverage(id)}
+                />
+                <p className="muted small">
+                  {stats.unpriced > 0
+                    ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this ` +
+                      'source. Try another, or type the prices in yourself.'
+                    : `Every ${activeVariant.label} card has a price from this source.`}
+                </p>
+                {cards.length > 0 && !entering && (
+                  <button
+                    className="btn small"
+                    onClick={() => {
+                      setEntering(enterKey)
+                      close()
+                    }}
+                  >
+                    Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
+                  </button>
+                )}
+              </div>
+            )}
+          </OverflowMenu>
+        </div>
       </header>
 
       <nav className="variant-tabs" aria-label="Print variation">
@@ -266,30 +306,6 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           </div>
           <div><dt>Spent</dt><dd>{stats.spend ? formatMoney(stats.spend) : '—'}</dd></div>
         </dl>
-      </div>
-
-      <div className="price-source-row">
-        <PriceSourceSelect
-          level="set"
-          id="set-price-source"
-          label={`Prices for ${set.name}`}
-          value={rules.bySet[setId] ?? 'inherit'}
-          onChange={(id) => setSetSource(setId, id)}
-          annotate={(id) => coverage(id)}
-        />
-        <p className="muted small">
-          {stats.unpriced > 0
-            ? `${stats.unpriced} of ${stats.total} ${activeVariant.label} cards have no price from this source. ` +
-              'Try another, or type the prices in yourself.'
-            : `Every ${activeVariant.label} card has a price from this source.`}
-        </p>
-        {cards.length > 0 && !entering && (
-          <div className="btn-row">
-            <button className="btn small" onClick={() => setEntering(enterKey)}>
-              Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="toolbar">
