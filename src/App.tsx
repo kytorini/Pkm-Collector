@@ -7,12 +7,10 @@ import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
 import { Search } from './views/Search'
 import { SetDetail } from './views/SetDetail'
-import { SetList } from './views/SetList'
 import { Settings } from './views/Settings'
 
 const NAV = [
   { href: routeHref.dashboard, label: 'Collection', icon: '◆', match: 'dashboard' },
-  { href: routeHref.sets, label: 'Sets', icon: '▦', match: 'sets' },
   { href: routeHref.search, label: 'Search', icon: '⌕', match: 'search' },
   { href: routeHref.settings, label: 'Settings', icon: '⚙', match: 'settings' },
 ] as const
@@ -35,7 +33,7 @@ function Shell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const active = route.name === 'set' ? 'sets' : route.name === 'import' ? 'settings' : route.name
+  const active = route.name === 'set' ? 'dashboard' : route.name === 'import' ? 'settings' : route.name
 
   return (
     <div className="app">
@@ -68,7 +66,6 @@ function Shell() {
 
       <main className="main">
         {route.name === 'dashboard' && <Dashboard />}
-        {route.name === 'sets' && <SetList />}
         {route.name === 'set' && <SetDetail setId={route.setId} variantId={route.variantId} />}
         {route.name === 'search' && <Search />}
         {route.name === 'settings' && <Settings />}

@@ -65,7 +65,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     return list
   }, [cards, collection, activeVariant, filter, sort, query])
 
-  if (!set) return <div className="view"><p>Unknown set. <a href={routeHref.sets}>Back to sets</a></p></div>
+  if (!set) return <div className="view"><p>Unknown set. <a href={routeHref.dashboard}>Back to your collection</a></p></div>
   if (!activeVariant) return <div className="view"><p>This set has no print variations configured.</p></div>
 
   const stats = statsForVariant(cards, activeVariant, collection)
@@ -97,7 +97,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     <div className="view">
       <header className="view-head set-head">
         <div>
-          <a className="back-link" href={routeHref.sets}>‹ Sets</a>
+          <a className="back-link" href={routeHref.dashboard}>‹ Collection</a>
           <h1>{set.name}</h1>
           <p className="muted">{set.series} series · {set.year} · {cards.length || set.total} cards</p>
         </div>

@@ -70,12 +70,17 @@ specific model:
 
 - **Navigation sits at the bottom on phones**, where a thumb reaches on a 6.3"
   screen, and at the top on tablets and desktops.
-- **The app shows only the sets you chase.** "Choose sets" on the Collection
-  page ticks them off; hidden ones leave that list, its totals and the Sets
-  tab, so completion and cost to finish answer "how am I doing on what I
-  collect" rather than counting sets you'll never buy. Nothing is deleted — the
-  cards stay cached, a direct link still opens a hidden set, and both pages say
-  how many are hidden with a way to bring them back. Stored per device.
+- **One page for the whole collection.** The Collection page is the set list:
+  every set is a row with its completion, count and value, and tapping a row
+  opens it in place to show each print run's progress. Each run links straight
+  to that binder page, so a 1st Edition run is one tap rather than a set page
+  and then a tab.
+- **The app shows only the sets you chase.** "Choose sets" ticks them off;
+  hidden ones leave the list and the totals, so completion and cost to finish
+  answer "how am I doing on what I collect" rather than counting sets you'll
+  never buy. Nothing is deleted — the cards stay cached, a direct link still
+  opens a hidden set, and the page says how many are hidden with a way to
+  bring them back. Stored per device.
 - **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
   5 or 6 per row. Auto fills the width, which on an iPad means six and rather
   small artwork. The choice is stored per device, since a tablet and a phone
@@ -282,5 +287,5 @@ src/
   lib/importer.ts       spreadsheet -> collection matching and planning
   lib/pricing.ts        variation -> price-bucket resolution
   lib/stats.ts          completion, value, spend rollups
-  views/                Collection, Sets, Set detail, Search, Import, Settings
+  views/                Collection, Set detail, Search, Import, Settings
 ```

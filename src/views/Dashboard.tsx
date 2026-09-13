@@ -4,7 +4,7 @@ import { VINTAGE_SETS } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
-import { statsForCollection, statsForSet } from '../lib/stats'
+import { statsForCollection, statsForSet, statsForVariant } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 
@@ -13,6 +13,12 @@ export function Dashboard() {
   const { collection } = useCollection()
   const hidden = useHiddenSets()
   const [choosing, setChoosing] = useState(false)
+  // Sets opened in place. More than one at a time, so two runs can be compared
+  // without collapsing the first.
+  const [open, setOpen] = useState<string[]>([])
+
+  const toggleOpen = (id: string) =>
+    setOpen((prev) => (prev.includes(id) ? prev.filter((o) => o !== id) : [...prev, id]))
 
   const shown = useMemo(() => VINTAGE_SETS.filter((s) => !hidden.includes(s.id)), [hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same
@@ -128,8 +134,8 @@ export function Dashboard() {
 
         {choosing && (
           <p className="muted small choose-hint">
-            Untick a set to hide it from this page and the Sets tab, and leave it out of your totals.
-            Nothing is deleted — tick it again whenever you start chasing it.
+            Untick a set to keep it off this page and out of your totals. Nothing is deleted — tick it
+            again whenever you start chasing it.
           </p>
         )}
 
@@ -154,13 +160,53 @@ export function Dashboard() {
               )
             }
 
+            const isOpen = open.includes(set.id)
+
             return (
-              <a key={set.id} className="progress-row" href={routeHref.set(set.id)}>
-                <span className="progress-row-name">{set.name}</span>
-                <ProgressBar value={s.owned} total={denom} />
-                <span className="progress-row-count muted">{s.owned}/{denom}</span>
-                <span className="progress-row-value">{s.ownedValue ? formatMoney(s.ownedValue) : ''}</span>
-              </a>
+              <div key={set.id} className={`set-row ${isOpen ? 'is-open' : ''}`}>
+                <button
+                  type="button"
+                  className="progress-row"
+                  onClick={() => toggleOpen(set.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={`set-panel-${set.id}`}
+                >
+                  <span className="progress-row-name">
+                    <span className="row-caret" aria-hidden>›</span>
+                    {set.name}
+                  </span>
+                  <ProgressBar value={s.owned} total={denom} />
+                  <span className="progress-row-count muted">{s.owned}/{denom}</span>
+                  <span className="progress-row-value">{s.ownedValue ? formatMoney(s.ownedValue) : ''}</span>
+                </button>
+
+                {isOpen && (
+                  <div className="set-panel" id={`set-panel-${set.id}`}>
+                    <p className="set-panel-head muted">
+                      {set.series} series · {set.year} · {cards.length || set.total} cards
+                    </p>
+                    <div className="set-variants">
+                      {set.variants.map((variant) => {
+                        const vs = statsForVariant(cards, variant, collection)
+                        const vDenom = vs.total || set.total
+                        return (
+                          <a
+                            key={variant.id}
+                            className="set-variant-link"
+                            href={routeHref.set(set.id, variant.id)}
+                          >
+                            <span className="set-variant-line">
+                              <span>{variant.label}</span>
+                              <span className="muted">{vs.owned}/{vDenom}</span>
+                            </span>
+                            <ProgressBar value={vs.owned} total={vDenom} />
+                          </a>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             )
           })}
           {!choosing && shown.length === 0 && (

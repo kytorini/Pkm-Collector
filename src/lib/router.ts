@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 
 export type Route =
   | { name: 'dashboard' }
-  | { name: 'sets' }
   | { name: 'set'; setId: string; variantId?: string }
   | { name: 'search' }
   | { name: 'settings' }
@@ -11,7 +10,9 @@ export type Route =
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0]
   const parts = path.split('/').filter(Boolean)
-  if (parts[0] === 'sets') return { name: 'sets' }
+  // The set list lives on the Collection page now. Old links still land
+  // somewhere sensible rather than on a blank screen.
+  if (parts[0] === 'sets') return { name: 'dashboard' }
   if (parts[0] === 'set' && parts[1]) return { name: 'set', setId: parts[1], variantId: parts[2] }
   if (parts[0] === 'search') return { name: 'search' }
   if (parts[0] === 'settings') return { name: 'settings' }
@@ -35,7 +36,6 @@ export function navigate(to: string): void {
 
 export const routeHref = {
   dashboard: '#/',
-  sets: '#/sets',
   search: '#/search',
   settings: '#/settings',
   import: '#/import',
