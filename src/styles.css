@@ -455,7 +455,12 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .variant-tab {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  /*
+   * Centred, not baseline-aligned: these pills carry a min-height for the tap
+   * target, and baseline alignment hands all of that spare height to the space
+   * below the text, which then sits visibly high in the pill.
+   */
+  align-items: center;
   flex: 0 0 auto;
   scroll-snap-align: start;
   gap: 7px;
