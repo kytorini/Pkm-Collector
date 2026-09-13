@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { getSet } from './data/vintageSets'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { CollectionProvider } from './store/collection'
 import { LibraryProvider, useLibrary } from './store/library'
@@ -35,13 +36,35 @@ function Shell() {
 
   const active = route.name === 'set' ? 'dashboard' : route.name === 'import' ? 'settings' : route.name
 
+  /*
+   * Which set and print run you're in, named in the bar that never moves.
+   *
+   * The card feed has one scan per card, so an Unlimited grid and a 1st
+   * Edition grid look identical; once the page header has scrolled away
+   * there is nothing left saying which you're in. The route already knows,
+   * so nothing has to be plumbed up from the view to ask it.
+   */
+  const here = useMemo(() => {
+    if (route.name !== 'set') return null
+    const set = getSet(route.setId)
+    if (!set) return null
+    const variant = set.variants.find((v) => v.id === route.variantId) ?? set.variants[0]
+    return { set: set.name, variant: variant?.label ?? '' }
+  }, [route])
+
   return (
     <div className="app">
-      <header className="topbar">
+      <header className={`topbar ${here ? 'has-title' : ''}`}>
         <a className="brand" href={routeHref.dashboard}>
           <span className="brand-mark" aria-hidden>◈</span>
-          <span>Pkm Collector</span>
+          <span className="brand-name">Pkm Collector</span>
         </a>
+        {here && (
+          <p className="topbar-title">
+            <span className="topbar-title-set">{here.set}</span>
+            <span className="topbar-title-variant">{here.variant}</span>
+          </p>
+        )}
       </header>
 
       {/*

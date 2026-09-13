@@ -60,6 +60,18 @@ h2 { font-size: 1.05rem; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.02em; }
 .brand-mark { color: var(--gold); font-size: 1.1rem; }
 
+/* Where you are, in the one bar that never scrolls. */
+.topbar-title { display: flex; align-items: baseline; gap: 9px; min-width: 0; margin: 0; }
+.topbar-title-set {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The print run is the part the artwork can't tell you, so it carries the colour. */
+.topbar-title-variant { color: var(--gold); font-weight: 650; font-size: 0.88rem; white-space: nowrap; }
+
 .nav {
   /* Fixed rather than in flow, so it sits above the bar's blurred backdrop
      and can move to the bottom of the screen on phones. */
@@ -447,7 +459,13 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   transition: border-color 0.15s, color 0.15s;
 }
 .variant-tab:hover { border-color: var(--gold-dim); }
-.variant-tab.is-active { background: var(--bg-raised); border-color: var(--gold); color: var(--text); }
+.variant-tab.is-active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #201803;
+  font-weight: 650;
+}
+.variant-tab.is-active .variant-tab-count { color: rgba(32, 24, 3, 0.7); }
 .variant-tab-name { font-size: 0.88rem; font-weight: 600; }
 .variant-tab-count { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .variant-tabs.is-stuck .variant-tab { padding: 5px 11px; }
@@ -775,6 +793,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
  */
 @media (max-width: 700px) {
   .topbar { gap: 12px; }
+  /* The wordmark gives its room to the set and run you're actually in. */
+  .topbar.has-title .brand-name { display: none; }
   .nav {
     top: auto;
     left: 0;

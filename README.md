@@ -81,6 +81,11 @@ specific model:
   never buy. Nothing is deleted — the cards stay cached, a direct link still
   opens a hidden set, and the page says how many are hidden with a way to
   bring them back. Stored per device.
+- **The top bar names the set and print run you're in.** With one scan per
+  card, an Unlimited grid and a 1st Edition grid are pixel-identical, so once
+  the page header scrolls away nothing else tells them apart. The run is the
+  coloured half, and on a phone the wordmark stands aside for it. The active
+  tab is filled rather than outlined for the same reason.
 - **The print-run tabs and the filter bar stay put while you scroll**, pinned
   under the top bar, so switching between 1st Edition and Unlimited or
   narrowing the grid never means scrolling back up. The tabs are one row — the
