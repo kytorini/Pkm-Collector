@@ -63,6 +63,24 @@ Apple Developer account.
 Until then the Add-to-Home-Screen install above covers most of what the native
 app would give you: icon, full-screen, offline, no browser UI.
 
+## Look
+
+A Pokédex, read in the dark: red shell, blue lens, the little yellow and green
+lights, and a dark screen to read off.
+
+- **Red is identity and selection** — the mark, the active tab, the chosen
+  print run, the ring around a card you own, and the line under the top bar.
+- **Yellow is money**, kept separate on purpose: a collection total should
+  never read as an alarm.
+- **Blue runs the progress bars**, green means finished, and destructive
+  actions are a warmer orange-red so they can't be mistaken for the brand.
+- **The icons are drawn, not typed** — one monoline family on a 24 grid, sized
+  in `em` and stroked in `currentColor`, so they take their colour from
+  whatever the nav already says about state. A poké ball for the collection, a
+  pair of cards for the lot, Pokédex sliders for settings.
+- **The app icon** is a poké ball on a card. `public/icon.svg` is the source;
+  the PNGs beside it are rendered from it.
+
 ## Phone and foldable layout
 
 The layout is driven by capability, not device lists — nothing keys off a

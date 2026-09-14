@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Pkm Collector">
+  <!-- Full bleed: iOS rounds the corners itself, and a second radius inside
+       the system's own mask reads as a mistake. -->
+  <rect width="512" height="512" fill="#12141a"/>
+
+  <!-- The card the ball sits on. -->
+  <rect x="88" y="44" width="336" height="424" rx="26" fill="#1b2030" stroke="#333c50" stroke-width="6"/>
+
+  <!-- The ball. -->
+  <g>
+    <circle cx="256" cy="256" r="106" fill="#f2f4f8"/>
+    <path d="M150 256a106 106 0 0 1 212 0Z" fill="#dc0a2d"/>
+    <rect x="150" y="243" width="212" height="26" fill="#12141a"/>
+    <circle cx="256" cy="256" r="106" fill="none" stroke="#12141a" stroke-width="9"/>
+    <circle cx="256" cy="256" r="37" fill="#12141a"/>
+    <circle cx="256" cy="256" r="25" fill="#f2f4f8"/>
+  </g>
+</svg>

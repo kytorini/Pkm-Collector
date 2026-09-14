@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { CardsIcon, ChevronLeftIcon, PokeballIcon, SlidersIcon } from './components/icons'
 import { getSet } from './data/vintageSets'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { usePhone } from './lib/useMediaQuery'
@@ -12,9 +13,9 @@ import { SetDetail } from './views/SetDetail'
 import { Settings } from './views/Settings'
 
 const NAV = [
-  { href: routeHref.dashboard, label: 'Collection', icon: '◆', match: 'dashboard' },
-  { href: routeHref.lot, label: 'Lot', icon: '⧉', match: 'lot' },
-  { href: routeHref.settings, label: 'Settings', icon: '⚙', match: 'settings' },
+  { href: routeHref.dashboard, label: 'Collection', Icon: PokeballIcon, match: 'dashboard' },
+  { href: routeHref.lot, label: 'Lot', Icon: CardsIcon, match: 'lot' },
+  { href: routeHref.settings, label: 'Settings', Icon: SlidersIcon, match: 'settings' },
 ] as const
 
 function Shell() {
@@ -67,8 +68,8 @@ function Shell() {
           href={routeHref.dashboard}
           aria-label={here && phone ? 'Back to your collection' : 'Pkm Collector, your collection'}
         >
-          <span className={`brand-mark ${here && phone ? 'is-back' : ''}`} aria-hidden>
-            {here && phone ? '‹' : '◈'}
+          <span className={`brand-mark ${here && phone ? 'is-back' : ''}`}>
+            {here && phone ? <ChevronLeftIcon /> : <PokeballIcon />}
           </span>
           <span className="brand-name">Pkm Collector</span>
         </a>
@@ -88,7 +89,7 @@ function Shell() {
       <nav className="nav" aria-label="Main">
         {NAV.map((item) => (
           <a key={item.href} href={item.href} className={`nav-link ${active === item.match ? 'is-active' : ''}`}>
-            <span className="nav-icon" aria-hidden>{item.icon}</span>
+            <span className="nav-icon"><item.Icon /></span>
             <span className="nav-label">{item.label}</span>
           </a>
         ))}
