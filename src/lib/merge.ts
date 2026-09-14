@@ -23,6 +23,74 @@ const stamp = (entry: CollectionEntry): number => {
   return Number.isFinite(time) ? time : 0
 }
 
+const at = (iso: string | undefined): number => {
+  const time = iso ? Date.parse(iso) : 0
+  return Number.isFinite(time) ? time : 0
+}
+
+/**
+ * Prices you recorded are merged per site rather than going down with the
+ * entry that lost.
+ *
+ * Whole-entry "newest wins" is right for a card's condition or quantity, where
+ * the last person to look is the one to believe. It is wrong for a figure
+ * typed in on the other device: ticking a card owned here would silently throw
+ * away a PriceCharting reading made there, because the tick is newer and the
+ * whole entry goes with it. Each figure carries its own date, so each can be
+ * settled on its own.
+ *
+ * Clearing a price leaves its date behind, so "cleared here" is a dated event
+ * like any other and simply beats an older reading. A side that never touched
+ * a site has no date for it at all, and so never wins it by accident.
+ */
+function mergeRecordedPrices(
+  winner: CollectionEntry,
+  loser: CollectionEntry,
+): Pick<CollectionEntry, 'manualPrices' | 'manualPricesAt'> {
+  const sites = new Set([
+    ...Object.keys(winner.manualPrices ?? {}),
+    ...Object.keys(winner.manualPricesAt ?? {}),
+    ...Object.keys(loser.manualPrices ?? {}),
+    ...Object.keys(loser.manualPricesAt ?? {}),
+  ])
+  if (sites.size === 0) return {}
+
+  const prices: Record<string, number> = {}
+  const dates: Record<string, string> = {}
+
+  for (const site of sites) {
+    const oursAt = at(winner.manualPricesAt?.[site])
+    const theirsAt = at(loser.manualPricesAt?.[site])
+
+    // Neither side dated this one: figures recorded before they carried a
+    // date. Keep whichever exists rather than losing one to a coin toss.
+    if (!oursAt && !theirsAt) {
+      const value = winner.manualPrices?.[site] ?? loser.manualPrices?.[site]
+      if (value != null) prices[site] = value
+      continue
+    }
+
+    const mine = oursAt >= theirsAt
+    const value = mine ? winner.manualPrices?.[site] : loser.manualPrices?.[site]
+    const date = mine ? winner.manualPricesAt?.[site] : loser.manualPricesAt?.[site]
+    if (date) dates[site] = date
+    if (value != null) prices[site] = value
+  }
+
+  return {
+    ...(Object.keys(prices).length > 0 ? { manualPrices: prices } : {}),
+    ...(Object.keys(dates).length > 0 ? { manualPricesAt: dates } : {}),
+  }
+}
+
+/** The newer entry, with any recorded prices the older one still holds. */
+function combine(winner: CollectionEntry, loser: CollectionEntry): CollectionEntry {
+  const next: CollectionEntry = { ...winner }
+  delete next.manualPrices
+  delete next.manualPricesAt
+  return { ...next, ...mergeRecordedPrices(winner, loser) }
+}
+
 export function mergeCollections(local: CollectionMap, remote: CollectionMap): MergeResult {
   const merged: CollectionMap = {}
   let pulled = 0
@@ -43,11 +111,11 @@ export function mergeCollections(local: CollectionMap, remote: CollectionMap): M
       const mineAt = stamp(mine)
       const theirsAt = stamp(theirs)
       if (theirsAt > mineAt) {
-        merged[key] = theirs
+        merged[key] = combine(theirs, mine)
         pulled++
         conflicts++
       } else if (mineAt > theirsAt) {
-        merged[key] = mine
+        merged[key] = combine(mine, theirs)
         pushed++
         conflicts++
       } else {

@@ -461,7 +461,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
       <div className="set-summary">
         <div className="summary-progress">
-          <ProgressBar value={stats.owned} total={stats.total || set.total} tone="gold" />
+          <ProgressBar value={stats.owned} total={stats.total || set.total} />
           <span className="muted">{stats.pct}% complete</span>
         </div>
         <dl className="summary-stats">

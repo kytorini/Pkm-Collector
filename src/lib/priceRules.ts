@@ -10,12 +10,19 @@ import { AUTO, type PriceSourceId } from './priceSources'
  * markets besides. A set-wide choice still exists, as the shorthand for "all
  * the runs in here", and a run may override it.
  *
- * Per-card choices are not here: those live on the collection entry, because a
- * price you recorded yourself is collection data and travels between devices
- * with the rest of it. These two are a reading preference, kept per device
- * alongside grid density and hidden sets.
+ * Per-card choices are not here: those live on the collection entry and travel
+ * with the rest of the collection.
+ *
+ * These do travel too, and have to. A figure you typed in syncs, but a figure
+ * nothing is reading is invisible: fill a print run in on one device, point
+ * that run at your readings, and the other device would show blanks because
+ * the rule stayed behind. Carried as a whole object with one timestamp —
+ * per-key merging would need a timestamp per key to settle an argument that
+ * hardly ever happens.
  */
 const STORAGE_KEY = 'pkm-collector:priceRules'
+/** The rules stamp this device last pushed or adopted. */
+const SYNCED_KEY = 'pkm-collector:priceRulesSyncedAt'
 
 export interface PriceRules {
   /** Applied to every set that has no choice of its own. */
@@ -24,6 +31,8 @@ export interface PriceRules {
   bySet: Record<string, PriceSourceId>
   /** `setId::variantId` -> source. The most specific rule short of a card. */
   byVariant: Record<string, PriceSourceId>
+  /** When these were last changed here, so a sync can tell which copy is newer. */
+  updatedAt?: string
 }
 
 export const DEFAULT_RULES: PriceRules = { collection: AUTO, bySet: {}, byVariant: {} }
@@ -45,6 +54,7 @@ function read(): PriceRules {
       // to the whole set, which is what they always meant.
       bySet: strings(parsed.bySet),
       byVariant: strings(parsed.byVariant),
+      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : undefined,
     }
   } catch {
     return { ...DEFAULT_RULES }
@@ -71,13 +81,75 @@ export function loadPriceRules(): PriceRules {
 }
 
 function save(next: PriceRules): void {
-  rules = next
+  rules = { ...next, updatedAt: new Date().toISOString() }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rules))
   } catch {
     /* a preference isn't worth failing over */
   }
   emit()
+}
+
+/**
+ * Takes the other device's rules wholesale, keeping their timestamp so this
+ * doesn't then look like the newer copy and bounce straight back.
+ */
+export function adoptPriceRules(next: PriceRules): void {
+  rules = next
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  } catch {
+    /* ignore */
+  }
+  markRulesSynced()
+  emit()
+}
+
+/** Zero when this device has never changed them, so remote always wins. */
+export function rulesChangedAt(): number {
+  const at = rules.updatedAt ? Date.parse(rules.updatedAt) : 0
+  return Number.isFinite(at) ? at : 0
+}
+
+function syncedAt(): number {
+  try {
+    const at = Number(localStorage.getItem(SYNCED_KEY) ?? 0)
+    return Number.isFinite(at) ? at : 0
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Whether these rules were last changed *here*, by the person using this
+ * device, rather than arriving from the other one.
+ *
+ * The push decision hangs on this rather than on comparing timestamps with
+ * the server. Two devices syncing seconds apart otherwise let a device that
+ * had merely re-sent unchanged rules look like the newer copy and overwrite a
+ * change the other had just made. A device that has adopted or already pushed
+ * has nothing to say, and says nothing.
+ */
+export function rulesNeedPush(): boolean {
+  if (rulesAreDefault()) return false
+  return rulesChangedAt() > syncedAt()
+}
+
+export function markRulesSynced(): void {
+  try {
+    localStorage.setItem(SYNCED_KEY, String(rulesChangedAt()))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** True when nothing here has been chosen, so there is nothing to push. */
+export function rulesAreDefault(): boolean {
+  return (
+    rules.collection === AUTO &&
+    Object.keys(rules.bySet).length === 0 &&
+    Object.keys(rules.byVariant).length === 0
+  )
 }
 
 export function setCollectionSource(id: PriceSourceId): void {

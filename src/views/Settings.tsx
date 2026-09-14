@@ -342,8 +342,8 @@ create policy "sync" on collections
           can have no feed of its own while the other is priced fine — or for the whole set at once. A single
           card overrides both from its panel, where you can also type a figure you read on PriceCharting or
           eBay, which those sites don't publish in a form the app can read. The most specific setting wins:
-          card, then print run, then set, then here. Per-card prices are part of your collection and sync
-          between devices; everything else here is per device, like grid density.
+          card, then print run, then set, then here. All of it syncs: a figure you typed in is no use on
+          your other device if the rule that reads it stayed behind.
         </p>
         {(perSetCount > 0 || perRunCount > 0 || perCardCount > 0) && (
           <>

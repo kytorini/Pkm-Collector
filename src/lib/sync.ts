@@ -1,3 +1,4 @@
+import type { PriceRules } from './priceRules'
 import type { CollectionMap } from '../types'
 
 /**
@@ -21,6 +22,23 @@ export interface RemoteDocument {
   collection: CollectionMap
   savedAt: number
 }
+
+export interface RemoteRules {
+  rules: PriceRules
+  savedAt: number
+}
+
+/**
+ * Price rules live in their own row rather than beside the collection.
+ *
+ * The collection row's `data` is the card map itself, and an older build of
+ * the app reads it as exactly that — wrapping it to make room here would have
+ * a device still running yesterday's code read two settings objects as two
+ * cards, and then push that back. A second row under a suffixed id is
+ * invisible to those builds, needs no change to the table, and can't corrupt
+ * anything if only one device has updated yet.
+ */
+const rulesId = (s: SyncSettings) => `${s.syncCode.trim()}:priceRules`
 
 export const EMPTY_SETTINGS: SyncSettings = { url: '', anonKey: '', syncCode: '', enabled: false }
 
@@ -99,6 +117,39 @@ export async function pullRemote(s: SyncSettings): Promise<RemoteDocument | null
     collection: row.data && typeof row.data === 'object' ? row.data : {},
     savedAt: Number.isFinite(savedAt) ? savedAt : 0,
   }
+}
+
+/** The other device's price sources, or null if it has never set any. */
+export async function pullRules(s: SyncSettings): Promise<RemoteRules | null> {
+  const url = `${endpoint(s)}?id=eq.${encodeURIComponent(rulesId(s))}&select=data,updated_at`
+  const res = await request(url, { headers: headers(s) })
+  if (!res.ok) throw new Error(describe(res.status))
+
+  const rows = (await res.json()) as { data?: PriceRules; updated_at?: string }[]
+  if (!Array.isArray(rows) || rows.length === 0) return null
+  const row = rows[0]
+  if (!row.data || typeof row.data !== 'object') return null
+
+  // The age of the rules themselves, not of the row they sit in. A device that
+  // re-pushes unchanged rules moves the row's write time without making its
+  // copy any newer — judged by that, it would then look newer than a change
+  // another device had just made, and overwrite it.
+  const contentAt = row.data.updatedAt ? Date.parse(row.data.updatedAt) : NaN
+  const rowAt = row.updated_at ? Date.parse(row.updated_at) : NaN
+  const savedAt = Number.isFinite(contentAt) ? contentAt : Number.isFinite(rowAt) ? rowAt : 0
+  return { rules: row.data, savedAt }
+}
+
+export async function pushRules(s: SyncSettings, rules: PriceRules): Promise<void> {
+  const body = JSON.stringify([
+    { id: rulesId(s), data: rules, updated_at: new Date().toISOString() },
+  ])
+  const res = await request(endpoint(s), {
+    method: 'POST',
+    headers: { ...headers(s), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body,
+  })
+  if (!res.ok) throw new Error(describe(res.status))
 }
 
 /** Writes the merged document back, creating the row on first use. */

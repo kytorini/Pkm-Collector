@@ -70,8 +70,13 @@ lights, and a dark screen to read off.
 
 - **Red is identity and selection** — the mark, the active tab, the chosen
   print run, the ring around a card you own, and the line under the top bar.
+  A scarlet (hue 4°) rather than a crimson, because it has to sit beside the
+  amber: a crimson at 353° against a warm yellow at 43° is a 50° split across
+  the top of the wheel, one reading pink and the other orange, and the two
+  fight. 4° against 39° is an analogous warm pair.
 - **Yellow is money**, kept separate on purpose: a collection total should
-  never read as an alarm.
+  never read as an alarm. Progress bars are blue everywhere, so a gold bar
+  never has to sit directly under a red tab.
 - **Blue runs the progress bars**, green means finished, and destructive
   actions are a warmer orange-red so they can't be mistaken for the brand.
 - **The icons are drawn, not typed** — one monoline family on a 24 grid, sized
@@ -333,8 +338,19 @@ batch is worth at market before you name a figure.
   checking again — the entry list says how many of a run have gone that way.
   Changing a price re-stamps it; clearing one takes its date with it. Prices
   recorded before this simply have no date, which is not the same as being old.
-- Recorded prices are collection data, not a preference: they're used
-  everywhere the card is valued and sync between your devices. The collection
+- **Recorded prices sync, and so do the sources that read them.** The figure
+  rides on the collection entry, but a figure nothing is reading is a blank
+  screen: fill a run in on one device, point that run at your readings, and
+  the other device needs the rule too. The rules travel in their own row
+  beside the collection, newest wins, and a device only ever pushes a change
+  its own user made — re-sending rules that merely arrived from the other
+  device is how one device overwrites the other.
+- **A figure is merged per site, not per card.** Whole-entry "newest wins" is
+  right for a card's condition, and wrong for a price typed in elsewhere:
+  ticking a card owned here would take a PriceCharting reading made there down
+  with it. Each figure carries its own date and is settled on its own, and
+  clearing one leaves that date behind so the clear can't be mistaken for
+  never having had a price. The collection
   and per-set source choices are per device, like grid density.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is

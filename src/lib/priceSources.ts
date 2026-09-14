@@ -55,8 +55,12 @@ export function recordedPrice(entry: CollectionEntry | undefined, key: string): 
 /**
  * When that figure was written down. Absent for prices recorded before they
  * were dated — the price still counts, its age is simply unknown.
+ *
+ * A date with no price behind it is the tombstone left by clearing one, and is
+ * nothing for the UI to report.
  */
 export function recordedAt(entry: CollectionEntry | undefined, key: string): string | undefined {
+  if (recordedPrice(entry, key) == null) return undefined
   return entry?.manualPricesAt?.[key]
 }
 

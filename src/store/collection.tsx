@@ -145,13 +145,12 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
           // A hand-entered price never refreshes itself, so it is stamped with
           // the day it was taken and re-stamped whenever it is changed.
           const stamps = { ...(next.manualPricesAt ?? {}) }
-          if (value == null || Number.isNaN(value)) {
-            delete prices[where]
-            delete stamps[where]
-          } else {
-            prices[where] = value
-            stamps[where] = next.updatedAt
-          }
+          // Either way the date is written. A cleared price keeps its date
+          // as a tombstone: without one, the other device can't tell "cleared
+          // here" from "never seen here", and would hand the price back.
+          stamps[where] = next.updatedAt
+          if (value == null || Number.isNaN(value)) delete prices[where]
+          else prices[where] = value
           if (Object.keys(prices).length > 0) next.manualPrices = prices
           else delete next.manualPrices
           if (Object.keys(stamps).length > 0) next.manualPricesAt = stamps

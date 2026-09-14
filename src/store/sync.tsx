@@ -5,10 +5,13 @@ import {
   isConfigured,
   loadSyncSettings,
   pullRemote,
+  pullRules,
   pushRemote,
+  pushRules,
   saveSyncSettings,
   type SyncSettings,
 } from '../lib/sync'
+import { adoptPriceRules, loadPriceRules, markRulesSynced, rulesChangedAt, rulesNeedPush } from '../lib/priceRules'
 import { useCollection } from './collection'
 
 const LAST_SYNCED_KEY = 'pkm-collector:lastSyncedAt'
@@ -99,6 +102,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         })
       }
 
+      // The figures ride on the collection, but the rule saying to read them
+      // does not — and a price nothing reads is a blank screen on the other
+      // device. Whole-object, newest wins.
+      await syncPriceRules(settings)
+
       const now = Date.now()
       setLastSyncedAt(now)
       localStorage.setItem(LAST_SYNCED_KEY, String(now))
@@ -113,6 +121,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
   // Sync when the app opens or comes back to the foreground, which is when the
   // other device's changes are most likely to be waiting.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!settings.enabled || !configured) return
     void syncNow()
@@ -150,6 +159,40 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   )
 
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>
+}
+
+/**
+ * Price sources, settled separately from the collection: they are one small
+ * object rather than a map of independently edited entries, so the newer copy
+ * simply wins.
+ */
+async function syncPriceRules(settings: SyncSettings): Promise<void> {
+  // Taken before the request, and pushed as taken. Reading them again
+  // afterwards meant a sync that adopted the other device's rules while this
+  // one was in flight would then push those same rules straight back, and the
+  // change made here would vanish.
+  const mine = loadPriceRules()
+  const mineAt = rulesChangedAt()
+  const unsent = rulesNeedPush()
+
+  const remote = await pullRules(settings)
+
+  const send = async () => {
+    await pushRules(settings, mine)
+    markRulesSynced()
+  }
+
+  if (!remote) {
+    if (unsent) await send()
+    return
+  }
+  if (remote.savedAt > mineAt) {
+    adoptPriceRules(remote.rules)
+    return
+  }
+  // Only this device's own unsent change is worth writing. Re-sending rules
+  // that merely arrived from the other device is how one overwrites the other.
+  if (unsent) await send()
 }
 
 export function useSync(): SyncContextValue {

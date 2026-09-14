@@ -52,7 +52,7 @@ export function Dashboard() {
           </p>
           {progress.running ? (
             <div className="sync-progress">
-              <ProgressBar value={progress.done} total={progress.total} tone="gold" />
+              <ProgressBar value={progress.done} total={progress.total} />
               <p className="muted">Loading {progress.current}… ({progress.done}/{progress.total})</p>
             </div>
           ) : (
@@ -105,7 +105,7 @@ export function Dashboard() {
         <div className="stat">
           <span className="stat-label">Completion</span>
           <span className="stat-value">{total.pct}%</span>
-          <ProgressBar value={total.owned} total={total.total} tone="gold" />
+          <ProgressBar value={total.owned} total={total.total} />
         </div>
         <div className="stat">
           <span className="stat-label">Market value</span>
