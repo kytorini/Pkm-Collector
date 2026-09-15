@@ -45,6 +45,7 @@ export function Dashboard() {
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
   const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
+  const missing = total.total - total.owned
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
@@ -110,6 +111,16 @@ export function Dashboard() {
                   <button className="link-btn" onClick={showAllSets}>Show all</button>
                 </p>
               )}
+              <p>
+                <strong>Market value</strong> is every copy you own at market, less a discount for
+                condition — two copies count twice, a played one counts for less.
+              </p>
+              <p>
+                <strong>Cost to finish</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
+                don't have would cost at market. It isn't market value subtracted from anything, so the
+                two don't add up to what a full set costs: duplicates and condition move the first and
+                not the second.
+              </p>
             </div>
           )}
         </OverflowMenu>
@@ -142,10 +153,11 @@ export function Dashboard() {
         <div className="stat">
           <span className="stat-label">Cost to finish</span>
           <span className="stat-value">{formatMoney(total.missingValue)}</span>
+          {/* What the figure is, always — the caveat used to replace it, so a
+              collection with unpriced slots never saw the definition at all. */}
           <span className="stat-sub muted">
-            {total.unpriced > 0
-              ? `excludes ${total.unpriced} slot${total.unpriced === 1 ? '' : 's'} with no price feed`
-              : 'every missing card at market'}
+            {missing} slot{missing === 1 ? '' : 's'} you don't have, at market
+            {total.unpriced > 0 ? ` · ${total.unpriced} unpriced` : ''}
           </span>
         </div>
         <div className="stat">

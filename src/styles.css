@@ -401,6 +401,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .overflow.info .overflow-panel { left: 0; right: auto; }
 .info-panel { display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; color: var(--text-dim); }
 .info-panel p { margin: 0; }
+.info-panel strong { color: var(--text); font-weight: 620; }
 
 .price-source-card {
   display: flex;

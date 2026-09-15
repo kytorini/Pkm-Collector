@@ -357,6 +357,13 @@ batch is worth at market before you name a figure.
   clearing one leaves that date behind so the clear can't be mistaken for
   never having had a price. The collection
   and per-set source choices are per device, like grid density.
+- **"Cost to finish" is not "market value" subtracted from anything.** It is
+  what the slots you don't have would cost at market, counted straight from
+  those slots. Market value is every copy you *do* have, less a discount for
+  condition. So the two don't sum to what a full set costs: a second copy and
+  a played copy both move market value and neither moves the cost to finish.
+  Both figures say so on the Collection page — the caption under each, and the
+  "i" beside the heading.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is
   deliberately not factored into value at all.
