@@ -5,6 +5,10 @@ interface Props {
   label: string
   /** Marks the button when there is something inside worth looking at. */
   flagged?: boolean
+  /** What the button shows. Defaults to the "…" this was built for. */
+  icon?: ReactNode
+  /** Put on the wrapper, for callers that need a different size or place. */
+  className?: string
   id: string
   children: (close: () => void) => ReactNode
 }
@@ -17,7 +21,7 @@ interface Props {
  * a list of commands, and claiming otherwise would make a screen reader
  * promise arrow-key navigation that doesn't exist.
  */
-export function OverflowMenu({ label, flagged, id, children }: Props) {
+export function OverflowMenu({ label, flagged, icon, className, id, children }: Props) {
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
@@ -43,7 +47,7 @@ export function OverflowMenu({ label, flagged, id, children }: Props) {
   }, [open])
 
   return (
-    <div className="overflow" ref={wrap}>
+    <div className={`overflow ${className ?? ''}`} ref={wrap}>
       <button
         ref={button}
         type="button"
@@ -54,7 +58,7 @@ export function OverflowMenu({ label, flagged, id, children }: Props) {
         title={label}
         onClick={() => setOpen((o) => !o)}
       >
-        <span aria-hidden>⋯</span>
+        {icon ?? <span aria-hidden>⋯</span>}
       </button>
       {open && (
         <div className="overflow-panel" id={id}>

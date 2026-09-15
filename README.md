@@ -97,7 +97,10 @@ specific model:
   every set is a row with its completion, count and value, and tapping a row
   opens it in place to show each print run's progress. Which sets are open is
   remembered, so stepping into a run and back doesn't fold everything up
-  again. Per device, like grid density. Each run links straight
+  again. Per device, like grid density. The slot count and the hidden-set
+  note sit behind an "i" beside the heading rather than wrapping to two lines
+  under it; the "i" is marked when sets are hidden, so the one part worth
+  knowing unasked still announces itself. Each run links straight
   to that binder page, so a 1st Edition run is one tap rather than a set page
   and then a tab.
 - **The app shows only the sets you chase.** "Choose sets" ticks them off;

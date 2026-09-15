@@ -370,6 +370,30 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 .set-head-actions { display: flex; align-items: center; gap: 8px; }
 
+/* A heading with its detail tucked in beside it rather than under it. */
+.head-with-info { position: relative; display: flex; align-items: center; gap: 9px; }
+.overflow.info .overflow-btn {
+  min-width: 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font-size: 1.15rem;
+}
+.overflow.info .overflow-btn:hover { color: var(--text); border-color: transparent; }
+.overflow.info .overflow-btn.is-flagged::after { top: 1px; right: 1px; }
+/*
+ * Anchored to the header rather than to the button. The button sits wherever
+ * the heading's width leaves it — a third of the way across a phone — and a
+ * 340px panel hung off that point runs clean off the right of the screen.
+ * Taking the wrapper out of the positioning makes the header the anchor, so
+ * the panel starts at the page gutter like everything else.
+ */
+.overflow.info { position: static; }
+.overflow.info .overflow-panel { left: 0; right: auto; }
+.info-panel { display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; color: var(--text-dim); }
+.info-panel p { margin: 0; }
+
 .price-source-card {
   display: flex;
   flex-direction: column;
@@ -1023,6 +1047,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .variant-bar { margin-bottom: 10px; padding-top: 6px; padding-bottom: 6px; }
   /* Square and compact: it shares the pinned row with the tabs. */
   .variant-bar .overflow-btn { min-width: 40px; min-height: 40px; padding: 6px; font-size: 0.95rem; }
+  .overflow.info .overflow-btn { min-width: 40px; min-height: 40px; padding: 6px; }
   .variant-bar.is-stuck .overflow-btn { min-height: 34px; }
   .variant-tab { min-height: 40px; padding: 6px 12px; }
   .variant-tab-name { font-size: 0.85rem; }

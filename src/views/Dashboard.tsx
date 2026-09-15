@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { InfoIcon } from '../components/icons'
+import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
@@ -81,19 +83,36 @@ export function Dashboard() {
 
   return (
     <div className="view">
-      <header className="view-head">
+      {/*
+        The slot count and the hidden-set note wrapped to two lines on a phone
+        to say something you read once, so they sit behind the heading instead.
+        The button is marked when sets are hidden, because that is the part you
+        would otherwise want telling about without asking.
+      */}
+      <header className="view-head head-with-info">
         <h1>Collection</h1>
-        <p className="muted">
-          {total.owned} of {total.total} tracked slots across {total.setsStarted} set{total.setsStarted === 1 ? '' : 's'}
-          {hidden.length > 0 && (
-            <>
-              {' · '}
-              {hidden.length} set{hidden.length === 1 ? '' : 's'} hidden, left out of these totals{' '}
-              <button className="link-btn" onClick={showAllSets}>show all</button>
-            </>
+        <OverflowMenu
+          id="collection-summary"
+          label="What these totals cover"
+          className="info"
+          icon={<InfoIcon />}
+          flagged={hidden.length > 0}
+        >
+          {() => (
+            <div className="info-panel">
+              <p>
+                {total.owned} of {total.total} tracked slots across {total.setsStarted}{' '}
+                set{total.setsStarted === 1 ? '' : 's'}.
+              </p>
+              {hidden.length > 0 && (
+                <p>
+                  {hidden.length} set{hidden.length === 1 ? '' : 's'} hidden, left out of these totals.{' '}
+                  <button className="link-btn" onClick={showAllSets}>Show all</button>
+                </p>
+              )}
+            </div>
           )}
-          .
-        </p>
+        </OverflowMenu>
       </header>
 
       {error && (

@@ -61,6 +61,17 @@ export function SlidersIcon({ size, className }: Props) {
   )
 }
 
+/** The detail behind a heading, when it doesn't earn a line of its own. */
+export function InfoIcon({ size, className }: Props) {
+  return (
+    <svg {...base(size)} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.2" />
+      <circle cx="12" cy="7.9" r="0.95" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 /** Back, in the same weight as the rest. */
 export function ChevronLeftIcon({ size, className }: Props) {
   return (
