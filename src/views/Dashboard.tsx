@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
+import { loadOpenSets, saveOpenSets } from '../lib/openSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
@@ -27,11 +28,16 @@ export function Dashboard() {
   const hidden = useHiddenSets()
   const [choosing, setChoosing] = useState(false)
   // Sets opened in place. More than one at a time, so two runs can be compared
-  // without collapsing the first.
-  const [open, setOpen] = useState<string[]>([])
+  // without collapsing the first, and remembered so stepping into a set and
+  // back doesn't fold everything up again.
+  const [open, setOpen] = useState<string[]>(loadOpenSets)
 
   const toggleOpen = (id: string) =>
-    setOpen((prev) => (prev.includes(id) ? prev.filter((o) => o !== id) : [...prev, id]))
+    setOpen((prev) => {
+      const next = prev.includes(id) ? prev.filter((o) => o !== id) : [...prev, id]
+      saveOpenSets(next)
+      return next
+    })
 
   const shown = useMemo(() => VINTAGE_SETS.filter((s) => !hidden.includes(s.id)), [hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same

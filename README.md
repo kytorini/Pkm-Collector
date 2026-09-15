@@ -95,7 +95,9 @@ specific model:
   screen, and at the top on tablets and desktops.
 - **One page for the whole collection.** The Collection page is the set list:
   every set is a row with its completion, count and value, and tapping a row
-  opens it in place to show each print run's progress. Each run links straight
+  opens it in place to show each print run's progress. Which sets are open is
+  remembered, so stepping into a run and back doesn't fold everything up
+  again. Per device, like grid density. Each run links straight
   to that binder page, so a 1st Edition run is one tap rather than a set page
   and then a tab.
 - **The app shows only the sets you chase.** "Choose sets" ticks them off;
