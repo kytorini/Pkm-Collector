@@ -291,15 +291,22 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   background: var(--bg-sunken);
   animation: panel-open 0.16s ease-out;
 }
+/*
+ * One line, always. The money is the half worth reading, so it keeps its full
+ * width and the description gives way — an ellipsis on a long series name
+ * beats wrapping the whole thing onto a second line on every phone.
+ */
 .set-panel-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 2px 14px;
+  flex-wrap: nowrap;
+  gap: 10px;
   font-size: 0.78rem;
   margin: 0 0 12px;
 }
+.set-panel-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-panel-money { flex: 0 0 auto; white-space: nowrap; }
 .set-variants { display: flex; flex-direction: column; gap: 10px; }
 .set-variant-line { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 5px; }
 /* What each print run is worth, and what finishing it would cost. */
@@ -312,6 +319,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   font-variant-numeric: tabular-nums;
 }
 .set-panel-money { font-variant-numeric: tabular-nums; }
+
 .money-held { color: var(--gold); font-weight: 600; }
 /* Each print run is its own destination: the binder opens on that variation. */
 .set-variant-link {

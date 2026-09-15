@@ -221,8 +221,10 @@ export function Dashboard() {
                 {isOpen && (
                   <div className="set-panel" id={`set-panel-${set.id}`}>
                     <div className="set-panel-head">
-                      <span className="muted">
-                        {set.series} series · {set.year} · {cards.length || set.total} cards
+                      {/* The card count is on every run line below as the
+                          denominator, so it isn't spent here. */}
+                      <span className="set-panel-what muted">
+                        {set.series} series · {set.year}
                       </span>
                       {cards.length > 0 && (
                         <span className="set-panel-money">
