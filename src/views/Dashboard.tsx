@@ -7,7 +7,7 @@ import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
-import { statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
+import { statsForCollection, statsForSet, statsForVariant, stillToBuyNote, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { useLibrary } from '../store/library'
@@ -46,6 +46,16 @@ export function Dashboard() {
   // selection as the list rather than counting sets that were put aside.
   const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
   const missing = total.total - total.owned
+  /*
+   * "Cost to finish" read as ambiguous next to a market value of the same
+   * size — total or remaining? — so the label says remaining outright and the
+   * caption is a sentence about the figure rather than a label for the count
+   * beside it. Unpriced slots you already own were in that caption too, though
+   * they cost nothing to finish; only the missing ones hold this figure down,
+   * and naming how many of the missing are counted says that without a
+   * footnote.
+   */
+  const shortBy = total.unpricedMissing
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
@@ -116,11 +126,17 @@ export function Dashboard() {
                 condition — two copies count twice, a played one counts for less.
               </p>
               <p>
-                <strong>Cost to finish</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
-                don't have would cost at market. It isn't market value subtracted from anything, so the
-                two don't add up to what a full set costs: duplicates and condition move the first and
-                not the second.
+                <strong>Still to buy</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
+                don't have would cost at market, one of each. It isn't market value taken off a larger
+                number — duplicates and condition move that figure and not this one, so the two don't
+                add up to the price of a full set.
               </p>
+              {shortBy > 0 && (
+                <p>
+                  {shortBy} of those {missing} have no price from any source, so they're left out
+                  and the figure is lower than the real bill.
+                </p>
+              )}
             </div>
           )}
         </OverflowMenu>
@@ -151,14 +167,11 @@ export function Dashboard() {
           </span>
         </div>
         <div className="stat">
-          <span className="stat-label">Cost to finish</span>
+          <span className="stat-label">Still to buy</span>
           <span className="stat-value">{formatMoney(total.missingValue)}</span>
           {/* What the figure is, always — the caveat used to replace it, so a
               collection with unpriced slots never saw the definition at all. */}
-          <span className="stat-sub muted">
-            {missing} slot{missing === 1 ? '' : 's'} you don't have, at market
-            {total.unpriced > 0 ? ` · ${total.unpriced} unpriced` : ''}
-          </span>
+          <span className="stat-sub muted">{stillToBuyNote(total)}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Spent</span>

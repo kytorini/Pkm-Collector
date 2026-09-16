@@ -104,7 +104,7 @@ specific model:
   to that binder page, so a 1st Edition run is one tap rather than a set page
   and then a tab.
 - **The app shows only the sets you chase.** "Choose sets" ticks them off;
-  hidden ones leave the list and the totals, so completion and cost to finish
+  hidden ones leave the list and the totals, so completion and "still to buy"
   answer "how am I doing on what I collect" rather than counting sets you'll
   never buy. Nothing is deleted — the cards stay cached, a direct link still
   opens a hidden set, and the page says how many are hidden with a way to
@@ -312,7 +312,7 @@ batch is worth at market before you name a figure.
   panel. Real Shadowless copies trade well above that.
 - **A missing bucket shows `—`, not a guess.** If a card has no 1st Edition
   listing, the 1st Edition slot shows no price rather than borrowing the
-  Unlimited one. "Cost to finish" says how many slots it had to skip.
+  Unlimited one. "Still to buy" says how many of the missing it could price.
 - **You can choose where prices come from**, at four levels: the whole
   collection (Settings), one set, one print run within a set (both on the set
   page), or one card (its panel). The most specific choice wins — card, then
@@ -368,13 +368,20 @@ batch is worth at market before you name a figure.
   clearing one leaves that date behind so the clear can't be mistaken for
   never having had a price. The collection
   and per-set source choices are per device, like grid density.
-- **"Cost to finish" is not "market value" subtracted from anything.** It is
+- **"Still to buy" is not "market value" subtracted from anything.** It is
   what the slots you don't have would cost at market, counted straight from
   those slots. Market value is every copy you *do* have, less a discount for
   condition. So the two don't sum to what a full set costs: a second copy and
-  a played copy both move market value and neither moves the cost to finish.
-  Both figures say so on the Collection page — the caption under each, and the
-  "i" beside the heading.
+  a played copy both move market value and neither moves what's still to buy.
+  It used to be labelled "cost to finish", which read as a total as easily as a
+  remainder, so the label now says which. Its caption is a sentence about the
+  money rather than a tally of the count beside it — *market price for 291 of
+  the 306 you don't have* — and naming how many of the missing were priced is
+  also how it admits the ones it couldn't: an unpriced slot adds nothing, so
+  the figure is short of the real bill. Unpriced slots you already **own** are
+  left out of that count, because a card you have costs nothing to finish and
+  counting it there only puzzles people. The "i" beside the heading carries the
+  full definition.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is
   deliberately not factored into value at all.

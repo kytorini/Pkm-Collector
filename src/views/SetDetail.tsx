@@ -26,7 +26,7 @@ import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
 import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
 import { usePhone } from '../lib/useMediaQuery'
-import { statsForVariant } from '../lib/stats'
+import { statsForVariant, stillToBuyNote } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 import type { ApiCard, CollectionMap, SetVariant, VintageSet } from '../types'
@@ -478,9 +478,15 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             )}
           </div>
           <div>
-            <dt>Cost to finish</dt>
+            <dt>Still to buy</dt>
             <dd>{formatMoney(stats.missingValue)}</dd>
-            {stats.unpriced > 0 && <span className="muted small">{stats.unpriced} card{stats.unpriced === 1 ? '' : 's'} with no price feed</span>}
+            {/* Only when there's something to admit: a figure that leaves
+                cards out is the surprising kind of number, so it takes the
+                note that survives the phone. The collection page carries the
+                standing definition; this one is the caveat. */}
+            {stats.unpricedMissing > 0 && (
+              <span className="copies-note">{stillToBuyNote(stats, true)}</span>
+            )}
           </div>
           {/* An em-dash costs a phone a whole wrapped line to say nothing. It
               comes back the moment there is a figure to show. */}

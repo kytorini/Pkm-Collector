@@ -17,11 +17,17 @@ export interface VariantStats {
   spend: number
   /** Cards with no price feed at all, so the totals above understate reality. */
   unpriced: number
+  /**
+   * Of those, the ones you don't own — the only unpriced slots that hold
+   * `missingValue` down. An unpriced card you already have costs nothing to
+   * finish, so counting it against that figure only puzzles people.
+   */
+  unpricedMissing: number
   /** Owned copies whose condition hasn't been judged yet. */
   unassessed: number
 }
 
-const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0, unassessed: 0 }
+const ZERO: VariantStats = { total: 0, owned: 0, copies: 0, pct: 0, ownedValue: 0, missingValue: 0, spend: 0, unpriced: 0, unpricedMissing: 0, unassessed: 0 }
 
 /** Reads the default source. Callers with price rules pass their own resolver. */
 const AUTO_PRICE: PriceResolver = (card, variant) => priceFor(card, variant)
@@ -39,6 +45,7 @@ export function statsForVariant(
   let missingValue = 0
   let spend = 0
   let unpriced = 0
+  let unpricedMissing = 0
   let unassessed = 0
 
   for (const card of cards) {
@@ -55,6 +62,7 @@ export function statsForVariant(
       spend += (entry.pricePaid ?? 0) * quantity
     } else {
       missingValue += market ?? 0
+      if (market == null) unpricedMissing++
     }
   }
 
@@ -67,6 +75,7 @@ export function statsForVariant(
     missingValue,
     spend,
     unpriced,
+    unpricedMissing,
     unassessed,
   }
 }
@@ -89,6 +98,7 @@ export function statsForSet(
         missingValue: acc.missingValue + s.missingValue,
         spend: acc.spend + s.spend,
         unpriced: acc.unpriced + s.unpriced,
+        unpricedMissing: acc.unpricedMissing + s.unpricedMissing,
         unassessed: acc.unassessed + s.unassessed,
       }),
       { ...ZERO },
@@ -118,9 +128,33 @@ export function statsForCollection(
       missingValue: acc.missingValue + s.missingValue,
       spend: acc.spend + s.spend,
       unpriced: acc.unpriced + s.unpriced,
+      unpricedMissing: acc.unpricedMissing + s.unpricedMissing,
       unassessed: acc.unassessed + s.unassessed,
       setsStarted: acc.setsStarted + (s.owned > 0 ? 1 : 0),
     }
   }
   return { ...acc, pct: acc.total ? Math.round((acc.owned / acc.total) * 100) : 0 }
+}
+
+/**
+ * One line saying what the "still to buy" figure actually counts.
+ *
+ * Kept here so a set and the whole collection phrase it the same way, and so
+ * the count that is named is always the one the money came from: slots you
+ * don't have that carry a price. A missing slot with no price adds nothing to
+ * the total, and saying how many of the missing are counted admits that
+ * without a second sentence about it.
+ *
+ * `compact` is for the set page, where the note shares a line with the figure
+ * and only appears when there is something to admit — the label and the money
+ * are right beside it, so it needn't repeat them.
+ */
+export function stillToBuyNote(stats: VariantStats, compact = false): string {
+  const missing = stats.total - stats.owned
+  const counted = missing - stats.unpricedMissing
+  if (compact) return stats.unpricedMissing > 0 ? `covers ${counted} of the ${missing} missing` : ''
+  if (missing === 0) return 'nothing left to buy'
+  // "price of N of the M" stutters; "for" carries the same sense and reads once.
+  if (stats.unpricedMissing > 0) return `market price for ${counted} of the ${missing} you don't have`
+  return `market price for the ${missing === 1 ? 'one' : missing} you don't have`
 }
