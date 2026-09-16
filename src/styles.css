@@ -778,6 +778,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .lot-row img { border-radius: 4px; flex: 0 0 auto; }
 .lot-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lot-row-main > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The grade and the figure it moves, on one line where there's room for
+   both. The row's height is set by the taller controls opposite, so this
+   costs nothing until it wraps. */
+.lot-row-grade { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; margin-top: 3px; min-width: 0; }
+.lot-row-grade select {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  max-width: 9rem;
+}
 .lot-row-each { font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .lot-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }
 .lot-row-line { font-size: 0.95rem; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
@@ -1200,6 +1210,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   select {
     min-height: 44px;
   }
+  /* Sized with the stepper beside it rather than on its own: a row of
+     44pt controls would be taller than the card art it describes. */
+  .lot-row-grade select { min-height: 34px; }
   .link-btn, .back-link { display: inline-flex; align-items: center; min-height: 44px; }
   /* Both dimensions, so it stays a circle at the 44pt target size. */
   .modal-close { --close-size: 44px; }

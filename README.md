@@ -283,13 +283,23 @@ pick replace.
 
 A scratch pile for pricing up a batch someone is offering you. Search a name,
 tap the print run they're actually holding, and it lands in the lot with its
-price; the running total sits pinned at the top as you go, so you know what the
-batch is worth at market before you name a figure.
+price; the running total sits pinned at the top as you go. Grade the ones you can see
+and the total follows, so you know what the batch is actually worth before you
+name a figure.
 
 - **A print run is pinned, not a card.** A 1st Edition Charizard and an
   Unlimited one are different markets, and both can sit in the same lot.
 - **Quantities**, because a box is as likely to hold three of something as one.
   Taking the last copy away removes the line.
+- **Condition per line, and the total moves with it.** The cards are in your
+  hand while you price them, and a quoted price is a near-mint one — counting a
+  played copy at it is how you talk yourself into a bad offer. Each line starts
+  unassessed, which values it at the quote exactly as before, so a lot you
+  haven't looked at reads the same as it always did. Grade what you can see and
+  the line, the total and the caption all follow. The multipliers are the same
+  ones the collection uses.
+- **The unit price shows only when it says something.** At one copy it is the
+  line total, already there in gold, so the line doesn't print it twice.
 - **A tick on a run you already own**, which is worth knowing before paying for
   another.
 - **Prices follow your own price sources**, including any figures you typed in

@@ -1,21 +1,22 @@
 import { useMemo, useState } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { getSet } from '../data/vintageSets'
-import { clearLot, isPinned, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
+import { adjustedValue, UNASSESSED } from '../lib/condition'
+import { clearLot, isPinned, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 import { usePrices } from '../store/prices'
-import type { ApiCard, SetVariant, VintageSet } from '../types'
+import { CONDITIONS, type ApiCard, type ConditionId, type SetVariant, type VintageSet } from '../types'
 
 /**
  * A pile of cards you're pricing up, and the search that fills it.
  *
  * Someone has a box in front of you and wants an offer. Search a name, tap the
- * print run they're holding, and the running total tells you what the batch is
- * worth at market before you say a number. Nothing here touches your
- * collection — a lot is a note you throw away.
+ * print run they're holding, grade what you can see, and the running total
+ * tells you what the batch is worth before you say a number. Nothing here
+ * touches your collection — a lot is a note you throw away.
  */
 export function Lot() {
   const { allCards } = useLibrary()
@@ -50,16 +51,22 @@ export function Lot() {
         const set = card ? getSet(card.set.id) : undefined
         const variant = set?.variants.find((v) => v.id === entry.variantId)
         const each = card && variant ? price(card, variant) : null
-        return { entry, card, set, variant, each }
+        // The quote is a near-mint figure; what you'd pay for the copy in
+        // front of you is that figure taken down to its condition.
+        const worth = adjustedValue(each?.market ?? null, entry)
+        return { entry, card, set, variant, each, worth }
       }),
     [lot, byId, price],
   )
 
-  const total = lines.reduce((sum, l) => sum + (l.each?.market ?? 0) * l.entry.quantity, 0)
+  const total = lines.reduce((sum, l) => sum + (l.worth ?? 0) * l.entry.quantity, 0)
   const copies = lines.reduce((sum, l) => sum + l.entry.quantity, 0)
   // A line the feed can't price would otherwise be silently counted as zero.
   const unpriced = lines.filter((l) => l.each?.market == null).length
   const approximate = lines.some((l) => l.each?.approximate)
+  // Say "at market" only while it is true of every line. "Assessed", not
+  // "graded" — graded means slabbed by PSA or BGS everywhere else in the app.
+  const assessed = lines.filter((l) => l.entry.condition !== UNASSESSED).length
   const searching = query.trim() !== '' || ownedOnly
 
   return (
@@ -78,7 +85,12 @@ export function Lot() {
             <span className="muted small">
               {approximate ? '≈ ' : ''}
               {lot.length} card{lot.length === 1 ? '' : 's'}
-              {copies !== lot.length ? `, ${copies} copies` : ''} at market
+              {copies !== lot.length ? `, ${copies} copies` : ''}
+              {assessed === 0
+                ? ' at market'
+                : assessed === lines.length
+                  ? ', adjusted for condition'
+                  : `, ${assessed} adjusted for condition`}
               {unpriced > 0 ? ` · ${unpriced} with no price` : ''}
             </span>
           </div>
@@ -144,7 +156,7 @@ export function Lot() {
         </p>
       ) : (
         <ul className="lot-list">
-          {lines.map(({ entry, card, set, variant, each }) => {
+          {lines.map(({ entry, card, set, variant, each, worth }) => {
             const id = `${entry.cardId}::${entry.variantId}`
             if (!card || !set || !variant) {
               return (
@@ -159,7 +171,7 @@ export function Lot() {
                 </li>
               )
             }
-            const line = (each?.market ?? 0) * entry.quantity
+            const line = (worth ?? 0) * entry.quantity
             return (
               <li key={id} className="lot-row">
                 <img src={card.images.small} alt="" loading="lazy" width={44} height={62} />
@@ -169,16 +181,33 @@ export function Lot() {
                     <span className="muted">#{card.number}</span>
                   </div>
                   <span className="muted small">{set.name} · {variant.label}</span>
-                  <span className="lot-row-each">
-                    {each?.market == null ? (
-                      <span className="muted">no price from your source</span>
-                    ) : (
-                      <>
-                        {each.approximate ? '~' : ''}{formatMoney(each.market)} each
-                        {each.converted ? ' (converted)' : ''}
-                      </>
-                    )}
-                  </span>
+                  {/* The grade sits next to the figure it moves, so the two
+                      read as cause and effect rather than as two settings. */}
+                  <div className="lot-row-grade">
+                    <select
+                      className="select select-compact"
+                      aria-label={`Condition of ${card.name} ${variant.label}`}
+                      value={entry.condition}
+                      onChange={(e) =>
+                        setCondition(entry.cardId, entry.variantId, e.target.value as ConditionId)
+                      }
+                    >
+                      {CONDITIONS.map((c) => (
+                        <option key={c.id} value={c.id}>{c.label}</option>
+                      ))}
+                    </select>
+                    {/* At one copy this figure is the line total, already
+                        showing in gold opposite — so it only appears when it
+                        says something that one doesn't. */}
+                    {worth == null ? (
+                      <span className="lot-row-each muted">no price from your source</span>
+                    ) : entry.quantity > 1 || each?.approximate || each?.converted ? (
+                      <span className="lot-row-each">
+                        {each?.approximate ? '~' : ''}{formatMoney(worth)} each
+                        {each?.converted ? ' (converted)' : ''}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="lot-row-side">
                   <span className="lot-row-line">{each?.market == null ? '—' : formatMoney(line)}</span>
