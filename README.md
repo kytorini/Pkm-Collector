@@ -130,6 +130,17 @@ specific model:
   pinned, giving the cards the difference. The toolbar is told the tabs' height
   rather than assuming it, so a wrapped label or an extra print run can't make
   the two overlap.
+- **Every page keeps its own place.** One document behind a hash router means
+  nothing resets the scroll when the page changes, so being halfway down the
+  collection left you halfway down the lot — at an offset that meant nothing
+  there. Each page now remembers where you were and gets it back on return,
+  while a page you haven't visited opens at the top. A set is one page whatever
+  print run you're on, so switching between 1st Edition and Unlimited holds
+  your place rather than throwing you to card one. The restore holds for a few
+  frames, because a page that grows above the fold as its figures arrive would
+  otherwise carry you a screen past where you left off — but the moment you
+  scroll, you win. Remembered for the session, not stored: it's where you were
+  a moment ago, not a preference.
 - **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
   5 or 6 per row. Auto fills the width, which on an iPad means six and rather
   small artwork. The choice is stored per device, since a tablet and a phone
@@ -423,5 +434,6 @@ src/
   lib/importer.ts       spreadsheet -> collection matching and planning
   lib/pricing.ts        variation -> price-bucket resolution
   lib/stats.ts          completion, value, spend rollups
-  views/                Collection, Set detail, Search, Import, Settings
+  lib/useScrollMemory.ts per-page scroll position across route changes
+  views/                Collection, Set detail, Lot, Import, Settings
 ```

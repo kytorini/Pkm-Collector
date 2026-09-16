@@ -3,6 +3,7 @@ import { CardsIcon, ChevronLeftIcon, PokeballIcon, SlidersIcon } from './compone
 import { getSet } from './data/vintageSets'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { usePhone } from './lib/useMediaQuery'
+import { useScrollMemory } from './lib/useScrollMemory'
 import { CollectionProvider } from './store/collection'
 import { LibraryProvider, useLibrary } from './store/library'
 import { SyncProvider } from './store/sync'
@@ -38,6 +39,13 @@ function Shell() {
   }, [])
 
   const active = route.name === 'set' ? 'dashboard' : route.name === 'import' ? 'settings' : route.name
+
+  /*
+   * One position per page. A set is one page whichever print run is showing:
+   * the tabs swap the grid under you, and being thrown to the top for it would
+   * lose the place you were comparing.
+   */
+  useScrollMemory(route.name === 'set' ? `set:${route.setId}` : route.name)
 
   /*
    * Which set and print run you're in, named in the bar that never moves.
