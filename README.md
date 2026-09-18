@@ -179,7 +179,20 @@ Each variation carries a short note on how to identify it.
 owned at your default condition (Settings). Open the card for the full detail
 panel: condition, quantity, grading (PSA/BGS/CGC/SGC), what you paid, notes —
 with every print run of that card editable on the same screen. `←` / `→` step
-through the set, `Esc` closes, `/` jumps to search from anywhere.
+through the set, `Esc` closes, `/` puts the cursor in the search on whichever
+page you're on.
+
+**Search from the Collection page to add a card.** You bought something and
+want it ticked off; hunting for which set it was in first is a step that
+shouldn't exist. Type a name, a number, a set, or any combination — "charizard
+4", "pikachu jungle", or just "4" — and each word is free to match a different
+part of the card. Results carry a button per print run with its price, so
+ticking the 1st Edition rather than the Unlimited is a deliberate act rather
+than a guess; tapping the art or the name opens the full panel for condition
+and quantity. The search covers the sets you collect, and says how many more
+matches are sitting in sets you've hidden rather than pretending they don't
+exist. The lot's search deliberately covers everything, hidden sets included:
+the box in front of you holds what it holds.
 
 **Prices come from the live feed.** Each variation resolves to its matching
 TCGplayer bucket — 1st Edition prices off `1stEditionHolofoil`, Unlimited off

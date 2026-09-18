@@ -1,16 +1,21 @@
 import { useMemo, useState } from 'react'
+import { BackToTop } from '../components/BackToTop'
+import { CardDetail } from '../components/CardDetail'
+import { CardResult } from '../components/CardResult'
 import { InfoIcon } from '../components/icons'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
-import { VINTAGE_SETS } from '../data/vintageSets'
+import { VINTAGE_SETS, getSet } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
+import { countMatches, searchCards } from '../lib/searchCards'
 import { statsForCollection, statsForSet, statsForVariant, stillToBuyNote, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { useLibrary } from '../store/library'
+import type { ApiCard, SetVariant, VintageSet } from '../types'
 
 /**
  * What the rest of a print run would cost. A run with nothing left to buy is
@@ -33,6 +38,10 @@ export function Dashboard() {
   // without collapsing the first, and remembered so stepping into a set and
   // back doesn't fold everything up again.
   const [open, setOpen] = useState<string[]>(loadOpenSets)
+  // Deliberately not focused on arrival: this page is opened to read as often
+  // as to add, and a keyboard over the totals would be in the way.
+  const [query, setQuery] = useState('')
+  const [openCardId, setOpenCardId] = useState<string | null>(null)
 
   const toggleOpen = (id: string) =>
     setOpen((prev) => {
@@ -56,6 +65,29 @@ export function Dashboard() {
    * footnote.
    */
   const shortBy = total.unpricedMissing
+
+  /*
+   * Search covers the sets you actually collect, the same ones this page and
+   * its totals are about. A card in a set you've put aside would otherwise
+   * turn up here as a slot that counts towards nothing, so the hidden ones are
+   * counted separately and offered rather than silently dropped.
+   */
+  const searching = query.trim() !== ''
+  const searchable = useMemo(() => shown.flatMap((s) => cardsBySet[s.id] ?? []), [shown, cardsBySet])
+  const results = useMemo(() => searchCards(searchable, query), [searchable, query])
+  const behindHidden = useMemo(
+    () => (searching ? countMatches(hidden.flatMap((id) => cardsBySet[id] ?? []), query) : 0),
+    [searching, hidden, cardsBySet, query],
+  )
+
+  const openCard = openCardId ? results.find((c) => c.id === openCardId) : undefined
+  const openSet = openCard ? getSet(openCard.set.id) : undefined
+  /** Left and right walk the results, so a page of them is one panel. */
+  const step = (delta: number) => {
+    const at = results.findIndex((c) => c.id === openCardId)
+    const next = results[at + delta]
+    if (next) setOpenCardId(next.id)
+  }
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
@@ -182,6 +214,23 @@ export function Dashboard() {
         </div>
       </div>
 
+      <div className="toolbar dash-search">
+        <input
+          className="search-input"
+          type="search"
+          placeholder="Find a card to add…"
+          aria-label="Search your sets for a card"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {searching && (
+          <button className="btn ghost small" onClick={() => setQuery('')}>Clear</button>
+        )}
+      </div>
+
+      {searching ? (
+        <SearchResults results={results} behindHidden={behindHidden} onOpen={setOpenCardId} />
+      ) : (
       <section className="series-block">
         <div className="section-head">
           <h2 className="series-title">Progress by set</h2>
@@ -303,6 +352,103 @@ export function Dashboard() {
           )}
         </div>
       </section>
+      )}
+
+      {openCard && openSet && (
+        <CardDetail
+          card={openCard}
+          set={openSet}
+          activeVariantId={openSet.variants[0].id}
+          onClose={() => setOpenCardId(null)}
+          onStep={step}
+        />
+      )}
     </div>
+  )
+}
+
+/**
+ * What the search turned up, with a button per print run.
+ *
+ * The run matters as much as the card: a 1st Edition Charizard and an
+ * Unlimited one are separate slots, and ticking the wrong one is a quiet way
+ * to get your totals wrong.
+ */
+function SearchResults({
+  results,
+  behindHidden,
+  onOpen,
+}: {
+  results: ApiCard[]
+  behindHidden: number
+  onOpen: (cardId: string) => void
+}) {
+  const hiddenNote =
+    behindHidden > 0 ? (
+      <p className="muted pad small">
+        {behindHidden} more {behindHidden === 1 ? 'card' : 'cards'} in sets you've hidden.{' '}
+        <button className="link-btn" onClick={showAllSets}>Show all sets</button>
+      </p>
+    ) : null
+
+  if (results.length === 0) {
+    return (
+      <>
+        <p className="muted pad">No matches in the sets you collect.</p>
+        {hiddenNote}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <ul className="result-list">
+        {results.map((card) => {
+          const set = getSet(card.set.id)
+          if (!set) return null
+          return (
+            <CardResult key={card.id} card={card} set={set} onOpen={() => onOpen(card.id)}>
+              {set.variants.map((variant) => (
+                <OwnChip key={variant.id} card={card} set={set} variant={variant} />
+              ))}
+            </CardResult>
+          )
+        })}
+      </ul>
+      {hiddenNote}
+      {results.length > 4 && <BackToTop />}
+    </>
+  )
+}
+
+/**
+ * One print run of one card: tap to own it, tap again to give it up.
+ *
+ * The price rides along because it's how you tell the runs apart at a glance,
+ * and a count appears once you have more than one copy — a second Charizard
+ * is worth being told about before you tick a third.
+ */
+function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; variant: SetVariant }) {
+  const { get, toggleOwned } = useCollection()
+  const price = usePrices()
+  const entry = get(card.id, variant.id)
+  const owned = Boolean(entry?.owned)
+  const copies = owned ? Math.max(1, entry?.quantity ?? 1) : 0
+  const p = price(card, variant)
+
+  return (
+    <button
+      className={`chip ${owned ? 'is-owned' : ''}`}
+      aria-pressed={owned}
+      onClick={() => toggleOwned(card.id, variant.id)}
+      title={owned ? `Remove ${variant.label} from your collection` : `Add ${set.name} ${variant.label} to your collection`}
+    >
+      <span className="chip-mark" aria-hidden>{owned ? '✓' : '+'}</span>
+      {variant.short}
+      {copies > 1 && <span className="chip-count">×{copies}</span>}
+      <span className="chip-price">
+        {p.market == null ? '—' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
+      </span>
+    </button>
   )
 }

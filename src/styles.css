@@ -209,6 +209,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   backdrop-filter: blur(12px);
 }
 .check-inline { display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: 0.88rem; }
+/* One row, always. The set toolbar gives its input a line of its own because
+   the filters under it need the width; here there is only a Clear beside it,
+   and dropping it to a second line would cost more height than it is worth. */
+.dash-search { flex-wrap: nowrap; }
+.dash-search .search-input { flex: 1 1 auto; min-width: 0; }
 
 .segmented { display: flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .segmented button {
@@ -828,11 +833,30 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .lot-remove:hover { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
 
 /* A chip in the results is the way into the lot, so it says which way it goes. */
-.chip.is-pinned { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; font-weight: 620; }
-.chip.is-pinned .chip-price { opacity: 0.8; }
+/* Filled means "it's in": pinned to the lot, or owned. Same gesture, same
+   answer, so the same shape. */
+.chip.is-pinned, .chip.is-owned { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; font-weight: 620; }
+.chip.is-pinned .chip-price, .chip.is-owned .chip-price { opacity: 0.8; }
 .chip-mark { font-size: 0.95rem; line-height: 1; opacity: 0.75; }
+.chip-count { font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .chip-owned { color: var(--gold-dim); font-size: 0.78rem; }
 .chip.is-pinned .chip-owned { color: rgba(255, 255, 255, 0.72); }
+
+/* The art and the name open the card panel; neither should look like a button
+   doing it, so they carry only the pointer. */
+.result-art, .result-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.result-art { border-radius: 5px; align-self: flex-start; display: block; flex: 0 0 auto; }
+.result-art img { display: block; border-radius: 5px; }
+.result-open { display: block; width: 100%; }
+.result-open:hover strong { color: var(--accent); }
 
 /* ---------- modal ---------- */
 .modal-backdrop {

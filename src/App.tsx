@@ -24,13 +24,24 @@ function Shell() {
   const phone = usePhone()
   const { progress } = useLibrary()
 
-  // "/" jumps to the lot's search from anywhere, the way a binder index would.
+  /*
+   * "/" is the binder index: it puts the cursor in the search on the page
+   * you're already on — the collection, a set's grid, the lot — and only
+   * carries you to the lot from a page that has none.
+   */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
       const typing = el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)
-      if (e.key === '/' && !typing) {
-        e.preventDefault()
+      if (e.key !== '/' || typing) return
+      e.preventDefault()
+      // By type, not by class: settings dresses its API-key box in the same
+      // class, and "/" should never drop the cursor into a password field.
+      const here = document.querySelector<HTMLInputElement>('.view input[type="search"]')
+      if (here) {
+        here.focus()
+        here.select()
+      } else {
         navigate(routeHref.lot)
       }
     }

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { BackToTop } from '../components/BackToTop'
+import { CardResult } from '../components/CardResult'
 import { getSet } from '../data/vintageSets'
 import { adjustedValue, UNASSESSED } from '../lib/condition'
 import { clearLot, isPinned, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
 import { formatMoney } from '../lib/pricing'
-import { routeHref } from '../lib/router'
+import { searchCards } from '../lib/searchCards'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 import { usePrices } from '../store/prices'
@@ -28,19 +29,17 @@ export function Lot() {
 
   const byId = useMemo(() => new Map(allCards.map((c) => [c.id, c])), [allCards])
 
+  /*
+   * Every set, including ones hidden from the collection page: the box in
+   * front of you holds what it holds, whether or not you chase that set.
+   */
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q && !ownedOnly) return []
-    return allCards
-      .filter((card) => {
-        if (q && !card.name.toLowerCase().includes(q)) return false
-        if (ownedOnly) {
-          const set = getSet(card.set.id)
-          if (!set?.variants.some((v) => get(card.id, v.id)?.owned)) return false
-        }
-        return true
-      })
-      .slice(0, 300)
+    const mine = ownedOnly
+      ? allCards.filter((card) => getSet(card.set.id)?.variants.some((v) => get(card.id, v.id)?.owned))
+      : allCards
+    // "Only cards I own" is a search of its own when nothing is typed.
+    if (!query.trim()) return ownedOnly ? mine.slice(0, 300) : []
+    return searchCards(mine, query)
   }, [allCards, query, ownedOnly, get])
 
   /** Everything the lot rows and the total need, resolved once. */
@@ -130,21 +129,11 @@ export function Lot() {
               const set = getSet(card.set.id)
               if (!set) return null
               return (
-                <li key={card.id} className="result">
-                  <img src={card.images.small} alt="" loading="lazy" width={60} height={84} />
-                  <div className="result-main">
-                    <div className="result-title">
-                      <strong>{card.name}</strong>
-                      <span className="muted">#{card.number}</span>
-                    </div>
-                    <a className="result-set muted" href={routeHref.set(set.id)}>{set.name} · {set.year}</a>
-                    <div className="chip-row">
-                      {set.variants.map((variant) => (
-                        <PinChip key={variant.id} card={card} set={set} variant={variant} />
-                      ))}
-                    </div>
-                  </div>
-                </li>
+                <CardResult key={card.id} card={card} set={set}>
+                  {set.variants.map((variant) => (
+                    <PinChip key={variant.id} card={card} set={set} variant={variant} />
+                  ))}
+                </CardResult>
               )
             })}
           </ul>
