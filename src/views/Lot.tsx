@@ -8,6 +8,7 @@ import { adjustedValue, UNASSESSED } from '../lib/condition'
 import { clearLot, isPinned, lotKey, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
 import { formatMoney } from '../lib/pricing'
 import { searchCards } from '../lib/searchCards'
+import { LOT_SORTS, loadLotSort, saveLotSort, type LotSort } from '../lib/sortOrder'
 import { usePhone } from '../lib/useMediaQuery'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
@@ -24,16 +25,7 @@ import { CONDITIONS, type ApiCard, type ConditionId, type SetVariant, type Vinta
  * opening a card gets you to its comps, and to the tick if you do buy it.
  */
 
-/** How the pile is stacked. Newest first is how it arrives, so it's the default. */
-type Sort = 'added' | 'value-desc' | 'value-asc' | 'name'
 
-const SORTS: Array<{ id: Sort; label: string }> = [
-  { id: 'added', label: 'Order added' },
-  { id: 'value-desc', label: 'Value, high to low' },
-  { id: 'value-asc', label: 'Value, low to high' },
-  // "Name" alone could be a filter; every option reads as an order instead.
-  { id: 'name', label: 'Name, A to Z' },
-]
 export function Lot() {
   const { allCards } = useLibrary()
   const { get } = useCollection()
@@ -41,7 +33,9 @@ export function Lot() {
   const lot = useLot()
   const [query, setQuery] = useState('')
   const [ownedOnly, setOwnedOnly] = useState(false)
-  const [sort, setSort] = useState<Sort>('added')
+  // Read back rather than defaulted: an order you chose stays chosen until
+  // you choose another.
+  const [sort, setSort] = useState<LotSort>(loadLotSort)
   const [openLine, setOpenLine] = useState<string | null>(null)
   const phone = usePhone()
 
@@ -120,9 +114,13 @@ export function Lot() {
       className="select select-compact"
       value={sort}
       aria-label="Sort the lot"
-      onChange={(e) => setSort(e.target.value as Sort)}
+      onChange={(e) => {
+        const next = e.target.value as LotSort
+        setSort(next)
+        saveLotSort(next)
+      }}
     >
-      {SORTS.map((s) => (
+      {LOT_SORTS.map((s) => (
         <option key={s.id} value={s.id}>{s.label}</option>
       ))}
     </select>

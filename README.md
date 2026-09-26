@@ -141,6 +141,12 @@ specific model:
   otherwise carry you a screen past where you left off — but the moment you
   scroll, you win. Remembered for the session, not stored: it's where you were
   a moment ago, not a preference.
+- **A sort you pick stays picked.** Both the set grid and the lot remember
+  their order until you change it yourself — stepping into a card and back,
+  into another set, or closing the app doesn't quietly put the list back in
+  set order. Kept per device alongside grid density, and validated against the
+  options the picker actually offers, so an order dropped in a later version
+  falls back rather than leaving the select blank.
 - **Grid density is adjustable** from the set toolbar — Auto, or a fixed 3, 4,
   5 or 6 per row. Auto fills the width, which on an iPad means six and rather
   small artwork. The choice is stored per device, since a tablet and a phone
@@ -321,7 +327,8 @@ name a figure.
   you pinned it. Value means the line, quantity included — the figure the row
   shows — and a card the feed can't price sinks to the bottom in either
   direction rather than posing as the cheapest thing in the box. The order is
-  a view: the total is a sum, so it doesn't move. On a phone the sort and
+  a view: the total is a sum, so it doesn't move. It's remembered until you
+  change it. On a phone the sort and
   Clear lot both sit behind the "…" in the pinned bar, which is marked when
   the pile isn't in the order you pinned it.
 - **Tap a line to open the card**, and with it the comp links — TCGplayer,
@@ -478,6 +485,7 @@ src/
   lib/importer.ts       spreadsheet -> collection matching and planning
   lib/pricing.ts        variation -> price-bucket resolution
   lib/stats.ts          completion, value, spend rollups
+  lib/sortOrder.ts      remembered list order for the set grid and the lot
   lib/useScrollMemory.ts per-page scroll position across route changes
   views/                Collection, Set detail, Lot, Import, Settings
 ```

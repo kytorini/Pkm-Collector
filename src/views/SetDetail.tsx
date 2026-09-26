@@ -26,6 +26,7 @@ import { navigate, routeHref } from '../lib/router'
 import { isUnassessed } from '../lib/condition'
 import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
 import { usePhone } from '../lib/useMediaQuery'
+import { SET_SORTS, loadSetSort, saveSetSort, type SetSort } from '../lib/sortOrder'
 import { statsForVariant, stillToBuyNote } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
@@ -143,7 +144,7 @@ function PriceEntryList({
 }
 
 type Filter = 'all' | 'owned' | 'missing' | 'unassessed'
-type Sort = 'number' | 'name' | 'price-desc' | 'price-asc'
+
 
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
   const set = getSet(setId)
@@ -152,7 +153,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const price = usePrices()
   const rules = usePriceRules()
   const [filter, setFilter] = useState<Filter>('all')
-  const [sort, setSort] = useState<Sort>('number')
+  // Read back, not defaulted: stepping into a card and out again, or into
+  // the next set, shouldn't quietly put the grid back in set order.
+  const [sort, setSort] = useState<SetSort>(loadSetSort)
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -397,11 +400,19 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   )
 
   const sortSelect = (
-    <select className="select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
-      <option value="number">Set order</option>
-      <option value="name">Name</option>
-      <option value="price-desc">Price, high to low</option>
-      <option value="price-asc">Price, low to high</option>
+    <select
+      className="select"
+      value={sort}
+      aria-label="Sort"
+      onChange={(e) => {
+        const next = e.target.value as SetSort
+        setSort(next)
+        saveSetSort(next)
+      }}
+    >
+      {SET_SORTS.map((s) => (
+        <option key={s.id} value={s.id}>{s.label}</option>
+      ))}
     </select>
   )
 
