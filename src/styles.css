@@ -760,6 +760,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   border-bottom: 1px solid var(--line-soft);
 }
 .lot-total { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lot-bar-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+/* The lot's art is smaller than a search result's, so it keeps its own size. */
+.lot-row .result-art img { width: 44px; height: 62px; }
 .lot-total-value {
   font-size: 1.45rem;
   font-weight: 650;

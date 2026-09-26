@@ -317,8 +317,22 @@ name a figure.
   another.
 - **Prices follow your own price sources**, including any figures you typed in
   yourself, so the total is the same number the rest of the app would give.
+- **Sort the pile** by value (high or low), by name, or leave it in the order
+  you pinned it. Value means the line, quantity included — the figure the row
+  shows — and a card the feed can't price sinks to the bottom in either
+  direction rather than posing as the cheapest thing in the box. The order is
+  a view: the total is a sum, so it doesn't move. On a phone the sort and
+  Clear lot both sit behind the "…" in the pinned bar, which is marked when
+  the pile isn't in the order you pinned it.
+- **Tap a line to open the card**, and with it the comp links — TCGplayer,
+  PriceCharting, eBay sold. The panel opens on the print run you pinned, which
+  is the point: an eBay search for a 1st Edition and one for an Unlimited
+  return different money. `←` / `→` walk the lot from there.
 - **Nothing here touches your collection.** Pinning is not owning. The lot is
   kept per device and isn't synced — it's a note for the next ten minutes.
+  Opening a card does put the collection's own controls in front of you, so
+  you can tick it off there if you go through with the deal — but that's a
+  deliberate act, not something pinning does.
 
 ## Honest notes on pricing
 
