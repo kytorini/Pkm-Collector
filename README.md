@@ -141,6 +141,13 @@ specific model:
   otherwise carry you a screen past where you left off — but the moment you
   scroll, you win. Remembered for the session, not stored: it's where you were
   a moment ago, not a preference.
+- **The four totals fold away**, from the chevron beside the Collection
+  heading. They answer "how am I doing", which is worth a glance and then
+  worth getting out of the way — on a phone they are 252px before the first
+  set. Folded, the completion bar stays with its percentage, since that's the
+  one you actually watch, and the strip itself opens them again. Remembered
+  per device, and open on a first visit: an app shouldn't start by hiding what
+  it's for.
 - **A sort you pick stays picked.** Both the set grid and the lot remember
   their order until you change it yourself — stepping into a card and back,
   into another set, or closing the app doesn't quietly put the list back in
@@ -486,6 +493,7 @@ src/
   lib/pricing.ts        variation -> price-bucket resolution
   lib/stats.ts          completion, value, spend rollups
   lib/sortOrder.ts      remembered list order for the set grid and the lot
+  lib/totalsOpen.ts     whether the Collection totals are folded away
   lib/useScrollMemory.ts per-page scroll position across route changes
   views/                Collection, Set detail, Lot, Import, Settings
 ```

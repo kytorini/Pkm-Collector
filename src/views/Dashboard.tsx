@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardResult } from '../components/CardResult'
-import { InfoIcon } from '../components/icons'
+import { ChevronDownIcon, InfoIcon } from '../components/icons'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
 import { VINTAGE_SETS, getSet } from '../data/vintageSets'
 import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
+import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
@@ -42,6 +43,14 @@ export function Dashboard() {
   // as to add, and a keyboard over the totals would be in the way.
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
+  const [totalsOpen, setTotalsOpen] = useState(loadTotalsOpen)
+
+  const toggleTotals = () => {
+    setTotalsOpen((was) => {
+      saveTotalsOpen(!was)
+      return !was
+    })
+  }
 
   const toggleOpen = (id: string) =>
     setOpen((prev) => {
@@ -172,6 +181,17 @@ export function Dashboard() {
             </div>
           )}
         </OverflowMenu>
+        <button
+          type="button"
+          className="disclose"
+          onClick={toggleTotals}
+          aria-expanded={totalsOpen}
+          aria-controls="collection-totals"
+          aria-label={totalsOpen ? 'Fold the totals away' : 'Show the totals'}
+          title={totalsOpen ? 'Fold the totals away' : 'Show the totals'}
+        >
+          <ChevronDownIcon />
+        </button>
       </header>
 
       {error && (
@@ -185,6 +205,13 @@ export function Dashboard() {
         </div>
       )}
 
+      {/*
+        Folded away, the completion bar stays behind: it's the figure you
+        actually watch, and a page that opens on a wall of money before the
+        first set is a page you scroll past. The region keeps its place in the
+        markup either way, so the chevron always has something to point at.
+      */}
+      <div id="collection-totals" hidden={!totalsOpen}>
       <div className="stat-row">
         <div className="stat">
           <span className="stat-label">Completion</span>
@@ -213,6 +240,21 @@ export function Dashboard() {
           </span>
         </div>
       </div>
+      </div>
+
+      {!totalsOpen && (
+        <button
+          type="button"
+          className="totals-peek"
+          onClick={toggleTotals}
+          aria-expanded={false}
+          aria-controls="collection-totals"
+          aria-label={`Show the totals — ${total.pct}% complete`}
+        >
+          <span className="totals-peek-pct">{total.pct}%</span>
+          <ProgressBar value={total.owned} total={total.total} />
+        </button>
+      )}
 
       <div className="toolbar dash-search">
         <input

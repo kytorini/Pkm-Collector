@@ -72,6 +72,15 @@ export function InfoIcon({ size, className }: Props) {
   )
 }
 
+/** Disclosure. Points down to open, and is turned over by CSS once open. */
+export function ChevronDownIcon({ size, className }: Props) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M5 9l7 7 7-7" />
+    </svg>
+  )
+}
+
 /** Back, in the same weight as the rest. */
 export function ChevronLeftIcon({ size, className }: Props) {
   return (
