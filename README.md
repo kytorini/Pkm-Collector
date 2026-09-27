@@ -150,12 +150,16 @@ specific model:
   it's for.
 - **Find the cards no feed will price.** They're the quiet gap behind every
   total: a card with no price counts as nothing, so market value reads low for
-  the ones you own and remaining cost reads low for the ones you don't. The
-  "i" beside the Collection heading says how many there are and offers to show
-  them; the list is one row per card with a button per print run, and the run
-  without a price says so where its figure would be. Open a card to type one
-  in. A set's toolbar has the same thing as a **No price** filter, per print
-  run, for working through one set at a time.
+  the ones you own and remaining cost reads low for the ones you don't. **See
+  what's not priced** sits on the Remaining cost card, which is the card that
+  raises the question — it was behind the "i" first, where nobody found it,
+  which is fair enough: you don't open a definition panel to go and do
+  something. It appears only when there is something to find, and the "i"
+  still offers the same list for anyone who reads it. The list is one row per
+  card with a button per print run, and the run without a price says so where
+  its figure would be. Open a card to type one in. A set's toolbar has the
+  same thing as a **No price** filter, per print run, for working through one
+  set at a time.
 - **A sort you pick stays picked.** Both the set grid and the lot remember
   their order until you change it yourself — stepping into a card and back,
   into another set, or closing the app doesn't quietly put the list back in

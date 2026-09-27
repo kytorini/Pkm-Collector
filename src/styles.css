@@ -252,6 +252,23 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .stat-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .stat-value { font-size: 1.7rem; font-weight: 640; letter-spacing: -0.02em; }
 .stat-sub { font-size: 0.8rem; }
+/* An errand, not a caption: coloured so it reads as somewhere to go, and on
+   its own line so it has room to be tapped. */
+.stat-gap {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.stat-gap:hover { color: var(--text); }
 
 .progress-table { border: 1px solid var(--line-soft); border-radius: var(--radius); overflow: hidden; }
 .progress-row {
@@ -1299,6 +1316,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .modal-close { --close-size: 44px; }
   /* Both dimensions again: a chevron is a small thing to hit with a thumb. */
   .disclose { min-width: 44px; min-height: 44px; }
+  .stat-gap { display: inline-flex; align-items: center; min-height: 36px; }
   .totals-peek { min-height: 44px; }
   .variant-toggle input { width: 22px; height: 22px; }
   .brand { min-height: 44px; display: inline-flex; align-items: center; }

@@ -263,6 +263,20 @@ export function Dashboard() {
           {/* What the figure is, always — the caveat used to replace it, so a
               collection with unpriced slots never saw the definition at all. */}
           <span className="stat-sub muted">{remainingCostNote(total)}</span>
+          {/* The way in sits on the card that raises the question. Behind the
+              "i" it went unfound, which is fair: nobody opens a definition
+              panel to go and do something. */}
+          {total.unpriced > 0 && (
+            <button
+              className="stat-gap"
+              onClick={() => {
+                setShowUnpriced(true)
+                setQuery('')
+              }}
+            >
+              See what's not priced
+            </button>
+          )}
         </div>
         <div className="stat">
           <span className="stat-label">Spent</span>
