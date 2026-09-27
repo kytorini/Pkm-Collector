@@ -148,6 +148,14 @@ specific model:
   one you actually watch, and the strip itself opens them again. Remembered
   per device, and open on a first visit: an app shouldn't start by hiding what
   it's for.
+- **Find the cards no feed will price.** They're the quiet gap behind every
+  total: a card with no price counts as nothing, so market value reads low for
+  the ones you own and remaining cost reads low for the ones you don't. The
+  "i" beside the Collection heading says how many there are and offers to show
+  them; the list is one row per card with a button per print run, and the run
+  without a price says so where its figure would be. Open a card to type one
+  in. A set's toolbar has the same thing as a **No price** filter, per print
+  run, for working through one set at a time.
 - **A sort you pick stays picked.** Both the set grid and the lot remember
   their order until you change it yourself — stepping into a card and back,
   into another set, or closing the app doesn't quietly put the list back in
@@ -500,6 +508,7 @@ src/
   lib/stats.ts          completion, value, spend rollups
   lib/sortOrder.ts      remembered list order for the set grid and the lot
   lib/totalsOpen.ts     whether the Collection totals are folded away
+  lib/unpriced.ts       the slots no feed will put a number on
   lib/useScrollMemory.ts per-page scroll position across route changes
   views/                Collection, Set detail, Lot, Import, Settings
 ```

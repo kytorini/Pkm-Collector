@@ -889,6 +889,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .chip.is-pinned .chip-price, .chip.is-owned .chip-price { opacity: 0.8; }
 .chip-mark { font-size: 0.95rem; line-height: 1; opacity: 0.75; }
 .chip-count { font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Not a price, and not pretending to be one. */
+.chip-price.is-missing { opacity: 1; color: var(--gold-dim); font-style: italic; }
+.chip.is-owned .chip-price.is-missing, .chip.is-pinned .chip-price.is-missing { color: rgba(255, 255, 255, 0.78); }
 .chip-owned { color: var(--gold-dim); font-size: 0.78rem; }
 .chip.is-pinned .chip-owned { color: rgba(255, 255, 255, 0.72); }
 
@@ -1189,6 +1192,10 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .section-head { flex-direction: column; align-items: stretch; gap: 10px; }
   .section-head .btn-row { flex-wrap: nowrap; }
   .section-head .btn-row .btn { flex: 1 1 0; min-width: 0; }
+  /* Two long buttons need a line of their own; one short one does not, and
+     stretching it across the page makes an ordinary Done look like a warning. */
+  .section-head.is-single { flex-direction: row; align-items: center; }
+  .section-head .btn-row .btn:only-child { flex: 0 0 auto; }
 
   /* Name and count share the first line; the bar and the value the second. */
   .progress-row { grid-template-columns: 1fr auto; row-gap: 7px; column-gap: 12px; padding: 13px 14px; }

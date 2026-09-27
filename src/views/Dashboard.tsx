@@ -12,6 +12,7 @@ import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
+import { unpricedCards, unpricedSlots } from '../lib/unpriced'
 import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
@@ -44,6 +45,9 @@ export function Dashboard() {
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [totalsOpen, setTotalsOpen] = useState(loadTotalsOpen)
+  // Reached from the "i" panel, which is where the count that prompts the
+  // question is stated. Not a stored preference — it's an errand, not a view.
+  const [showUnpriced, setShowUnpriced] = useState(false)
 
   const toggleTotals = () => {
     setTotalsOpen((was) => {
@@ -89,12 +93,23 @@ export function Dashboard() {
     [searching, hidden, cardsBySet, query],
   )
 
-  const openCard = openCardId ? results.find((c) => c.id === openCardId) : undefined
+  /*
+   * Which slots no feed will price. Owned ones too, not just missing: an
+   * unpriced card you hold drags market value down exactly as quietly.
+   */
+  const gaps = useMemo(
+    () => (showUnpriced ? unpricedSlots(cardsBySet, collection, shown.map((s) => s.id), price) : []),
+    [showUnpriced, cardsBySet, collection, shown, price],
+  )
+  const gapCards = useMemo(() => unpricedCards(gaps), [gaps])
+
+  const listed = showUnpriced ? gapCards.map((g) => g.card) : results
+  const openCard = openCardId ? listed.find((c) => c.id === openCardId) : undefined
   const openSet = openCard ? getSet(openCard.set.id) : undefined
   /** Left and right walk the results, so a page of them is one panel. */
   const step = (delta: number) => {
-    const at = results.findIndex((c) => c.id === openCardId)
-    const next = results[at + delta]
+    const at = listed.findIndex((c) => c.id === openCardId)
+    const next = listed[at + delta]
     if (next) setOpenCardId(next.id)
   }
 
@@ -150,7 +165,7 @@ export function Dashboard() {
           icon={<InfoIcon />}
           flagged={hidden.length > 0}
         >
-          {() => (
+          {(close) => (
             <div className="info-panel">
               <p>
                 {total.owned} of {total.total} tracked slots across {total.setsStarted}{' '}
@@ -177,6 +192,22 @@ export function Dashboard() {
                   {shortBy} of those slots {shortBy === 1 ? 'has' : 'have'} no price from any
                   source, so {shortBy === 1 ? "it's" : "they're"} left out and the figure is lower
                   than the real bill.
+                </p>
+              )}
+              {total.unpriced > 0 && (
+                <p>
+                  {total.unpriced} slot{total.unpriced === 1 ? '' : 's'} in all {total.unpriced === 1 ? 'has' : 'have'}{' '}
+                  no price, counting the ones you own.{' '}
+                  <button
+                    className="link-btn"
+                    onClick={() => {
+                      close()
+                      setShowUnpriced(true)
+                      setQuery('')
+                    }}
+                  >
+                    Show them
+                  </button>
                 </p>
               )}
             </div>
@@ -264,14 +295,26 @@ export function Dashboard() {
           placeholder="Find a card to add…"
           aria-label="Search your sets for a card"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            // Typing is a different errand; don't leave the old filter on
+            // under it and call the result a search.
+            if (e.target.value) setShowUnpriced(false)
+          }}
         />
         {searching && (
           <button className="btn ghost small" onClick={() => setQuery('')}>Clear</button>
         )}
       </div>
 
-      {searching ? (
+      {showUnpriced ? (
+        <UnpricedList
+          cards={gapCards}
+          slots={gaps.length}
+          onOpen={setOpenCardId}
+          onDone={() => setShowUnpriced(false)}
+        />
+      ) : searching ? (
         <SearchResults results={results} behindHidden={behindHidden} onOpen={setOpenCardId} />
       ) : (
       <section className="series-block">
@@ -465,6 +508,64 @@ function SearchResults({
 }
 
 /**
+ * Every card the feed won't price, so they can be given one by hand.
+ *
+ * The rows are the search's, because the question is the same — which card is
+ * this? — and the run that's missing a price already shows a dash where its
+ * figure would be. Tapping the card opens the panel, which is where a price
+ * gets typed.
+ */
+function UnpricedList({
+  cards,
+  slots,
+  onOpen,
+  onDone,
+}: {
+  cards: Array<{ card: ApiCard; set: VintageSet }>
+  slots: number
+  onOpen: (cardId: string) => void
+  onDone: () => void
+}) {
+  return (
+    <>
+      <div className="section-head is-single">
+        <h2 className="series-title">
+          {slots === 0
+            ? 'Every slot has a price'
+            : `${slots} slot${slots === 1 ? '' : 's'} with no price`}
+        </h2>
+        <div className="btn-row">
+          <button className="btn ghost small" onClick={onDone}>Done</button>
+        </div>
+      </div>
+      {slots === 0 ? (
+        <p className="muted pad">
+          Every print run of every card you collect has a price from your chosen source. Nothing to
+          fill in.
+        </p>
+      ) : (
+        <>
+          <p className="muted pad small">
+            No feed quotes {slots === 1 ? 'this one' : 'these'}, so {slots === 1 ? 'it counts' : 'they count'} as
+            nothing in your totals. Open a card to type a price in.
+          </p>
+          <ul className="result-list">
+            {cards.map(({ card, set }) => (
+              <CardResult key={card.id} card={card} set={set} onOpen={() => onOpen(card.id)}>
+                {set.variants.map((variant) => (
+                  <OwnChip key={variant.id} card={card} set={set} variant={variant} />
+                ))}
+              </CardResult>
+            ))}
+          </ul>
+          {cards.length > 4 && <BackToTop />}
+        </>
+      )}
+    </>
+  )
+}
+
+/**
  * One print run of one card: tap to own it, tap again to give it up.
  *
  * The price rides along because it's how you tell the runs apart at a glance,
@@ -489,8 +590,10 @@ function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
       <span className="chip-mark" aria-hidden>{owned ? '✓' : '+'}</span>
       {variant.short}
       {copies > 1 && <span className="chip-count">×{copies}</span>}
-      <span className="chip-price">
-        {p.market == null ? '—' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
+      {/* A dash where a figure should be is the whole signal in the
+          no-price list, so it is drawn as a gap rather than as a price. */}
+      <span className={`chip-price ${p.market == null ? 'is-missing' : ''}`}>
+        {p.market == null ? 'no price' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
       </span>
     </button>
   )

@@ -143,7 +143,7 @@ function PriceEntryList({
   )
 }
 
-type Filter = 'all' | 'owned' | 'missing' | 'unassessed'
+type Filter = 'all' | 'owned' | 'missing' | 'unassessed' | 'unpriced'
 
 
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
@@ -256,6 +256,9 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       if (filter === 'owned' && !owned) return false
       if (filter === 'missing' && owned) return false
       if (filter === 'unassessed' && !isUnassessed(entry)) return false
+      // The gap behind every total on this page: no price means counted as
+      // nothing, whether you own the card or not.
+      if (filter === 'unpriced' && price(card, activeVariant).market != null) return false
       if (q && !card.name.toLowerCase().includes(q) && !card.number.toLowerCase().includes(q)) return false
       return true
     })
@@ -521,6 +524,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             ['owned', 'Owned'],
             ['missing', 'Missing'],
             ['unassessed', 'Unrated'],
+            ['unpriced', 'No price'],
           ] as [Filter, string][]).map(([f, label]) => (
             <button key={f} className={filter === f ? 'is-active' : ''} onClick={() => setFilter(f)}>
               {label}
