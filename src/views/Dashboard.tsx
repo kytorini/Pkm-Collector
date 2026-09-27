@@ -12,7 +12,7 @@ import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
-import { statsForCollection, statsForSet, statsForVariant, stillToBuyNote, type VariantStats } from '../lib/stats'
+import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { useLibrary } from '../store/library'
@@ -167,7 +167,7 @@ export function Dashboard() {
                 condition — two copies count twice, a played one counts for less.
               </p>
               <p>
-                <strong>Still to buy</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
+                <strong>Remaining cost</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
                 don't have would cost at market, one of each. It isn't market value taken off a larger
                 number — duplicates and condition move that figure and not this one, so the two don't
                 add up to the price of a full set.
@@ -227,11 +227,11 @@ export function Dashboard() {
           </span>
         </div>
         <div className="stat">
-          <span className="stat-label">Still to buy</span>
+          <span className="stat-label">Remaining cost</span>
           <span className="stat-value">{formatMoney(total.missingValue)}</span>
           {/* What the figure is, always — the caveat used to replace it, so a
               collection with unpriced slots never saw the definition at all. */}
-          <span className="stat-sub muted">{stillToBuyNote(total)}</span>
+          <span className="stat-sub muted">{remainingCostNote(total)}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Spent</span>

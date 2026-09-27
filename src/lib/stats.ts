@@ -137,22 +137,22 @@ export function statsForCollection(
 }
 
 /**
- * One line saying what the "still to buy" figure is.
+ * One line saying what the "remaining cost" figure is.
  *
  * Kept here so a set and the whole collection phrase it the same way.
  *
  * It says it in words rather than counts. "Market price for 756 of the 760
  * you don't have" was accurate and read like a ledger entry: two bare numbers
  * under a third, much larger one, and "the 760" left hanging without a noun.
- * What the figure is takes no numbers at all — it's what the rest would cost —
- * and the cards with no price are an aside at the end, where they belong,
- * since they're usually a handful out of hundreds.
+ * With the label carrying "cost", what is left for the caption is the basis —
+ * market prices, for what you don't have — and the cards with no price as an
+ * aside at the end, since they're usually a handful out of hundreds.
  *
  * `compact` is for the set page, where the note shares a line with the figure
  * and only appears when there is something to admit — the label and the money
  * are right beside it, so it needn't repeat them.
  */
-export function stillToBuyNote(stats: VariantStats, compact = false): string {
+export function remainingCostNote(stats: VariantStats, compact = false): string {
   const missing = stats.total - stats.owned
   const unpriced = stats.unpricedMissing
   const one = unpriced === 1
@@ -162,13 +162,15 @@ export function stillToBuyNote(stats: VariantStats, compact = false): string {
     return one ? 'one of them has no price' : `${unpriced} of them have no price`
   }
   if (missing === 0) return 'nothing left to buy'
-  // Nothing missing carries a price, so the figure above is zero, and saying
-  // what it "would cost" would be a straight lie.
+  // Nothing missing carries a price, so the figure above is zero, and pricing
+  // "the rest" would be a straight lie.
   if (unpriced === missing) {
     return missing === 1 ? 'the one you need has no price' : 'none of the rest has a price yet'
   }
+  if (missing === 1) return 'the last one, at market price'
+  // "the rest" rather than a count, and no second "cost" after the label's.
   if (unpriced > 0) {
-    return `what the rest would cost at market — ${one ? "one isn't priced" : `${unpriced} aren't priced`}`
+    return `the rest, at market prices — ${one ? "one isn't priced" : `${unpriced} aren't priced`}`
   }
-  return missing === 1 ? 'what the last one would cost at market' : 'what the rest would cost at market'
+  return 'the rest, at market prices'
 }
