@@ -137,13 +137,16 @@ export function statsForCollection(
 }
 
 /**
- * One line saying what the "still to buy" figure actually counts.
+ * One line saying what the "still to buy" figure is.
  *
- * Kept here so a set and the whole collection phrase it the same way, and so
- * the count that is named is always the one the money came from: slots you
- * don't have that carry a price. A missing slot with no price adds nothing to
- * the total, and saying how many of the missing are counted admits that
- * without a second sentence about it.
+ * Kept here so a set and the whole collection phrase it the same way.
+ *
+ * It says it in words rather than counts. "Market price for 756 of the 760
+ * you don't have" was accurate and read like a ledger entry: two bare numbers
+ * under a third, much larger one, and "the 760" left hanging without a noun.
+ * What the figure is takes no numbers at all — it's what the rest would cost —
+ * and the cards with no price are an aside at the end, where they belong,
+ * since they're usually a handful out of hundreds.
  *
  * `compact` is for the set page, where the note shares a line with the figure
  * and only appears when there is something to admit — the label and the money
@@ -151,10 +154,21 @@ export function statsForCollection(
  */
 export function stillToBuyNote(stats: VariantStats, compact = false): string {
   const missing = stats.total - stats.owned
-  const counted = missing - stats.unpricedMissing
-  if (compact) return stats.unpricedMissing > 0 ? `covers ${counted} of the ${missing} missing` : ''
+  const unpriced = stats.unpricedMissing
+  const one = unpriced === 1
+
+  if (compact) {
+    if (unpriced === 0) return ''
+    return one ? 'one of them has no price' : `${unpriced} of them have no price`
+  }
   if (missing === 0) return 'nothing left to buy'
-  // "price of N of the M" stutters; "for" carries the same sense and reads once.
-  if (stats.unpricedMissing > 0) return `market price for ${counted} of the ${missing} you don't have`
-  return `market price for the ${missing === 1 ? 'one' : missing} you don't have`
+  // Nothing missing carries a price, so the figure above is zero, and saying
+  // what it "would cost" would be a straight lie.
+  if (unpriced === missing) {
+    return missing === 1 ? 'the one you need has no price' : 'none of the rest has a price yet'
+  }
+  if (unpriced > 0) {
+    return `what the rest would cost at market — ${one ? "one isn't priced" : `${unpriced} aren't priced`}`
+  }
+  return missing === 1 ? 'what the last one would cost at market' : 'what the rest would cost at market'
 }

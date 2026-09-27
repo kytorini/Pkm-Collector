@@ -174,8 +174,9 @@ export function Dashboard() {
               </p>
               {shortBy > 0 && (
                 <p>
-                  {shortBy} of those {missing} have no price from any source, so they're left out
-                  and the figure is lower than the real bill.
+                  {shortBy} of those slots {shortBy === 1 ? 'has' : 'have'} no price from any
+                  source, so {shortBy === 1 ? "it's" : "they're"} left out and the figure is lower
+                  than the real bill.
                 </p>
               )}
             </div>

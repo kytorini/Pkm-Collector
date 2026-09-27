@@ -425,14 +425,17 @@ name a figure.
   condition. So the two don't sum to what a full set costs: a second copy and
   a played copy both move market value and neither moves what's still to buy.
   It used to be labelled "cost to finish", which read as a total as easily as a
-  remainder, so the label now says which. Its caption is a sentence about the
-  money rather than a tally of the count beside it — *market price for 291 of
-  the 306 you don't have* — and naming how many of the missing were priced is
-  also how it admits the ones it couldn't: an unpriced slot adds nothing, so
-  the figure is short of the real bill. Unpriced slots you already **own** are
-  left out of that count, because a card you have costs nothing to finish and
-  counting it there only puzzles people. The "i" beside the heading carries the
-  full definition.
+  remainder, so the label now says which. Its caption says what the money is in
+  words — *what the rest would cost at market* — with the cards that have no
+  price as an aside at the end: *— 6 aren't priced*. An unpriced slot adds
+  nothing to the total, so the figure is short of the real bill, and that aside
+  is how it owns up. The caption used to carry the fraction instead (*market
+  price for 291 of the 306 you don't have*), which was accurate and read like a
+  ledger entry: two bare numbers under a third much larger one, and "the 306"
+  hanging without a noun. Unpriced slots you already **own** are left out of
+  that count, because a card you have costs nothing to finish and counting it
+  there only puzzles people. The "i" beside the heading carries the full
+  definition.
 - **Prices are the feed's, not a valuation.** Graded copies especially — a
   PSA 10 is a different market from the raw price shown here, so grading is
   deliberately not factored into value at all.
