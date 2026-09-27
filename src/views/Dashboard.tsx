@@ -31,7 +31,7 @@ function remainderNote(s: VariantStats): string {
 }
 
 export function Dashboard() {
-  const { cardsBySet, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
+  const { cardsBySet, allCards, hydrated, empty, progress, syncAll, error, failedSets } = useLibrary()
   const { collection } = useCollection()
   const price = usePrices()
   const hidden = useHiddenSets()
@@ -44,6 +44,17 @@ export function Dashboard() {
   // as to add, and a keyboard over the totals would be in the way.
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
+  /*
+   * The list as it stood when the panel was opened.
+   *
+   * The lists here are live: type a price into a card reached from "not
+   * priced yet" and it stops being unpriced, so it leaves the list mid-edit.
+   * The panel used to be looked up in that list and vanished with it — one
+   * digit and the card shut. It resolves against every card now, and the
+   * arrows walk this snapshot, so finishing one card still steps to the next
+   * one you meant rather than to whatever survived the filter.
+   */
+  const [walk, setWalk] = useState<string[]>([])
   const [totalsOpen, setTotalsOpen] = useState(loadTotalsOpen)
   // Reached from the "i" panel, which is where the count that prompts the
   // question is stated. Not a stored preference — it's an errand, not a view.
@@ -104,13 +115,20 @@ export function Dashboard() {
   const gapCards = useMemo(() => unpricedCards(gaps), [gaps])
 
   const listed = showUnpriced ? gapCards.map((g) => g.card) : results
-  const openCard = openCardId ? listed.find((c) => c.id === openCardId) : undefined
+  const byId = useMemo(() => new Map(allCards.map((c) => [c.id, c])), [allCards])
+  const openCard = openCardId ? byId.get(openCardId) : undefined
   const openSet = openCard ? getSet(openCard.set.id) : undefined
-  /** Left and right walk the results, so a page of them is one panel. */
+
+  const openPanel = (cardId: string) => {
+    setWalk(listed.map((c) => c.id))
+    setOpenCardId(cardId)
+  }
+  /** Left and right walk the list you opened, so a page of them is one panel. */
   const step = (delta: number) => {
-    const at = listed.findIndex((c) => c.id === openCardId)
-    const next = listed[at + delta]
-    if (next) setOpenCardId(next.id)
+    const at = walk.indexOf(openCardId ?? '')
+    if (at < 0) return
+    const next = walk[at + delta]
+    if (next) setOpenCardId(next)
   }
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
@@ -325,11 +343,11 @@ export function Dashboard() {
         <UnpricedList
           cards={gapCards}
           slots={gaps.length}
-          onOpen={setOpenCardId}
+          onOpen={openPanel}
           onDone={() => setShowUnpriced(false)}
         />
       ) : searching ? (
-        <SearchResults results={results} behindHidden={behindHidden} onOpen={setOpenCardId} />
+        <SearchResults results={results} behindHidden={behindHidden} onOpen={openPanel} />
       ) : (
       <section className="series-block">
         <div className="section-head">

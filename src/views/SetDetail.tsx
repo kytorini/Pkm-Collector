@@ -158,6 +158,12 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const [sort, setSort] = useState<SetSort>(loadSetSort)
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
+  /*
+   * The grid as it stood when the card was opened. Under the "No price"
+   * filter, typing a price takes the card out of `visible` mid-edit, and the
+   * arrows would then step from nowhere to the top of the list.
+   */
+  const [walk, setWalk] = useState<string[]>([])
   const [refreshing, setRefreshing] = useState(false)
   // Distinguishes "still waiting" from "tried and failed", so a dead request
   // doesn't sit under a Loading message forever.
@@ -307,12 +313,18 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     return `${n} of ${cards.length}`
   }
 
+  const openPanel = (cardId: string) => {
+    const pool = visible.length ? visible : cards
+    setWalk(pool.map((c) => c.id))
+    setOpenCardId(cardId)
+  }
+
   const step = (delta: number) => {
     if (!openCard) return
-    const pool: ApiCard[] = visible.length ? visible : cards
-    const idx = pool.findIndex((c) => c.id === openCard.id)
-    const next = pool[(idx + delta + pool.length) % pool.length]
-    if (next) setOpenCardId(next.id)
+    const pool = walk.length ? walk : cards.map((c) => c.id)
+    const idx = pool.indexOf(openCard.id)
+    if (idx < 0) return
+    setOpenCardId(pool[(idx + delta + pool.length) % pool.length])
   }
 
   const onRefresh = async () => {
@@ -572,7 +584,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         <>
           <div className="card-grid" style={{ '--grid-template': gridTemplate(density) } as CSSProperties}>
             {visible.map((card) => (
-              <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => setOpenCardId(c.id)} />
+              <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => openPanel(c.id)} />
             ))}
           </div>
           <BackToTop />
