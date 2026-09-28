@@ -158,7 +158,7 @@ specific model:
   still offers the same list for anyone who reads it. The list is one row per
   card with a button per print run, and the run without a price says so where
   its figure would be. Open a card to type one in. A set's toolbar has the
-  same thing as a **No price** filter, per print run, for working through one
+  same thing as an **Unpriced** filter, per print run, for working through one
   set at a time.
 - **A sort you pick stays picked.** Both the set grid and the lot remember
   their order until you change it yourself — stepping into a card and back,

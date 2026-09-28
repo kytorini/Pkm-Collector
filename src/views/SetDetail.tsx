@@ -536,7 +536,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             ['owned', 'Owned'],
             ['missing', 'Missing'],
             ['unassessed', 'Unrated'],
-            ['unpriced', 'No price'],
+            // One word, like the four beside it, so nothing has to wrap.
+            ['unpriced', 'Unpriced'],
           ] as [Filter, string][]).map(([f, label]) => (
             <button key={f} className={filter === f ? 'is-active' : ''} onClick={() => setFilter(f)}>
               {label}

@@ -217,12 +217,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 .segmented { display: flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .segmented button {
-  padding: 8px 14px;
+  padding: 6px 13px;
   border: 0;
   background: var(--bg-sunken);
   color: var(--text-dim);
   font: inherit;
   font-size: 0.87rem;
+  line-height: 1.35;
+  /* Five filters squeezed "No price" onto a second line and took the whole
+     row down with it — one wrapped label sets the height of all of them. */
+  white-space: nowrap;
   cursor: pointer;
 }
 .segmented button + button { border-left: 1px solid var(--line); }
@@ -1191,7 +1195,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .toolbar { gap: 6px; margin-bottom: 10px; padding-top: 6px; padding-bottom: 6px; }
   .search-input { min-height: 38px; flex: 1 1 100%; padding: 7px 12px; }
   .segmented { flex: 1 1 auto; }
-  .segmented button { min-height: 38px; padding: 7px 12px; flex: 1; }
+  /* Equal shares of a narrow row, so the labels have to be lean rather than
+     padded: the row is a filter, not a destination. */
+  .segmented button { min-height: 32px; padding: 5px 4px; flex: 1 1 0; min-width: 0; font-size: 0.8rem; }
   .select { min-height: 38px; padding: 7px 10px; }
 
   /* Three across reads better than two — more of the set per screen. */
@@ -1325,7 +1331,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 /* Phones override the floor where a 44pt row would push cards off-screen. */
 @media (hover: none) and (max-width: 700px) {
   .btn.small, .set-head .btn { min-height: 40px; }
-  .search-input, .segmented button, .select { min-height: 38px; }
+  .search-input, .select { min-height: 38px; }
+  .segmented button { min-height: 32px; }
   .variant-tab { min-height: 40px; }
   .back-link { min-height: 32px; }
 }
