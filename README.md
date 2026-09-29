@@ -230,14 +230,44 @@ won't parse that query it falls back to the plainest shape it certainly takes,
 one field and one term, on the longest word; the results are sifted locally
 either way.
 
+**Groups are made by naming one.** There is no "create a group" step and
+nothing to set up first: tap **Group** on any single, type *Eevee collection*,
+and the group exists with that card in it. An empty group would be clutter,
+and a card is the only place a grouping means anything. What was missing was
+the way in — tagging lived in the card panel, where nobody looking at the
+Singles page would find it — so the button now sits on every row under the
+price, and a line above the list says so until the first group is named. The
+field is the card panel's own rather than a copy, so one place decides what a
+tag is and which ones already exist. Naming a group moves the row under its
+new heading and the open field follows it there, instead of vanishing
+mid-thought; a card in two groups shows the field under the first of them, not
+under both.
+
 **Singles divide by your own groups.** Tag a card *Eevee collection*, *Van
-Gogh*, *slabs* — whatever the pile is — from its card panel, and the Singles
-page groups by those tags with a value per group. A card carries several tags
+Gogh*, *slabs* — whatever the pile is — and the Singles page groups by those
+tags with a value per group. A card carries several tags
 at once and appears under each, because a Van Gogh Pikachu belongs in "Van
 Gogh" and in "Pikachu collection" both. The groups therefore overlap, which is
 why the figure at the top is the collection's own rather than the sum of the
 headings beneath it. Tags already in use are offered as you type, so "Eevee
 collection" and "eevee collection" don't quietly become two piles.
+
+**Long names are folded to what a collector says.** "Scarlet & Violet Black
+Star Promos" is 33 characters riding in a row that already carries a card
+name, a number, a print run and a price; on a phone it wrapped or was cut off
+mid-word, and neither told you anything. It shows as "S&V Promos", because
+that is what it's called. Three tactics in `shortName.ts`, in order of how
+much they keep: series everyone already writes as initials (S&V, S&S, D&P),
+phrases with a settled short form (Black Star Promos → Promos, Trainer Gallery
+→ TG), and — only if it is still long — dropping a trailing filler word and
+then clipping on a word boundary, never mid-syllable. The first two always
+run, since the short form isn't a compromise; the third runs under pressure,
+because clipping does lose something. The full name is kept in the row's
+`title` either way, so it is folded away rather than gone. A set named exactly
+"Scarlet & Violet" keeps its name — a bare "S&V" would read as the era, not
+the set. Names are folded where they ride beside other data (singles, search
+results, the lot, the card panel, set rows) and left whole where the name is
+the point: a set's own page, and the picker where you choose one to add.
 
 **The sets are yours to choose.** Add any set from any of four regions —
 English, Japanese, Chinese (Simplified), Chinese (Traditional) — and remove

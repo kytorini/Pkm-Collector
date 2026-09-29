@@ -7,6 +7,7 @@ import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
 import { SetManager } from '../components/SetManager'
 import { SingleFinder } from '../components/SingleFinder'
+import { TagField } from '../components/TagField'
 import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
@@ -14,7 +15,8 @@ import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
-import { collectSingles, groupSingles } from '../lib/singles'
+import { shortSetName } from '../lib/shortName'
+import { collectSingles, groupSingles, UNGROUPED } from '../lib/singles'
 import { isChasing } from '../lib/trackedSets'
 import { unpricedCards, unpricedSlots } from '../lib/unpriced'
 import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
@@ -484,9 +486,9 @@ export function Dashboard() {
                   aria-expanded={isOpen}
                   aria-controls={`set-panel-${set.id}`}
                 >
-                  <span className="progress-row-name">
+                  <span className="progress-row-name" title={set.name}>
                     <span className="row-caret" aria-hidden>›</span>
-                    {set.name}
+                    {shortSetName(set.name)}
                   </span>
                   <ProgressBar value={s.owned} total={denom} />
                   <span className="progress-row-count muted">{s.owned}/{denom}</span>
@@ -657,7 +659,27 @@ function SinglesList({
   onOpen: (cardId: string) => void
   onAdd: () => void
 }) {
+  /* Which card has its group editor open, so only one is ever in the way. */
+  const [tagging, setTagging] = useState('')
   const kept = new Set(groups.flatMap((g) => g.singles.map((s) => `${s.card.id}::${s.variant.id}`))).size
+  const named = groups.filter((g) => g.tag !== UNGROUPED).length
+  /*
+   * A tagged card shows up under each of its groups, so keying the open
+   * editor by card alone would open it in two places at once. It belongs to
+   * the first heading the card appears under — and only there, which also
+   * means naming a group doesn't close the field: the row moves to its new
+   * heading, and the editor follows it rather than vanishing mid-thought.
+   */
+  const firstHome = useMemo(() => {
+    const home = new Map<string, string>()
+    for (const group of groups) {
+      for (const single of group.singles) {
+        const slot = `${single.card.id}::${single.variant.id}`
+        if (!home.has(slot)) home.set(slot, group.tag)
+      }
+    }
+    return home
+  }, [groups])
   return (
     <section className="series-block">
       <div className="section-head">
@@ -671,7 +693,16 @@ function SinglesList({
       {kept === 0 && (
         <p className="muted pad">
           Nothing here yet. Add a card you own without taking on its whole set — a promo, or one
-          card out of a set you're not chasing.
+          card out of a set you’re not chasing.
+        </p>
+      )}
+      {/* A group is made by naming one, not by creating an empty container
+          first — but that only works if the way to name one is in sight. Said
+          once, while there are none, and gone as soon as there is one. */}
+      {kept > 0 && named === 0 && (
+        <p className="muted small pad">
+          Groups are yours to name: tap <strong>Group</strong> on a card and type one — “Eevee
+          collection”, “Van Gogh”, “slabs”. A card can sit in several at once.
         </p>
       )}
       {groups.map((group) => (
@@ -684,31 +715,50 @@ function SinglesList({
             </span>
           </div>
           <ul className="single-list">
-            {group.singles.map((single) => (
-              <li key={`${group.tag}:${single.card.id}:${single.variant.id}`} className="single-row">
-                <button
-                  type="button"
-                  className="result-art"
-                  onClick={() => onOpen(single.card.id)}
-                  aria-label={`Open ${single.card.name}`}
-                >
-                  <img src={single.card.images.small} alt="" loading="lazy" width={38} height={53} />
-                </button>
-                <button type="button" className="result-open single-main" onClick={() => onOpen(single.card.id)}>
-                  <span className="result-title">
-                    <strong>{single.card.name}</strong>
-                    <span className="muted">#{single.card.number}</span>
+            {group.singles.map((single) => {
+              const slot = `${single.card.id}::${single.variant.id}`
+              const open = tagging === slot && firstHome.get(slot) === group.tag
+              return (
+                <li key={`${group.tag}:${slot}`} className="single-row">
+                  <button
+                    type="button"
+                    className="result-art"
+                    onClick={() => onOpen(single.card.id)}
+                    aria-label={`Open ${single.card.name}`}
+                  >
+                    <img src={single.card.images.small} alt="" loading="lazy" width={38} height={53} />
+                  </button>
+                  <button type="button" className="result-open single-main" onClick={() => onOpen(single.card.id)}>
+                    <span className="result-title">
+                      <strong>{single.card.name}</strong>
+                      <span className="muted">#{single.card.number}</span>
+                    </span>
+                    <span className="muted small" title={single.set.name}>
+                      {shortSetName(single.set.name)} · {single.variant.label}
+                      {(single.entry.quantity ?? 1) > 1 ? ` · ×${single.entry.quantity}` : ''}
+                    </span>
+                  </button>
+                  <span className="single-worth">
+                    {single.worth == null ? <span className="muted small">no price</span> : formatMoney(single.worth)}
+                    <button
+                      type="button"
+                      className="single-tag-btn"
+                      onClick={() => setTagging(open ? '' : slot)}
+                      aria-expanded={open}
+                    >
+                      {single.tags.length > 0 ? `Groups · ${single.tags.length}` : '+ Group'}
+                    </button>
                   </span>
-                  <span className="muted small">
-                    {single.set.name} · {single.variant.label}
-                    {(single.entry.quantity ?? 1) > 1 ? ` · ×${single.entry.quantity}` : ''}
-                  </span>
-                </button>
-                <span className="single-worth">
-                  {single.worth == null ? <span className="muted small">no price</span> : formatMoney(single.worth)}
-                </span>
-              </li>
-            ))}
+                  {/* The card panel's own field, not a copy of it: one place
+                      decides what a tag is and which ones already exist. */}
+                  {open && (
+                    <div className="single-tagger">
+                      <TagField cardId={single.card.id} variantId={single.variant.id} tags={single.tags} />
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
       ))}

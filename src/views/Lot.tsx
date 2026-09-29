@@ -7,6 +7,7 @@ import { getSet } from '../lib/sets'
 import { adjustedValue, UNASSESSED } from '../lib/condition'
 import { clearLot, isPinned, lotKey, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
 import { formatMoney } from '../lib/pricing'
+import { shortSetName } from '../lib/shortName'
 import { searchCards } from '../lib/searchCards'
 import { LOT_SORTS, loadLotSort, saveLotSort, type LotSort } from '../lib/sortOrder'
 import { usePhone } from '../lib/useMediaQuery'
@@ -284,7 +285,7 @@ export function Lot() {
                       <span className="muted">#{card.number}</span>
                     </span>
                   </button>
-                  <span className="muted small">{set.name} · {variant.label}</span>
+                  <span className="muted small" title={set.name}>{shortSetName(set.name)} · {variant.label}</span>
                   {/* The grade sits next to the figure it moves, so the two
                       read as cause and effect rather than as two settings. */}
                   <div className="lot-row-grade">

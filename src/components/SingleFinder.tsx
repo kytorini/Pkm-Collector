@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { findCardsByName, loadSetMeta } from '../api/pokemonTcg'
 import { searchCards } from '../lib/searchCards'
+import { shortSetName } from '../lib/shortName'
 import { detectVariants } from '../lib/detectVariants'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { addSet, isTracked, setDetectedVariants } from '../lib/trackedSets'
@@ -138,8 +139,8 @@ export function SingleFinder({ onDone }: { onDone: () => void }) {
                   <strong>{card.name}</strong>
                   <span className="muted">#{card.number}</span>
                 </span>
-                <span className="result-set muted">
-                  {card.set.name}
+                <span className="result-set muted" title={card.set.name}>
+                  {shortSetName(card.set.name)}
                   {card.set.releaseDate ? ` · ${card.set.releaseDate.slice(0, 4)}` : ''}
                   {price != null ? ` · ${formatMoney(price)}` : ''}
                 </span>

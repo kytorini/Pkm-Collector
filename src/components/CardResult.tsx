@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { routeHref } from '../lib/router'
+import { shortSetName } from '../lib/shortName'
 import type { ApiCard, VintageSet } from '../types'
 
 interface Props {
@@ -42,7 +43,9 @@ export function CardResult({ card, set, onOpen, children }: Props) {
         ) : (
           title
         )}
-        <a className="result-set muted" href={routeHref.set(set.id)}>{set.name} · {set.year}</a>
+        <a className="result-set muted" href={routeHref.set(set.id)} title={set.name}>
+          {shortSetName(set.name)} · {set.year}
+        </a>
         <div className="chip-row">{children}</div>
       </div>
     </li>

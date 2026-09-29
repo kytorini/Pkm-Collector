@@ -3,6 +3,7 @@ import { CONDITION_NOTE, adjustedValue, valueMultiplier } from '../lib/condition
 import { externalLinks } from '../lib/externalLinks'
 import { convertEurToUsd } from '../lib/fx'
 import { formatMoney, priceFor } from '../lib/pricing'
+import { shortSetName } from '../lib/shortName'
 import {
   RECORDED_SOURCES,
   isRecorded,
@@ -78,8 +79,8 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
         <div className="modal-body">
           <header className="modal-head">
             <h2>{card.name}</h2>
-            <p className="muted">
-              {set.name} · #{card.number}
+            <p className="muted" title={set.name}>
+              {shortSetName(set.name)} · #{card.number}
               {card.rarity ? ` · ${card.rarity}` : ''}
               {card.artist ? ` · Illus. ${card.artist}` : ''}
             </p>
