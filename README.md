@@ -226,6 +226,15 @@ own completion bars. Same for 1st Edition vs Unlimited across Jungle through
 Neo Destiny, and Reverse Holos in Legendary Collection and the e-Card sets.
 Each variation carries a short note on how to identify it.
 
+**A whole run can be marked at once**, from the "…" on a set page: *Mark 12
+owned*, or *Un-mark* them again. One print run at a time, because owning a card
+in 1st Edition is not owning it in Unlimited and a sweep across both would
+claim copies that aren't there. It acts on what you can see, so a filter or a
+search narrows it — every card you're missing, or every Charizard — and it says
+so before it does anything. Cards already in the state you asked for are left
+untouched rather than restamped, so a second pass doesn't drag their condition,
+quantity and price paid into a sync as though they'd changed.
+
 **Marking a card takes one click.** The ✓ in the corner of any card marks it
 owned at your default condition (Settings). Open the card for the full detail
 panel: condition, quantity, grading (PSA/BGS/CGC/SGC), what you paid, notes —

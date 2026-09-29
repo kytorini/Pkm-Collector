@@ -149,7 +149,7 @@ type Filter = 'all' | 'owned' | 'missing' | 'unassessed' | 'unpriced'
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
   const set = getSet(setId)
   const { cardsBySet, fetchedAt, syncSet, progress, error } = useLibrary()
-  const { collection, setPriceOverride } = useCollection()
+  const { collection, get, setPriceOverride, setOwnedMany } = useCollection()
   const price = usePrices()
   const rules = usePriceRules()
   const [filter, setFilter] = useState<Filter>('all')
@@ -341,6 +341,32 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
   const stamp = fetchedAt[setId]
 
+  /*
+   * Ticking a whole run at once — a set bought as a lot, or a binder page
+   * filled in one go.
+   *
+   * It acts on what you can see, so a filter or a search narrows it: "every
+   * card I'm missing" and "every holo called Charizard" are both reachable
+   * without leaving the page. With nothing narrowed, what you see is the run,
+   * which is the plain reading of the button.
+   */
+  const ownAll = (owned: boolean) => {
+    const slots = visible.map((card) => ({ cardId: card.id, variantId: activeVariant.id }))
+    const moving = slots.filter((slot) => Boolean(get(slot.cardId, slot.variantId)?.owned) !== owned)
+    if (moving.length === 0) return
+    const what = `${moving.length} card${moving.length === 1 ? '' : 's'}`
+    const verb = owned ? `Mark ${what} owned` : `Un-mark ${what}`
+    // The scope is worth a sentence only when it isn't the whole run —
+    // saying "this covers all 12" while moving 3 of them reads like a
+    // warning that it will touch 12.
+    const scope =
+      visible.length < cards.length ? ` Only the ${visible.length} showing ${visible.length === 1 ? 'is' : 'are'} affected.` : ''
+    if (!confirm(`${verb} in ${set.name} ${activeVariant.label}?${scope}`)) return
+    setOwnedMany(moving, owned)
+  }
+
+  const unowned = visible.filter((card) => !get(card.id, activeVariant.id)?.owned).length
+
   const optionsMenu = (
         <OverflowMenu
           id="set-options"
@@ -351,6 +377,31 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         >
           {(close) => (
             <div className="price-source-row">
+              {/* Heavy enough to want asking about, and rare enough to live
+                  behind the menu rather than on the toolbar. */}
+              <button
+                className="btn"
+                disabled={visible.length === 0 || unowned === 0}
+                onClick={() => {
+                  close()
+                  ownAll(true)
+                }}
+              >
+                {unowned === 0 && visible.length > 0
+                  ? `All ${visible.length < cards.length ? 'showing' : ''} owned`.replace('  ', ' ')
+                  : `Mark ${unowned} owned`}
+              </button>
+              <button
+                className="btn"
+                disabled={visible.length === 0 || unowned === visible.length}
+                onClick={() => {
+                  close()
+                  ownAll(false)
+                }}
+              >
+                Un-mark {visible.length - unowned}
+              </button>
+              <hr className="menu-rule" />
               {phone && (
                 <>
                   <button

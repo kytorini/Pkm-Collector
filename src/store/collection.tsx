@@ -12,6 +12,11 @@ interface CollectionContextValue {
   get: (cardId: string, variantId: string) => CollectionEntry | undefined
   /** Flips owned on/off, creating the entry on first touch. */
   toggleOwned: (cardId: string, variantId: string) => void
+  /**
+   * Ticks or un-ticks many slots at once, returning how many actually moved.
+   * Slots already in the state asked for are left alone.
+   */
+  setOwnedMany: (slots: ReadonlyArray<{ cardId: string; variantId: string }>, owned: boolean) => number
   update: (cardId: string, variantId: string, patch: Partial<CollectionEntry>) => void
   /**
    * Sets where this slot's price comes from. Unlike `update`, recording a
@@ -110,6 +115,44 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
         // removed entry would simply be pulled back from the server.
         return { ...prev, [key]: { ...existing, owned: !existing.owned, updatedAt: new Date().toISOString() } }
       })
+    },
+    [defaultCondition],
+  )
+
+  /**
+   * Ticks or un-ticks a run of cards at once — a set bought as a lot, or a
+   * page of a binder filled in one go.
+   *
+   * One print run's worth at a time, because owning a card in 1st Edition is
+   * not owning it in Unlimited, and a sweep across both would claim copies
+   * that aren't there.
+   *
+   * Cards already in the state being asked for are left untouched, so a
+   * second pass doesn't restamp them and drag their condition, quantity or
+   * price paid into a sync as though they'd changed.
+   */
+  const setOwnedMany = useCallback(
+    (slots: ReadonlyArray<{ cardId: string; variantId: string }>, owned: boolean) => {
+      let changed = 0
+      setCollection((prev) => {
+        const next = { ...prev }
+        const now = new Date().toISOString()
+        for (const { cardId, variantId } of slots) {
+          const key = entryKey(cardId, variantId)
+          const existing = next[key]
+          if (existing) {
+            if (Boolean(existing.owned) === owned) continue
+            next[key] = { ...existing, owned, updatedAt: now }
+          } else {
+            // Nothing to un-tick: an entry that was never made is already not owned.
+            if (!owned) continue
+            next[key] = { cardId, variantId, owned: true, quantity: 1, condition: defaultCondition, updatedAt: now }
+          }
+          changed++
+        }
+        return changed === 0 ? prev : next
+      })
+      return changed
     },
     [defaultCondition],
   )
@@ -228,8 +271,8 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount }),
-    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount],
+    () => ({ collection, defaultCondition, setDefaultCondition, get, toggleOwned, setOwnedMany, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount }),
+    [collection, defaultCondition, setDefaultCondition, get, toggleOwned, setOwnedMany, update, setPriceOverride, remove, replaceAll, resetQuantities, resetConditions, ownedCount],
   )
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>
