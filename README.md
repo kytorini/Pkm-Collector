@@ -205,14 +205,15 @@ one Charizard out of a set of 191 — and counting them that way made the
 remaining cost the price of sets nobody was buying. A set can now be kept for
 singles instead: you own the cards, so they count towards what your collection
 is worth and what you spent, but its unbought cards are not a bill and its
-completion is not a bar you're trying to fill. The Collection page grows a
-**Sets | Singles** switch once there is a single to show, under the totals
-rather than beside them in the nav — the headline figures cover the whole
+completion is not a bar you're trying to fill. The Collection page carries a
+**Sets | Singles** switch under the totals rather than beside them in the nav — the headline figures cover the whole
 collection, so they belong above the split rather than duplicated on each side
 of it.
 
 **Adding a single is one search.** *Add a single* — on the Singles tab, and on
-the welcome screen, since a collection can begin with one — searches every
+the welcome screen, since a collection can begin with one. The switch is never
+hidden: showing it only once a single existed hid the only way to add one,
+because the welcome screen's button is gone the moment there is a set. It searches every
 English set by name, tracked or not, because the collection's own search only
 knows the sets you've downloaded and that is no use for a card you just
 bought. Pick it and it comes in as a single: its set is fetched and kept for

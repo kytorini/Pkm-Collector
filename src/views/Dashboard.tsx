@@ -437,16 +437,17 @@ export function Dashboard() {
         <SearchResults results={results} behindHidden={behindHidden} onOpen={openPanel} />
       ) : (
       <>
-      {(singles.length > 0 || shown.length > chasing.length) && (
-        <div className="segmented collection-tabs">
+      {/* Never conditional. Hiding it until a single existed hid the only way
+          to add one: the welcome screen's button is gone the moment there is
+          a set, so a collection with sets and no singles had no door at all. */}
+      <div className="segmented collection-tabs">
           <button className={tab === 'sets' ? 'is-active' : ''} onClick={() => setTab('sets')} aria-pressed={tab === 'sets'}>
             Sets
           </button>
           <button className={tab === 'singles' ? 'is-active' : ''} onClick={() => setTab('singles')} aria-pressed={tab === 'singles'}>
-            Singles
+            Singles{singles.length > 0 ? ` · ${new Set(singles.map((s) => `${s.card.id}::${s.variant.id}`)).size}` : ''}
           </button>
         </div>
-      )}
 
       {tab === 'singles' ? (
         <SinglesList
