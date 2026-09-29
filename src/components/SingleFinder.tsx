@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { findCardsByName, loadSetMeta } from '../api/pokemonTcg'
+import { searchCards } from '../lib/searchCards'
 import { detectVariants } from '../lib/detectVariants'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { addSet, isTracked, setDetectedVariants } from '../lib/trackedSets'
@@ -33,7 +34,15 @@ export function SingleFinder({ onDone }: { onDone: () => void }) {
     setSearching(true)
     setError(null)
     try {
-      setResults(await findCardsByName(q))
+      /*
+       * Sifted with the same matcher the collection search uses, so the
+       * fallback's wide net — every card whose name holds one word — is
+       * narrowed back to what was actually asked for, and the closest name
+       * comes first.
+       */
+      const found = await findCardsByName(q)
+      const sifted = searchCards(found, q, { limit: 60 })
+      setResults(sifted.length > 0 ? sifted : found.slice(0, 60))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reach the Pokémon TCG API.')
       setResults(null)
@@ -86,8 +95,9 @@ export function SingleFinder({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       <p className="muted pad small">
-        Search every English set, tracked or not. Whatever you pick comes in as a single — its set is
-        kept for singles, so the rest of it never counts as a bill.
+        Search every English set, tracked or not, by card name or set name — “Van Gogh pikachu” finds
+        it. Whatever you pick comes in as a single: its set is kept for singles, so the rest of it
+        never counts as a bill.
       </p>
 
       <div className="toolbar dash-search">
@@ -109,7 +119,11 @@ export function SingleFinder({ onDone }: { onDone: () => void }) {
       </div>
 
       {error && <div className="error-banner"><p>{error}</p></div>}
-      {results?.length === 0 && !searching && <p className="muted pad">No cards match that name.</p>}
+      {results?.length === 0 && !searching && (
+        <p className="muted pad">
+          Nothing matches. Try the card's name, or the set's — “Van Gogh”, “Pikachu”, or both.
+        </p>
+      )}
 
       <ul className="result-list">
         {(results ?? []).map((card) => {

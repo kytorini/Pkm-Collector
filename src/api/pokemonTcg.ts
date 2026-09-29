@@ -152,23 +152,53 @@ export async function listPokemonTcgSets(): Promise<ApiSetMeta[]> {
 }
 
 /**
- * Cards by name, across every set — including ones you don't track.
+ * Cards across every set — including ones you don't track.
  *
  * The collection's own search only knows the sets you've downloaded, which is
  * right for "where am I on this set" and useless for "I bought a Van Gogh
  * Pikachu". This asks the API instead, so a single can be found before its
  * set is anything to this app.
+ *
+ * Crucially it searches the set's name too. "Van Gogh pikachu" is how anyone
+ * would look for that card, and no card is *named* that: "Van Gogh" is the
+ * set and "Pikachu with Grey Felt Hat" is the card. Matching names alone
+ * found nothing at all.
  */
 export async function findCardsByName(query: string): Promise<ApiCard[]> {
   const q = query.trim()
   if (q.length < 2) return []
-  // Quoted so a multi-word name stays one term, wildcarded so a partial
-  // spelling still lands — nobody types "Pikachu with Grey Felt Hat" in full.
-  const search = `name:"*${q.replace(/["\\]/g, '')}*"`
-  const body = await getJson<{ data: ApiCard[] }>(
-    `/cards?q=${encodeURIComponent(search)}&pageSize=60&orderBy=-set.releaseDate`,
-  )
-  return Array.isArray(body.data) ? body.data.filter((c) => typeof c?.id === 'string') : []
+  const tokens = q.split(/\s+/).map((t) => t.replace(/["\\()]/g, '')).filter(Boolean)
+  if (tokens.length === 0) return []
+
+  // Every word has to match something, but each is free to match the card or
+  // the set it came from.
+  const precise = tokens.map((t) => `(name:*${t}* OR set.name:*${t}*)`).join(' ')
+  const found = await search(precise)
+  if (found.length > 0) return found
+
+  /*
+   * Nothing, which may mean the card isn't there or may mean the API didn't
+   * take that query. Fall back to the plainest form it certainly takes —
+   * one field, one term — on the word most likely to be distinctive, and let
+   * the caller sift the rest.
+   */
+  const longest = [...tokens].sort((a, b) => b.length - a.length)[0]
+  const wide = await search(`name:*${longest}*`)
+  if (wide.length > 0) return wide
+  return search(`set.name:*${longest}*`)
+}
+
+async function search(q: string): Promise<ApiCard[]> {
+  try {
+    const body = await getJson<{ data: ApiCard[] }>(
+      `/cards?q=${encodeURIComponent(q)}&pageSize=250&orderBy=-set.releaseDate`,
+    )
+    return Array.isArray(body.data) ? body.data.filter((c) => typeof c?.id === 'string') : []
+  } catch {
+    // A query this API won't parse is a 400, not an outage. The caller has
+    // another shape to try, and a thrown error would stop it trying.
+    return []
+  }
 }
 
 /** Fetches every card in a set, following pagination. */

@@ -220,6 +220,16 @@ bought. Pick it and it comes in as a single: its set is fetched and kept for
 singles, so the rest of that set never becomes a bill. A second single from
 the same set costs no second download.
 
+**The search reads set names too, word by word.** "Van Gogh pikachu" is how
+anyone looks for that card, and no card is *named* that: "Van Gogh Museum" is
+the set, "Pikachu with Grey Felt Hat" is the card. Matching card names alone —
+and matching the whole phrase as one string — found nothing. Each word is now
+asked of the card name *or* its set's name, and all of them have to land, so
+"Van Gogh pikachu" finds the one card and not forty other Pikachus. If the API
+won't parse that query it falls back to the plainest shape it certainly takes,
+one field and one term, on the longest word; the results are sifted locally
+either way.
+
 **Singles divide by your own groups.** Tag a card *Eevee collection*, *Van
 Gogh*, *slabs* — whatever the pile is — from its card panel, and the Singles
 page groups by those tags with a value per group. A card carries several tags
