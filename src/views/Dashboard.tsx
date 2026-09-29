@@ -265,7 +265,14 @@ export function Dashboard() {
       <div className="stat-row">
         <div className="stat">
           <span className="stat-label">Completion</span>
-          <span className="stat-value">{total.pct}%</span>
+          {/* The count rides on the headline rather than under the bar: a
+              caption line here would grow the whole row, and the figure it
+              qualifies is the percentage right beside it. Written the way the
+              per-set rows write it, since it is the same fraction. */}
+          <span className="stat-headline">
+            <span className="stat-value">{total.pct}%</span>
+            <span className="stat-count">{total.owned}/{total.total}</span>
+          </span>
           <ProgressBar value={total.owned} total={total.total} />
         </div>
         <div className="stat">

@@ -141,6 +141,11 @@ specific model:
   otherwise carry you a screen past where you left off — but the moment you
   scroll, you win. Remembered for the session, not stored: it's where you were
   a moment ago, not a preference.
+- **Completion carries its own fraction.** The percentage has the raw count
+  beside it — *65%  497/761* — sharing a baseline and right-aligned with the
+  end of the bar, so the two numbers bracket it. On the headline rather than
+  under the bar: a caption line there would have grown the whole row of
+  totals, and the figure it qualifies is the percentage next to it.
 - **The four totals fold away**, from the chevron beside the Collection
   heading. They answer "how am I doing", which is worth a glance and then
   worth getting out of the way — on a phone they are 252px before the first

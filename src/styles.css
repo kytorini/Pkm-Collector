@@ -256,6 +256,10 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .stat-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .stat-value { font-size: 1.7rem; font-weight: 640; letter-spacing: -0.02em; }
 .stat-sub { font-size: 0.8rem; }
+/* A big figure with its raw count alongside, sharing a baseline so the small
+   one reads as a footnote to it rather than as a second stat. */
+.stat-headline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.stat-count { font-size: 0.82rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* An errand, not a caption: coloured so it reads as somewhere to go, and on
    its own line so it has room to be tapped. */
 .stat-gap {
