@@ -16,6 +16,7 @@ import { isStalePrice, recordedAgo } from '../lib/dates'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
 import { PriceInput } from './PriceInput'
+import { TagField } from './TagField'
 import { PriceSourceSelect } from './PriceSourceSelect'
 import { CONDITIONS, GRADERS, type ApiCard, type ConditionId, type Grader, type VintageSet } from '../types'
 
@@ -330,6 +331,8 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                         onChange={(e) => update(card.id, variant.id, { notes: e.target.value || undefined })}
                       />
                     </label>
+
+                    <TagField cardId={card.id} variantId={variant.id} tags={entry.tags ?? []} />
 
                     <button className="link-btn danger" onClick={() => remove(card.id, variant.id)}>
                       Clear this entry

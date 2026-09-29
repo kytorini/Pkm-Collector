@@ -121,6 +121,12 @@ export interface CollectionEntry {
   manualPricesAt?: Record<string, string>
   /** Pre-dates `manualPrices`; still read as the 'own' figure. */
   manualPrice?: number
+  /**
+   * Your own groupings — "Eevee collection", "Van Gogh", "Slabs". Free text,
+   * because the ways a collection divides are the collector's, not the
+   * printer's: they cut across sets, regions and years.
+   */
+  tags?: string[]
   updatedAt: string
 }
 

@@ -199,6 +199,27 @@ instantly and works offline.
 
 ## What it does
 
+**Sets you're chasing, and singles you're not.** Adding a set used to say "I
+intend to collect all of this", which isn't what a Van Gogh Pikachu means, nor
+one Charizard out of a set of 191 — and counting them that way made the
+remaining cost the price of sets nobody was buying. A set can now be kept for
+singles instead: you own the cards, so they count towards what your collection
+is worth and what you spent, but its unbought cards are not a bill and its
+completion is not a bar you're trying to fill. The Collection page grows a
+**Sets | Singles** switch once there is a single to show, under the totals
+rather than beside them in the nav — the headline figures cover the whole
+collection, so they belong above the split rather than duplicated on each side
+of it.
+
+**Singles divide by your own groups.** Tag a card *Eevee collection*, *Van
+Gogh*, *slabs* — whatever the pile is — from its card panel, and the Singles
+page groups by those tags with a value per group. A card carries several tags
+at once and appears under each, because a Van Gogh Pikachu belongs in "Van
+Gogh" and in "Pikachu collection" both. The groups therefore overlap, which is
+why the figure at the top is the collection's own rather than the sum of the
+headings beneath it. Tags already in use are offered as you type, so "Eevee
+collection" and "eevee collection" don't quietly become two piles.
+
 **The sets are yours to choose.** Add any set from any of four regions —
 English, Japanese, Chinese (Simplified), Chinese (Traditional) — and remove
 one when you stop chasing it. **Manage sets** on the Collection page lists what

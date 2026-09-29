@@ -13,6 +13,8 @@ import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
+import { collectSingles, groupSingles } from '../lib/singles'
+import { isChasing } from '../lib/trackedSets'
 import { unpricedCards, unpricedSlots } from '../lib/unpriced'
 import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
@@ -61,6 +63,7 @@ export function Dashboard() {
   // Reached from the "i" panel, which is where the count that prompts the
   // question is stated. Not a stored preference — it's an errand, not a view.
   const [showUnpriced, setShowUnpriced] = useState(false)
+  const [tab, setTab] = useState<'sets' | 'singles'>('sets')
 
   const toggleTotals = () => {
     setTotalsOpen((was) => {
@@ -79,7 +82,35 @@ export function Dashboard() {
   const shown = useMemo(() => trackedSets.filter((s) => !hidden.includes(s.id)), [trackedSets, hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
-  const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
+  /*
+   * Two questions, two scopes.
+   *
+   * Completion and remaining cost are about finishing something, so only the
+   * sets you are chasing count: a Van Gogh Pikachu is not 1/183 of a promo
+   * set you never meant to finish, and counting it that way made the
+   * remaining cost the price of sets nobody is buying.
+   *
+   * What it is worth and what you spent are about what you hold, so those
+   * count everything, singles included.
+   */
+  const chasing = useMemo(() => shown.filter(isChasing), [shown])
+  const held = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
+  const toFinish = statsForCollection(cardsBySet, collection, chasing.map((s) => s.id), price)
+  const total = {
+    ...held,
+    total: toFinish.total,
+    owned: toFinish.owned,
+    pct: toFinish.pct,
+    missingValue: toFinish.missingValue,
+    unpricedMissing: toFinish.unpricedMissing,
+  }
+
+  const singles = useMemo(
+    () => (shown.length > chasing.length ? collectSingles(cardsBySet, collection, price) : []),
+    [shown, chasing, cardsBySet, collection, price],
+  )
+  const singleGroups = useMemo(() => groupSingles(singles), [singles])
+  const singlesWorth = singles.reduce((sum, s) => sum + (s.worth ?? 0), 0)
   const missing = total.total - total.owned
   /*
    * "Cost to finish" read as ambiguous next to a market value of the same
@@ -213,8 +244,18 @@ export function Dashboard() {
               )}
               <p>
                 <strong>Market value</strong> is every copy you own at market, less a discount for
-                condition — two copies count twice, a played one counts for less.
+                condition — two copies count twice, a played one counts for less. It covers
+                everything you hold, singles included.
               </p>
+              {shown.length > chasing.length && (
+                <p>
+                  <strong>Completion</strong> and <strong>remaining cost</strong> cover only the{' '}
+                  {chasing.length} set{chasing.length === 1 ? '' : 's'} you're chasing. The other{' '}
+                  {shown.length - chasing.length} {shown.length - chasing.length === 1 ? 'is' : 'are'}{' '}
+                  kept for singles: you own the cards, but the rest of those sets isn't a bill you
+                  mean to pay.
+                </p>
+              )}
               <p>
                 <strong>Remaining cost</strong> is what the {missing} slot{missing === 1 ? '' : 's'} you
                 don't have would cost at market, one of each. It isn't market value taken off a larger
@@ -295,7 +336,12 @@ export function Dashboard() {
           <span className="stat-label">Market value</span>
           <span className="stat-value">{formatMoney(total.ownedValue)}</span>
           <span className="stat-sub muted">
-            {total.copies > total.owned ? `${total.copies} copies of ${total.owned} cards` : 'what you hold'}
+            {/* Both figures from the same scope as the money above them.
+                Reading `owned` off the chasing-only totals said "1 copies of
+                0 cards" for a collection that was nothing but singles. */}
+            {held.copies > held.owned
+              ? `${held.copies} copies of ${held.owned} card${held.owned === 1 ? '' : 's'}`
+              : 'what you hold'}
           </span>
         </div>
         <div className="stat">
@@ -372,6 +418,21 @@ export function Dashboard() {
       ) : searching ? (
         <SearchResults results={results} behindHidden={behindHidden} onOpen={openPanel} />
       ) : (
+      <>
+      {singles.length > 0 && (
+        <div className="segmented collection-tabs">
+          <button className={tab === 'sets' ? 'is-active' : ''} onClick={() => setTab('sets')} aria-pressed={tab === 'sets'}>
+            Sets
+          </button>
+          <button className={tab === 'singles' ? 'is-active' : ''} onClick={() => setTab('singles')} aria-pressed={tab === 'singles'}>
+            Singles
+          </button>
+        </div>
+      )}
+
+      {tab === 'singles' && singles.length > 0 ? (
+        <SinglesList groups={singleGroups} worth={singlesWorth} onOpen={openPanel} />
+      ) : (
       <section className="series-block">
         <div className="section-head">
           <h2 className="series-title">Progress by set</h2>
@@ -384,7 +445,7 @@ export function Dashboard() {
         </div>
 
         <div className="progress-table">
-          {shown.map((set) => {
+          {chasing.map((set) => {
             const cards = cardsBySet[set.id] ?? []
             const s = statsForSet(cards, set, collection, price)
             const denom = s.total || set.total * set.variants.length
@@ -461,22 +522,29 @@ export function Dashboard() {
               </div>
             )
           })}
-          {shown.length === 0 && (
+          {chasing.length === 0 && (
             <p className="muted pad" style={{ padding: '16px' }}>
               {trackedSets.length === 0 ? (
                 <>
                   No sets yet.{' '}
                   <button className="link-btn" onClick={() => setManaging(true)}>Add one</button>
                 </>
-              ) : (
+              ) : shown.length === 0 ? (
                 <>
                   Every set is hidden. <button className="link-btn" onClick={showAllSets}>Show all</button>
+                </>
+              ) : (
+                <>
+                  Nothing here is a set you're chasing — they're all kept for singles.{' '}
+                  <button className="link-btn" onClick={() => setManaging(true)}>Manage sets</button>
                 </>
               )}
             </p>
           )}
         </div>
       </section>
+      )}
+      </>
       )}
 
       {openCard && openSet && (
@@ -543,6 +611,73 @@ function SearchResults({
       {hiddenNote}
       {results.length > 4 && <BackToTop />}
     </>
+  )
+}
+
+/**
+ * The cards kept on the side, under whatever headings you gave them.
+ *
+ * A card with two tags appears under both, on purpose — a Van Gogh Pikachu is
+ * in "Van Gogh" and in "Pikachu collection" at once. The groups therefore
+ * overlap, so the figure at the top is the collection's own rather than the
+ * sum of the headings below it, which would double-count.
+ */
+function SinglesList({
+  groups,
+  worth,
+  onOpen,
+}: {
+  groups: ReturnType<typeof groupSingles>
+  worth: number
+  onOpen: (cardId: string) => void
+}) {
+  const kept = new Set(groups.flatMap((g) => g.singles.map((s) => `${s.card.id}::${s.variant.id}`))).size
+  return (
+    <section className="series-block">
+      <div className="section-head is-single">
+        <h2 className="series-title">
+          {kept} single{kept === 1 ? '' : 's'} · {formatMoney(worth)}
+        </h2>
+      </div>
+      {groups.map((group) => (
+        <div key={group.tag || 'ungrouped'} className="single-group">
+          <div className="single-group-head">
+            <h3>{group.tag || 'Not in a group'}</h3>
+            <span className="muted small">
+              {group.copies} card{group.copies === 1 ? '' : 's'} · {formatMoney(group.worth)}
+              {group.unpriced > 0 ? ` · ${group.unpriced} unpriced` : ''}
+            </span>
+          </div>
+          <ul className="single-list">
+            {group.singles.map((single) => (
+              <li key={`${group.tag}:${single.card.id}:${single.variant.id}`} className="single-row">
+                <button
+                  type="button"
+                  className="result-art"
+                  onClick={() => onOpen(single.card.id)}
+                  aria-label={`Open ${single.card.name}`}
+                >
+                  <img src={single.card.images.small} alt="" loading="lazy" width={38} height={53} />
+                </button>
+                <button type="button" className="result-open single-main" onClick={() => onOpen(single.card.id)}>
+                  <span className="result-title">
+                    <strong>{single.card.name}</strong>
+                    <span className="muted">#{single.card.number}</span>
+                  </span>
+                  <span className="muted small">
+                    {single.set.name} · {single.variant.label}
+                    {(single.entry.quantity ?? 1) > 1 ? ` · ×${single.entry.quantity}` : ''}
+                  </span>
+                </button>
+                <span className="single-worth">
+                  {single.worth == null ? <span className="muted small">no price</span> : formatMoney(single.worth)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
   )
 }
 

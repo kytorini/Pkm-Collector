@@ -816,6 +816,61 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .chip.is-on { border-color: var(--accent); color: var(--accent); }
 .chip-price { opacity: 0.7; font-variant-numeric: tabular-nums; }
 
+/* ---------- singles ---------- */
+/* Sets and singles are two readings of one collection, so the switch sits
+   under the totals that cover both rather than in the nav beside them. */
+.collection-tabs { margin-bottom: 14px; }
+.collection-tabs button { flex: 1; }
+.single-group { margin-bottom: 18px; }
+.single-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.single-group-head h3 { margin: 0; font-size: 0.95rem; }
+.single-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.single-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+.single-row .result-art img { width: 38px; height: 53px; }
+.single-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.single-main > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.single-worth {
+  flex: 0 0 auto;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag-field { display: flex; flex-direction: column; gap: 6px; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 99px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.tag span { opacity: 0.6; font-size: 0.7rem; }
+.tag.is-offer { border-color: var(--line); color: var(--text-dim); }
+.tag.is-offer:hover { border-color: var(--accent-dim); color: var(--accent); }
+
 /* ---------- managing which sets you collect ---------- */
 .set-manage-list { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .set-manage-row {
@@ -845,6 +900,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .region-tag.is-on { border-color: var(--accent-dim); color: var(--accent); }
 .add-head { margin-top: 6px; }
+.chasing-choice { margin-bottom: 4px; }
+.chasing-hint { margin: 0 0 12px; }
+.set-manage-row .check-inline { font-size: 0.8rem; margin-top: 2px; }
 .set-manage-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
 /* The way in for a set no feed lists. Folded away until it's needed, since
    most of the time the catalogue has what you want. */

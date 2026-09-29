@@ -5,7 +5,7 @@ import { describeVariants, detectVariants } from '../lib/detectVariants'
 import { blankChecklist, manualSetId, parseChecklist } from '../lib/manualSet'
 import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
 import { scopedId } from '../lib/regions'
-import { addSet, removeSet, setDetectedVariants, setPreset, useTrackedSets } from '../lib/trackedSets'
+import { addSet, isChasing, removeSet, setChasing, setDetectedVariants, setPreset, useTrackedSets } from '../lib/trackedSets'
 import { useLibrary } from '../store/library'
 
 /**
@@ -26,6 +26,12 @@ export function SetManager({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null)
   /** Set ids currently being fetched, so each row can say so on its own. */
   const [busy, setBusy] = useState<string[]>([])
+  /*
+   * What adding a set means. Chasing one says "I intend to finish this";
+   * keeping singles says "I have some of these". The difference decides
+   * whether its missing cards are counted as a bill still to pay.
+   */
+  const [chasing, setChasingNew] = useState(true)
   const [byHand, setByHand] = useState(false)
   const [handName, setHandName] = useState('')
   const [handList, setHandList] = useState('')
@@ -75,6 +81,7 @@ export function SetManager({ onDone }: { onDone: () => void }) {
       year: set.year,
       total: set.total,
       preset: suggestPreset(region, set.year),
+      chasing,
     })
     try {
       // The cards are the authority on which runs exist; the preset guessed
@@ -128,6 +135,7 @@ export function SetManager({ onDone }: { onDone: () => void }) {
       // One run: nothing quotes this set, so there are no printings to read.
       preset: 'single',
       manualCards: checklist,
+      chasing,
     })
     setHandName('')
     setHandList('')
@@ -171,6 +179,14 @@ export function SetManager({ onDone }: { onDone: () => void }) {
                     {set.year || '—'} · {loaded > 0 ? `${loaded} cards` : 'not downloaded'} ·{' '}
                     {set.variants.length === 1 ? 'one run' : `${set.variants.length} runs`}
                   </span>
+                  <label className="check-inline">
+                    <input
+                      type="checkbox"
+                      checked={isChasing(set)}
+                      onChange={(e) => setChasing(set.id, e.target.checked)}
+                    />
+                    Chasing this set
+                  </label>
                   <label className="labelled-select">
                     <span>Print runs</span>
                     <select
@@ -229,6 +245,16 @@ export function SetManager({ onDone }: { onDone: () => void }) {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
+
+      <label className="check-inline chasing-choice">
+        <input type="checkbox" checked={chasing} onChange={(e) => setChasingNew(e.target.checked)} />
+        I mean to finish the sets I add
+      </label>
+      <p className="muted small chasing-hint">
+        {chasing
+          ? 'Their missing cards count towards completion and remaining cost.'
+          : "Added for singles: what you own counts towards what your collection is worth, but the rest isn't a bill you mean to pay."}
+      </p>
 
       <div className="segmented region-picker">
         {REGIONS.map((r) => (

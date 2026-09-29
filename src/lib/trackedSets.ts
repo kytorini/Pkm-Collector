@@ -41,6 +41,19 @@ export interface TrackedSet extends VintageSet {
    * another device to download these from, so it has to carry them.
    */
   manualCards?: ManualCard[]
+  /**
+   * Whether you mean to finish it.
+   *
+   * Adding a set used to say "I intend to collect all of this", which is not
+   * what a Van Gogh Pikachu means, nor one Charizard out of a set of 191.
+   * A set you aren't chasing still counts towards what your collection is
+   * worth and what you spent — you own the cards — but not towards
+   * completion or remaining cost, which are about finishing something.
+   *
+   * Absent means chasing, so every set tracked before this keeps counting the
+   * way it did.
+   */
+  chasing?: boolean
   /** ISO. Ordering falls back to this when a set has no release date. */
   addedAt: string
   /** Last write, for settling two devices that both changed the list. */
@@ -216,6 +229,8 @@ export interface NewSet {
   preset: string
   /** Given only for a set typed in here; it decides the source. */
   manualCards?: ManualCard[]
+  /** False for a set you keep singles from rather than mean to finish. */
+  chasing?: boolean
 }
 
 /** Oldest print first, the way the collection page has always listed sets. */
@@ -240,6 +255,7 @@ export function addSet(set: NewSet, variants?: SetVariant[]): TrackedSet {
     total: set.total,
     preset: set.preset,
     ...(set.manualCards ? { manualCards: set.manualCards } : {}),
+    ...(set.chasing === false ? { chasing: false } : {}),
     variants: variants ?? getPreset(set.preset).variants,
     addedAt: existing?.addedAt ?? now,
     updatedAt: now,
@@ -293,6 +309,18 @@ export function setPreset(id: string, preset: string): void {
         : s,
     ),
   )
+}
+
+/** Switches a set between one you mean to finish and one you keep singles from. */
+export function setChasing(id: string, chasing: boolean): void {
+  write(
+    tracked.map((s) => (s.id === id ? { ...s, chasing, updatedAt: new Date().toISOString() } : s)),
+  )
+}
+
+/** The sets counted towards completion and remaining cost. */
+export function isChasing(set: TrackedSet): boolean {
+  return set.chasing !== false
 }
 
 /** Wholesale replacement, for a sync that has settled the two sides. */
