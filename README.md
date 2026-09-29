@@ -211,6 +211,14 @@ rather than beside them in the nav — the headline figures cover the whole
 collection, so they belong above the split rather than duplicated on each side
 of it.
 
+**Adding a single is one search.** *Add a single* — on the Singles tab, and on
+the welcome screen, since a collection can begin with one — searches every
+English set by name, tracked or not, because the collection's own search only
+knows the sets you've downloaded and that is no use for a card you just
+bought. Pick it and it comes in as a single: its set is fetched and kept for
+singles, so the rest of that set never becomes a bill. A second single from
+the same set costs no second download.
+
 **Singles divide by your own groups.** Tag a card *Eevee collection*, *Van
 Gogh*, *slabs* — whatever the pile is — from its card panel, and the Singles
 page groups by those tags with a value per group. A card carries several tags

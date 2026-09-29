@@ -6,6 +6,7 @@ import { ChevronDownIcon, InfoIcon } from '../components/icons'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
 import { SetManager } from '../components/SetManager'
+import { SingleFinder } from '../components/SingleFinder'
 import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
@@ -64,6 +65,7 @@ export function Dashboard() {
   // question is stated. Not a stored preference — it's an errand, not a view.
   const [showUnpriced, setShowUnpriced] = useState(false)
   const [tab, setTab] = useState<'sets' | 'singles'>('sets')
+  const [addingSingle, setAddingSingle] = useState(false)
 
   const toggleTotals = () => {
     setTotalsOpen((was) => {
@@ -178,6 +180,19 @@ export function Dashboard() {
     )
   }
 
+  if (addingSingle) {
+    return (
+      <div className="view">
+        <SingleFinder
+          onDone={() => {
+            setAddingSingle(false)
+            setTab('singles')
+          }}
+        />
+      </div>
+    )
+  }
+
   if (empty) {
     return (
       <div className="view">
@@ -196,7 +211,10 @@ export function Dashboard() {
           ) : trackedSets.length > 0 ? (
             <button className="btn primary" onClick={() => void syncAll()}>Download card data</button>
           ) : (
-            <button className="btn primary" onClick={() => setManaging(true)}>Choose your sets</button>
+            <div className="btn-row welcome-actions">
+              <button className="btn primary" onClick={() => setManaging(true)}>Choose your sets</button>
+              <button className="btn" onClick={() => setAddingSingle(true)}>Add a single</button>
+            </div>
           )}
           {error && (
             <div className="error-banner">
@@ -419,7 +437,7 @@ export function Dashboard() {
         <SearchResults results={results} behindHidden={behindHidden} onOpen={openPanel} />
       ) : (
       <>
-      {singles.length > 0 && (
+      {(singles.length > 0 || shown.length > chasing.length) && (
         <div className="segmented collection-tabs">
           <button className={tab === 'sets' ? 'is-active' : ''} onClick={() => setTab('sets')} aria-pressed={tab === 'sets'}>
             Sets
@@ -430,8 +448,13 @@ export function Dashboard() {
         </div>
       )}
 
-      {tab === 'singles' && singles.length > 0 ? (
-        <SinglesList groups={singleGroups} worth={singlesWorth} onOpen={openPanel} />
+      {tab === 'singles' ? (
+        <SinglesList
+          groups={singleGroups}
+          worth={singlesWorth}
+          onOpen={openPanel}
+          onAdd={() => setAddingSingle(true)}
+        />
       ) : (
       <section className="series-block">
         <div className="section-head">
@@ -626,19 +649,30 @@ function SinglesList({
   groups,
   worth,
   onOpen,
+  onAdd,
 }: {
   groups: ReturnType<typeof groupSingles>
   worth: number
   onOpen: (cardId: string) => void
+  onAdd: () => void
 }) {
   const kept = new Set(groups.flatMap((g) => g.singles.map((s) => `${s.card.id}::${s.variant.id}`))).size
   return (
     <section className="series-block">
-      <div className="section-head is-single">
+      <div className="section-head">
         <h2 className="series-title">
-          {kept} single{kept === 1 ? '' : 's'} · {formatMoney(worth)}
+          {kept === 0 ? 'Singles' : `${kept} single${kept === 1 ? '' : 's'} · ${formatMoney(worth)}`}
         </h2>
+        <div className="btn-row">
+          <button className="btn ghost small" onClick={onAdd}>Add a single</button>
+        </div>
       </div>
+      {kept === 0 && (
+        <p className="muted pad">
+          Nothing here yet. Add a card you own without taking on its whole set — a promo, or one
+          card out of a set you're not chasing.
+        </p>
+      )}
       {groups.map((group) => (
         <div key={group.tag || 'ungrouped'} className="single-group">
           <div className="single-group-head">

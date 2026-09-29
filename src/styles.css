@@ -820,6 +820,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 /* Sets and singles are two readings of one collection, so the switch sits
    under the totals that cover both rather than in the nav beside them. */
 .collection-tabs { margin-bottom: 14px; }
+.welcome-actions { justify-content: center; }
 .collection-tabs button { flex: 1; }
 .single-group { margin-bottom: 18px; }
 .single-group-head {

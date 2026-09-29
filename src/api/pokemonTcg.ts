@@ -151,6 +151,26 @@ export async function listPokemonTcgSets(): Promise<ApiSetMeta[]> {
   return Array.isArray(body.data) ? body.data.filter((s) => typeof s?.id === 'string') : []
 }
 
+/**
+ * Cards by name, across every set — including ones you don't track.
+ *
+ * The collection's own search only knows the sets you've downloaded, which is
+ * right for "where am I on this set" and useless for "I bought a Van Gogh
+ * Pikachu". This asks the API instead, so a single can be found before its
+ * set is anything to this app.
+ */
+export async function findCardsByName(query: string): Promise<ApiCard[]> {
+  const q = query.trim()
+  if (q.length < 2) return []
+  // Quoted so a multi-word name stays one term, wildcarded so a partial
+  // spelling still lands — nobody types "Pikachu with Grey Felt Hat" in full.
+  const search = `name:"*${q.replace(/["\\]/g, '')}*"`
+  const body = await getJson<{ data: ApiCard[] }>(
+    `/cards?q=${encodeURIComponent(search)}&pageSize=60&orderBy=-set.releaseDate`,
+  )
+  return Array.isArray(body.data) ? body.data.filter((c) => typeof c?.id === 'string') : []
+}
+
 /** Fetches every card in a set, following pagination. */
 async function fetchAllCards(setId: string): Promise<ApiCard[]> {
   const cards: ApiCard[] = []
