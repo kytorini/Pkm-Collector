@@ -27,6 +27,13 @@ export interface TrackedSet extends VintageSet {
   region: RegionId
   /** Which preset its runs came from, so the choice can be shown and changed. */
   preset: string
+  /**
+   * True once the split was chosen by hand. Nothing re-reads it off the cards
+   * after that: the feed is usually right, but the collector is the one who
+   * knows whether they separate a printing, and being overruled by a
+   * background job is how an app loses trust.
+   */
+  pinned?: boolean
   /** ISO. Ordering falls back to this when a set has no release date. */
   addedAt: string
   /** Last write, for settling two devices that both changed the list. */
@@ -237,12 +244,42 @@ export function removeSet(id: string): void {
   write(tracked.filter((s) => s.id !== id), { ...removed, [id]: new Date().toISOString() })
 }
 
+/**
+ * Replaces a set's runs with what was read off its cards.
+ *
+ * Marked `detected` rather than as one of the presets, because it is not a
+ * choice from a menu — it is what the set turned out to be, and saying so is
+ * how the picker knows not to claim otherwise.
+ */
+export function setDetectedVariants(id: string, variants: SetVariant[]): void {
+  write(
+    tracked.map((s) =>
+      s.id === id ? { ...s, preset: 'detected', variants, updatedAt: new Date().toISOString() } : s,
+    ),
+  )
+}
+
+/**
+ * Sets whose runs were guessed before their cards arrived, and which nobody
+ * has since set by hand — the ones worth re-reading off the feed.
+ *
+ * Deliberately excludes `custom`, the hand-written splits a pre-existing
+ * collection was migrated onto. Base Set's three printings are a collector's
+ * distinction the price feed does not draw, and re-reading it would quietly
+ * merge Shadowless into Unlimited.
+ */
+const GUESSED = new Set(['single', 'reverse', 'first-unlimited'])
+
+export function needsDetection(set: TrackedSet): boolean {
+  return !set.pinned && GUESSED.has(set.preset)
+}
+
 /** Changes how a set is split, keeping everything else about it. */
 export function setPreset(id: string, preset: string): void {
   write(
     tracked.map((s) =>
       s.id === id
-        ? { ...s, preset, variants: getPreset(preset).variants, updatedAt: new Date().toISOString() }
+        ? { ...s, preset, pinned: true, variants: getPreset(preset).variants, updatedAt: new Date().toISOString() }
         : s,
     ),
   )

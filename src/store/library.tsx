@@ -3,7 +3,8 @@ import { dropSetCache, loadSetCards, pricesAreStale, readCachedSet } from '../ap
 import { loadTcgdexSet } from '../api/tcgdex'
 import { idbDelete, idbGet, idbSet } from '../lib/idb'
 import { getRegion } from '../lib/regions'
-import { loadTrackedSets, useTrackedSets, type TrackedSet } from '../lib/trackedSets'
+import { detectVariants } from '../lib/detectVariants'
+import { loadTrackedSets, needsDetection, setDetectedVariants, useTrackedSets, type TrackedSet } from '../lib/trackedSets'
 import type { ApiCard } from '../types'
 
 /**
@@ -49,7 +50,8 @@ interface LibraryContextValue {
   /** Sets whose last sync attempt failed, so they can be retried on their own. */
   failedSets: string[]
   syncAll: (force?: boolean, only?: string[]) => Promise<void>
-  syncSet: (setId: string, force?: boolean) => Promise<void>
+  /** Returns what it loaded, so a caller can act on the cards straight away. */
+  syncSet: (setId: string, force?: boolean) => Promise<{ cards: ApiCard[]; fetchedAt: number }>
   /** Drops a removed set's cached cards. Collection entries are left alone. */
   forgetSet: (setId: string) => Promise<void>
   allCards: ApiCard[]
@@ -95,6 +97,25 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       setCardsBySet(cards)
       setFetchedAt(stamps)
       setHydrated(true)
+
+      /*
+       * Sets whose runs were guessed before their cards existed get the real
+       * answer now that the cards are here. This corrects the sets added when
+       * every modern set was handed a reverse holo run on a hunch, which asked
+       * for two slots per card in the many sets printed only one way.
+       *
+       * Once corrected a set is marked as read from its cards, so this settles
+       * rather than running every load, and it never touches a split chosen by
+       * hand or one carried over from the old built-in list.
+       */
+      for (const set of trackedSets) {
+        if (!needsDetection(set)) continue
+        const held = cards[set.id]
+        if (!held?.length) continue
+        const found = detectVariants(held)
+        if (!found.confident) continue
+        setDetectedVariants(set.id, found.variants)
+      }
     })()
     return () => {
       dead = true
@@ -120,6 +141,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         setFetchedAt((prev) => ({ ...prev, [setId]: result.fetchedAt }))
         setFailedSets((prev) => prev.filter((id) => id !== setId))
         setError(null)
+        // Handed back rather than only stored: the state set just above has
+        // not reached a re-render yet, so a caller reading the library here
+        // would see the set as empty.
+        return { cards: result.cards, fetchedAt: result.fetchedAt }
       } catch (err) {
         const where = set && set.source === 'tcgdex' ? 'TCGdex' : 'the Pokémon TCG API'
         setError(err instanceof Error ? err.message : `Could not reach ${where}.`)

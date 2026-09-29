@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { loadCatalogue, type CatalogueSet } from '../api/catalogue'
 import { getPreset, suggestPreset, VARIANT_PRESETS } from '../data/variantPresets'
+import { describeVariants, detectVariants } from '../lib/detectVariants'
 import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
 import { scopedId } from '../lib/regions'
-import { addSet, removeSet, setPreset, useTrackedSets } from '../lib/trackedSets'
+import { addSet, removeSet, setDetectedVariants, setPreset, useTrackedSets } from '../lib/trackedSets'
 import { useLibrary } from '../store/library'
 
 /**
@@ -45,6 +46,10 @@ export function SetManager({ onDone }: { onDone: () => void }) {
   }, [region])
 
   const trackedIds = useMemo(() => new Set(tracked.map((s) => s.id)), [tracked])
+  // Read at call time: a set added and fetched in one go is not in this
+  // render's copy of the library yet.
+  const latestCards = useRef(cardsBySet)
+  latestCards.current = cardsBySet
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -67,12 +72,33 @@ export function SetManager({ onDone }: { onDone: () => void }) {
       preset: suggestPreset(region, set.year),
     })
     try {
-      await syncSet(id)
+      // The cards are the authority on which runs exist; the preset guessed
+      // before they arrived is only a placeholder. Read from what the fetch
+      // returned, not from the library — its state has not re-rendered yet.
+      const { cards } = await syncSet(id)
+      if (cards.length > 0) setDetectedVariants(id, detectVariants(cards).variants)
     } catch {
       /* the row shows the library's own error; the set stays added to retry */
     } finally {
       setBusy((b) => b.filter((x) => x !== id))
     }
+  }
+
+  /** Re-reads a set's runs off its cards. Silent on add, spoken when asked. */
+  const match = (id: string, announce = false): void => {
+    const cards = latestCards.current[id] ?? []
+    if (cards.length === 0) {
+      if (announce) alert('Download this set first — its runs are read from its cards.')
+      return
+    }
+    const found = detectVariants(cards)
+    setDetectedVariants(id, found.variants)
+    if (!announce) return
+    alert(
+      found.confident
+        ? `${describeVariants(found.variants)} — read from the ${cards.length} cards in this set.`
+        : `No feed quotes this set yet, so its printings can't be read. Left as one run, which counts every card once. Set it by hand if you know better.`,
+    )
   }
 
   const drop = async (id: string) => {
@@ -119,7 +145,10 @@ export function SetManager({ onDone }: { onDone: () => void }) {
                       {/* A migrated set keeps runs written by hand; naming that
                           is honest, and picking anything else replaces them. */}
                       {!VARIANT_PRESETS.some((p) => p.id === set.preset) && (
-                        <option value="custom">As set up ({set.variants.map((v) => v.short).join(' · ')})</option>
+                        <option value="custom">
+                          {set.preset === 'detected' ? 'From its cards' : 'As set up'} (
+                          {set.variants.map((v) => v.short).join(' · ')})
+                        </option>
                       )}
                       {VARIANT_PRESETS.map((p) => (
                         <option key={p.id} value={p.id}>{p.label}</option>
@@ -127,13 +156,23 @@ export function SetManager({ onDone }: { onDone: () => void }) {
                     </select>
                   </label>
                 </div>
-                <button
-                  className="btn ghost small"
-                  onClick={() => void drop(set.id)}
-                  title={`Stop tracking ${set.name} and delete its cards`}
-                >
-                  Remove
-                </button>
+                <div className="btn-row set-manage-actions">
+                  <button
+                    className="btn ghost small"
+                    disabled={loaded === 0}
+                    onClick={() => match(set.id, true)}
+                    title="Read this set's print runs from its cards"
+                  >
+                    Match
+                  </button>
+                  <button
+                    className="btn ghost small"
+                    onClick={() => void drop(set.id)}
+                    title={`Stop tracking ${set.name} and delete its cards`}
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
             )
           })}

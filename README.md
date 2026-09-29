@@ -534,11 +534,31 @@ of that file control how each print run is labelled, identified and priced.
 
 Nothing else reads that list any more — it is the seed a collection built
 before choosable sets is carried onto, and sets are added from inside the app
-now. How a set is split into print runs comes from a preset instead
-(`src/data/variantPresets.ts`): one run, Normal + Reverse Holo, 1st Edition +
-Unlimited, or Base Set's three. One is suggested from the set's age and region
-and can be changed whenever — only a collector knows whether they separate
-reverse holos.
+now.
+
+**How a set is split into print runs is read off its cards**
+(`src/lib/detectVariants.ts`). TCGplayer quotes a set per printing, so the
+price buckets that appear across its cards are the printings that exist. This
+used to be guessed from the set's age — "modern sets have a normal and a
+reverse holo" — which is true of most and false of plenty: the 30th
+Celebration set is reverse holo throughout and its Classic Collection is holo
+throughout, and giving either one two runs invented a second slot for every
+card in it, 322 to collect where there are 161, with the completion bar and
+the remaining cost wrong to match. A printing has to appear on a fifth of the
+set to count, so one stray entry in the feed doesn't double it.
+
+Where nothing can be read — a set too new to be quoted, or a Japanese or
+Chinese one, which no feed prices — it falls back to **one run**. Over-counting
+is the worse error because it is silent, so the guess errs low. The one guess
+kept before cards arrive is the "Edition 1" stamp on early Western sets, which
+is reliable and matters before any price lands.
+
+A set added under the old guess corrects itself once its cards are on the
+device. A split you set by hand is pinned and never re-read, and neither is one
+carried over from the old built-in list — Base Set's three printings are a
+collector's distinction the feed doesn't draw, and re-reading it would quietly
+merge Shadowless into Unlimited. **Match**, in Manage sets, re-reads one on
+demand and says what it found.
 
 ## Layout
 

@@ -61,18 +61,25 @@ export function getPreset(id: string): VariantPreset {
 }
 
 /**
- * A first guess at how a set should be split, from what the source says about
- * it. Wrong sometimes — a preset is a starting point, not a ruling — so it is
- * offered rather than applied silently.
+ * What to split a set by before its cards have arrived.
  *
- * The "Edition 1" stamp is a Western vintage thing: Japanese sets carried it
- * only in the earliest years and Chinese sets never did, so a 1st Edition
- * split is never suggested outside English.
+ * Deliberately timid. This used to hand every set from 2002 on a reverse holo
+ * run on the grounds that most modern sets have one — which invents a second
+ * slot for every card in the ones that don't, and there are plenty: a set
+ * printed entirely in reverse holo, or entirely in holo, ends up asking for
+ * twice the cards it contains.
+ *
+ * Over-counting is the worse error, because it is silent: the completion bar
+ * and the remaining cost are simply wrong and nothing says so. So one run is
+ * assumed, and `detectVariants` reads the real answer off the cards as soon
+ * as they land.
+ *
+ * The one guess kept is the "Edition 1" stamp on early Western sets, which is
+ * reliable and matters before any price arrives. Japanese sets carried it only
+ * in the earliest years and Chinese ones never did, so it is never suggested
+ * outside English.
  */
 export function suggestPreset(region: RegionId, year: number | undefined): string {
-  if (region !== 'en') return 'single'
-  if (year != null && year <= 2000) return 'first-unlimited'
-  // Reverse holos start with Legendary Collection in 2002 and never stop.
-  if (year != null && year >= 2002) return 'reverse'
+  if (region === 'en' && year != null && year >= 1999 && year <= 2000) return 'first-unlimited'
   return 'single'
 }

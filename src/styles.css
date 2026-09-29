@@ -845,6 +845,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .region-tag.is-on { border-color: var(--accent-dim); color: var(--accent); }
 .add-head { margin-top: 6px; }
+.set-manage-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
 /* Four regions do not fit across a phone as equal segments, so this row
    scrolls rather than squeezing the labels into initials. */
 .region-picker { overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
