@@ -7,7 +7,7 @@ import type { SetVariant, VintageSet } from '../types'
  * Base Set reports `1stEdition*` / `unlimited*`; later WOTC sets report
  * `1stEdition*` / plain `holofoil` + `normal` for the unlimited run.
  */
-const FIRST_EDITION: SetVariant = {
+export const FIRST_EDITION: SetVariant = {
   id: 'first-edition',
   label: '1st Edition',
   short: '1st Ed',
@@ -15,7 +15,7 @@ const FIRST_EDITION: SetVariant = {
   note: 'Black "Edition 1" stamp to the left of the artwork.',
 }
 
-const SHADOWLESS: SetVariant = {
+export const SHADOWLESS: SetVariant = {
   id: 'shadowless',
   label: 'Shadowless',
   short: 'Shadowless',
@@ -25,7 +25,7 @@ const SHADOWLESS: SetVariant = {
   note: 'No drop shadow on the right edge of the art box, thinner HP font. Second print run — no 1st Edition stamp.',
 }
 
-const UNLIMITED: SetVariant = {
+export const UNLIMITED: SetVariant = {
   id: 'unlimited',
   label: 'Unlimited',
   short: 'Unlimited',
@@ -34,7 +34,7 @@ const UNLIMITED: SetVariant = {
   note: 'Drop shadow present, no 1st Edition stamp.',
 }
 
-const REVERSE_HOLO: SetVariant = {
+export const REVERSE_HOLO: SetVariant = {
   id: 'reverse-holo',
   label: 'Reverse Holo',
   short: 'Reverse',
@@ -43,11 +43,12 @@ const REVERSE_HOLO: SetVariant = {
 }
 
 /**
- * The vintage runs this app tracks, oldest first. `id` is the pokemontcg.io
- * set id — card data, images and prices are pulled with it.
+ * The vintage runs a collection starts from, oldest first. `id` is the
+ * pokemontcg.io set id — card data, images and prices are pulled with it.
  *
- * Adding a set is a one-line job: find its id at https://api.pokemontcg.io/v2/sets
- * and give it the variations you care about.
+ * No longer the whole world: sets are added and removed from the app itself
+ * now, in any region. This list is the seed a pre-existing collection is
+ * migrated onto, and nothing else reads it.
  */
 export const VINTAGE_SETS: VintageSet[] = [
   {
@@ -83,15 +84,10 @@ export const VINTAGE_SETS: VintageSet[] = [
   { id: 'si1', name: 'Southern Islands', series: 'Other', year: 2001, total: 18, variants: [UNLIMITED] },
 ]
 
-export const SETS_BY_ID = new Map(VINTAGE_SETS.map((s) => [s.id, s]))
-
-export function getSet(setId: string): VintageSet | undefined {
-  return SETS_BY_ID.get(setId)
-}
-
-export function getVariant(setId: string, variantId: string): SetVariant | undefined {
-  return getSet(setId)?.variants.find((v) => v.id === variantId)
-}
-
-/** Every (set, variant) pair, used for collection-wide totals. */
-export const ALL_SLOTS = VINTAGE_SETS.flatMap((set) => set.variants.map((variant) => ({ set, variant })))
+/*
+ * Lookups used to live here, over this fixed list. They read the sets you
+ * actually track now — see lib/sets.ts — because the list is no longer fixed.
+ * What stays here is the seed: the sixteen runs a collection started from
+ * before any of them could be chosen, kept so an existing collection carries
+ * over and so the picker has something sensible to suggest.
+ */

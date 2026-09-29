@@ -5,8 +5,9 @@ import { CardResult } from '../components/CardResult'
 import { ChevronDownIcon, InfoIcon } from '../components/icons'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
-import { VINTAGE_SETS, getSet } from '../data/vintageSets'
-import { showAllSets, toggleHiddenSet, useHiddenSets } from '../lib/hiddenSets'
+import { SetManager } from '../components/SetManager'
+import { getSet, useSets } from '../lib/sets'
+import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
 import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
 import { formatMoney } from '../lib/pricing'
@@ -35,7 +36,8 @@ export function Dashboard() {
   const { collection } = useCollection()
   const price = usePrices()
   const hidden = useHiddenSets()
-  const [choosing, setChoosing] = useState(false)
+  const [managing, setManaging] = useState(false)
+  const trackedSets = useSets()
   // Sets opened in place. More than one at a time, so two runs can be compared
   // without collapsing the first, and remembered so stepping into a set and
   // back doesn't fold everything up again.
@@ -74,7 +76,7 @@ export function Dashboard() {
       return next
     })
 
-  const shown = useMemo(() => VINTAGE_SETS.filter((s) => !hidden.includes(s.id)), [hidden])
+  const shown = useMemo(() => trackedSets.filter((s) => !hidden.includes(s.id)), [trackedSets, hidden])
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
   const total = statsForCollection(cardsBySet, collection, shown.map((s) => s.id), price)
@@ -133,23 +135,37 @@ export function Dashboard() {
 
   if (!hydrated) return <div className="view"><p className="muted pad">Opening your binder…</p></div>
 
+  /*
+   * The picker has to come before the empty state, or a collection with no
+   * sets yet can never get any: the welcome screen's own button opens it.
+   */
+  if (managing) {
+    return (
+      <div className="view">
+        <SetManager onDone={() => setManaging(false)} />
+      </div>
+    )
+  }
+
   if (empty) {
     return (
       <div className="view">
         <div className="welcome">
           <h1>Let’s fill the binder</h1>
           <p>
-            First run needs one download: card names, artwork and current market prices for all{' '}
-            {VINTAGE_SETS.length} vintage sets, pulled from the Pokémon TCG API. It’s cached on this device
-            afterwards, so the app opens instantly and works offline.
+            Add the sets you collect — English, Japanese or Chinese — and only those are downloaded:
+            card names, artwork, and market prices where a feed quotes them. They’re cached on this
+            device afterwards, so the app opens instantly and works offline.
           </p>
           {progress.running ? (
             <div className="sync-progress">
               <ProgressBar value={progress.done} total={progress.total} />
               <p className="muted">Loading {progress.current}… ({progress.done}/{progress.total})</p>
             </div>
-          ) : (
+          ) : trackedSets.length > 0 ? (
             <button className="btn primary" onClick={() => void syncAll()}>Download card data</button>
+          ) : (
+            <button className="btn primary" onClick={() => setManaging(true)}>Choose your sets</button>
           )}
           {error && (
             <div className="error-banner">
@@ -360,43 +376,18 @@ export function Dashboard() {
         <div className="section-head">
           <h2 className="series-title">Progress by set</h2>
           <div className="btn-row">
-            <button className="btn ghost small" onClick={() => setChoosing((c) => !c)}>
-              {choosing ? 'Done' : 'Choose sets'}
-            </button>
+            <button className="btn ghost small" onClick={() => setManaging(true)}>Manage sets</button>
             <button className="btn ghost small" onClick={() => void syncAll(true)} disabled={progress.running}>
               {progress.running ? `Refreshing ${progress.current}…` : 'Refresh all prices'}
             </button>
           </div>
         </div>
 
-        {choosing && (
-          <p className="muted small choose-hint">
-            Untick a set to keep it off this page and out of your totals. Nothing is deleted — tick it
-            again whenever you start chasing it.
-          </p>
-        )}
-
         <div className="progress-table">
-          {(choosing ? VINTAGE_SETS : shown).map((set) => {
+          {shown.map((set) => {
             const cards = cardsBySet[set.id] ?? []
             const s = statsForSet(cards, set, collection, price)
             const denom = s.total || set.total * set.variants.length
-            const isHidden = hidden.includes(set.id)
-
-            if (choosing) {
-              return (
-                <label key={set.id} className={`progress-row is-choosing ${isHidden ? 'is-hidden' : ''}`}>
-                  <span className="progress-row-name">
-                    <input type="checkbox" checked={!isHidden} onChange={() => toggleHiddenSet(set.id)} />
-                    {set.name}
-                  </span>
-                  <ProgressBar value={s.owned} total={denom} />
-                  <span className="progress-row-count muted">{s.owned}/{denom}</span>
-                  <span className="progress-row-value">{s.ownedValue ? formatMoney(s.ownedValue) : ''}</span>
-                </label>
-              )
-            }
-
             const isOpen = open.includes(set.id)
 
             return (
@@ -470,9 +461,18 @@ export function Dashboard() {
               </div>
             )
           })}
-          {!choosing && shown.length === 0 && (
+          {shown.length === 0 && (
             <p className="muted pad" style={{ padding: '16px' }}>
-              Every set is hidden. <button className="link-btn" onClick={showAllSets}>Show all</button>
+              {trackedSets.length === 0 ? (
+                <>
+                  No sets yet.{' '}
+                  <button className="link-btn" onClick={() => setManaging(true)}>Add one</button>
+                </>
+              ) : (
+                <>
+                  Every set is hidden. <button className="link-btn" onClick={showAllSets}>Show all</button>
+                </>
+              )}
             </p>
           )}
         </div>

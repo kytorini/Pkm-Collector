@@ -1,4 +1,4 @@
-import { VINTAGE_SETS, getSet } from '../data/vintageSets'
+import { allSets, getSet } from './sets'
 import { entryKey, type ApiCard, type CollectionEntry, type CollectionMap, type ConditionId, type Grader, type VintageSet } from '../types'
 
 /* ------------------------------------------------------------------ *
@@ -110,14 +110,14 @@ export function matchSet(raw: string): SetGuess {
   const byAlias = SET_ALIASES[key]
   if (byAlias) return { set: getSet(byAlias) ?? null, variantHint }
 
-  const byId = VINTAGE_SETS.find((s) => norm(s.id) === key)
+  const byId = allSets().find((s) => norm(s.id) === key)
   if (byId) return { set: byId, variantHint }
 
-  const byName = VINTAGE_SETS.find((s) => norm(s.name) === key)
+  const byName = allSets().find((s) => norm(s.name) === key)
   if (byName) return { set: byName, variantHint }
 
   // Last resort: a set whose name is contained in the cell ("1999 Base Set").
-  const contained = VINTAGE_SETS.filter((s) => key.includes(norm(s.name)))
+  const contained = allSets().filter((s) => key.includes(norm(s.name)))
   if (contained.length === 1) return { set: contained[0], variantHint }
   // Prefer the longest name, so "Base Set 2" beats "Base Set".
   if (contained.length > 1) {

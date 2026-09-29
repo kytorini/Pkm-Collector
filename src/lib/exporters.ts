@@ -1,4 +1,4 @@
-import { getSet, getVariant } from '../data/vintageSets'
+import { getSet, getVariant } from './sets'
 import { adjustedValue } from './condition'
 import { priceFor } from './pricing'
 import type { ApiCard, CollectionMap } from '../types'

@@ -1,6 +1,6 @@
 import { adjustedValue, isUnassessed } from './condition'
 import { priceFor, type PriceResolver } from './pricing'
-import { VINTAGE_SETS } from '../data/vintageSets'
+import { allSets } from './sets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
 
 export interface VariantStats {
@@ -114,7 +114,7 @@ export function statsForCollection(
 ): VariantStats & { setsStarted: number } {
   let acc = { ...ZERO, setsStarted: 0 }
   const included = onlySetIds ? new Set(onlySetIds) : null
-  for (const set of VINTAGE_SETS) {
+  for (const set of allSets()) {
     if (included && !included.has(set.id)) continue
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue

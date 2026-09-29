@@ -1,0 +1,219 @@
+import { useEffect, useMemo, useState } from 'react'
+import { loadCatalogue, type CatalogueSet } from '../api/catalogue'
+import { getPreset, suggestPreset, VARIANT_PRESETS } from '../data/variantPresets'
+import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
+import { scopedId } from '../lib/regions'
+import { addSet, removeSet, setPreset, useTrackedSets } from '../lib/trackedSets'
+import { useLibrary } from '../store/library'
+
+/**
+ * Choosing what you collect.
+ *
+ * Two halves: the sets you track, and everything you could. The catalogue is
+ * only a list of names and counts — a set's cards are not fetched until you
+ * add it, and are thrown away when you drop it, so the app holds the sets you
+ * chase rather than every set ever printed.
+ */
+export function SetManager({ onDone }: { onDone: () => void }) {
+  const tracked = useTrackedSets()
+  const { syncSet, forgetSet, cardsBySet } = useLibrary()
+  const [region, setRegion] = useState<RegionId>(DEFAULT_REGION)
+  const [query, setQuery] = useState('')
+  const [catalogue, setCatalogue] = useState<CatalogueSet[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  /** Set ids currently being fetched, so each row can say so on its own. */
+  const [busy, setBusy] = useState<string[]>([])
+
+  useEffect(() => {
+    let dead = false
+    setLoading(true)
+    setError(null)
+    void loadCatalogue(region)
+      .then((sets) => {
+        if (!dead) setCatalogue(sets)
+      })
+      .catch((err: unknown) => {
+        if (!dead) setError(err instanceof Error ? err.message : 'Could not load the set list.')
+      })
+      .finally(() => {
+        if (!dead) setLoading(false)
+      })
+    return () => {
+      dead = true
+    }
+  }, [region])
+
+  const trackedIds = useMemo(() => new Set(tracked.map((s) => s.id)), [tracked])
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = q
+      ? catalogue.filter((s) => s.name.toLowerCase().includes(q) || s.sourceId.toLowerCase().includes(q) || s.series.toLowerCase().includes(q))
+      : catalogue
+    return list.slice(0, 200)
+  }, [catalogue, query])
+
+  const add = async (set: CatalogueSet) => {
+    const id = scopedId(region, set.sourceId)
+    setBusy((b) => [...b, id])
+    addSet({
+      sourceId: set.sourceId,
+      region,
+      name: set.name,
+      series: set.series,
+      year: set.year,
+      total: set.total,
+      preset: suggestPreset(region, set.year),
+    })
+    try {
+      await syncSet(id)
+    } catch {
+      /* the row shows the library's own error; the set stays added to retry */
+    } finally {
+      setBusy((b) => b.filter((x) => x !== id))
+    }
+  }
+
+  const drop = async (id: string) => {
+    removeSet(id)
+    await forgetSet(id)
+  }
+
+  return (
+    <section className="series-block">
+      <div className="section-head is-single">
+        <h2 className="series-title">Your sets</h2>
+        <div className="btn-row">
+          <button className="btn ghost small" onClick={onDone}>Done</button>
+        </div>
+      </div>
+
+      {tracked.length === 0 ? (
+        <p className="muted pad small">
+          Nothing tracked yet. Pick a region below and add the sets you collect — only those are
+          downloaded.
+        </p>
+      ) : (
+        <ul className="set-manage-list">
+          {tracked.map((set) => {
+            const loaded = cardsBySet[set.id]?.length ?? 0
+            return (
+              <li key={set.id} className="set-manage-row">
+                <div className="set-manage-main">
+                  <span className="set-manage-name">
+                    <strong>{set.name}</strong>
+                    <span className="region-tag">{getRegion(set.region).short}</span>
+                  </span>
+                  <span className="muted small">
+                    {set.year || '—'} · {loaded > 0 ? `${loaded} cards` : 'not downloaded'} ·{' '}
+                    {set.variants.length === 1 ? 'one run' : `${set.variants.length} runs`}
+                  </span>
+                  <label className="labelled-select">
+                    <span>Print runs</span>
+                    <select
+                      className="select select-compact"
+                      value={VARIANT_PRESETS.some((p) => p.id === set.preset) ? set.preset : 'custom'}
+                      onChange={(e) => setPreset(set.id, e.target.value)}
+                    >
+                      {/* A migrated set keeps runs written by hand; naming that
+                          is honest, and picking anything else replaces them. */}
+                      {!VARIANT_PRESETS.some((p) => p.id === set.preset) && (
+                        <option value="custom">As set up ({set.variants.map((v) => v.short).join(' · ')})</option>
+                      )}
+                      {VARIANT_PRESETS.map((p) => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <button
+                  className="btn ghost small"
+                  onClick={() => void drop(set.id)}
+                  title={`Stop tracking ${set.name} and delete its cards`}
+                >
+                  Remove
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <div className="section-head is-single add-head">
+        <h2 className="series-title">Add a set</h2>
+      </div>
+
+      <div className="toolbar dash-search">
+        <input
+          className="search-input"
+          type="search"
+          placeholder="Search sets…"
+          aria-label="Search the set list"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="segmented region-picker">
+        {REGIONS.map((r) => (
+          <button
+            key={r.id}
+            className={region === r.id ? 'is-active' : ''}
+            onClick={() => setRegion(r.id)}
+            aria-pressed={region === r.id}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
+      {!getRegion(region).priced && (
+        <p className="muted pad small">
+          No feed quotes {getRegion(region).label} prices, so these cards arrive without one. They
+          show up under “not priced yet”, where you can type a figure in — it then travels with your
+          collection like any other.
+        </p>
+      )}
+
+      {loading && <p className="muted pad">Loading the {getRegion(region).label} set list…</p>}
+      {error && <div className="error-banner"><p>{error}</p></div>}
+      {!loading && !error && results.length === 0 && <p className="muted pad">No sets match.</p>}
+
+      <ul className="set-manage-list">
+        {results.map((set) => {
+          const id = scopedId(region, set.sourceId)
+          const already = trackedIds.has(id)
+          const working = busy.includes(id)
+          return (
+            <li key={id} className="set-manage-row">
+              <div className="set-manage-main">
+                <span className="set-manage-name">
+                  <strong>{set.name}</strong>
+                  {already && <span className="region-tag is-on">Tracked</span>}
+                </span>
+                <span className="muted small">
+                  {[set.series, set.year || null, set.total ? `${set.total} cards` : null]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+                {!already && (
+                  <span className="muted small">
+                    Suggested: {getPreset(suggestPreset(region, set.year)).label}
+                  </span>
+                )}
+              </div>
+              <button
+                className={`btn small ${already ? 'ghost' : 'primary'}`}
+                disabled={working}
+                onClick={() => (already ? void drop(id) : void add(set))}
+              >
+                {working ? 'Adding…' : already ? 'Remove' : 'Add'}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}

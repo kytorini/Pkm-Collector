@@ -816,6 +816,41 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .chip.is-on { border-color: var(--accent); color: var(--accent); }
 .chip-price { opacity: 0.7; font-variant-numeric: tabular-nums; }
 
+/* ---------- managing which sets you collect ---------- */
+.set-manage-list { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.set-manage-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+.set-manage-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.set-manage-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.set-manage-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-manage-row .labelled-select { margin: 4px 0 0; }
+.set-manage-row .labelled-select span { font-size: 0.72rem; }
+.set-manage-row .select-compact { max-width: 15rem; min-height: 32px; padding: 4px 8px; font-size: 0.78rem; }
+/* Which printing a set is, said in two or three letters so a row can carry it. */
+.region-tag {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.region-tag.is-on { border-color: var(--accent-dim); color: var(--accent); }
+.add-head { margin-top: 6px; }
+/* Four regions do not fit across a phone as equal segments, so this row
+   scrolls rather than squeezing the labels into initials. */
+.region-picker { overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
+.region-picker::-webkit-scrollbar { display: none; }
+.region-picker button { flex: 0 0 auto; white-space: nowrap; }
+
 /* ---------- the lot ---------- */
 .lot-bar {
   position: sticky;

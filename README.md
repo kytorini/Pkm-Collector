@@ -199,6 +199,27 @@ instantly and works offline.
 
 ## What it does
 
+**The sets are yours to choose.** Add any set from any of four regions —
+English, Japanese, Chinese (Simplified), Chinese (Traditional) — and remove
+one when you stop chasing it. **Manage sets** on the Collection page lists what
+you track and what you could; searching the catalogue costs nothing because a
+catalogue is only names and counts. A set's cards are fetched when you add it
+and deleted when you drop it, so a collection of three sets costs three sets of
+storage rather than every set ever printed. Dropping a set leaves your
+collection entries alone, so adding it back finds them again. Which sets you
+track travels with your collection over sync, settled per set: a set added on
+the phone and another on the iPad both survive, and a removal sticks rather
+than coming back from the other device's copy.
+
+**Where the cards come from.** English comes from
+[pokemontcg.io](https://docs.pokemontcg.io), the only source here that
+publishes market prices — every money figure in the app rests on it, so it
+stays. Japanese and Chinese come from [TCGdex](https://tcgdex.dev), which is
+free, needs no key and covers seventeen languages, but quotes no prices for
+them. Those cards arrive unpriced and land under **not priced yet**, where a
+figure typed in by hand behaves like any other and travels with the
+collection.
+
 **Print variations are first-class.** Base Set 1st Edition, Shadowless and
 Unlimited are three separate things to own, priced separately and with their
 own completion bars. Same for 1st Edition vs Unlimited across Jungle through
@@ -502,6 +523,14 @@ in a `.env` file (see `.env.example`).
 `https://api.pokemontcg.io/v2/sets`). The shared variant definitions at the top
 of that file control how each print run is labelled, identified and priced.
 
+Nothing else reads that list any more — it is the seed a collection built
+before choosable sets is carried onto, and sets are added from inside the app
+now. How a set is split into print runs comes from a preset instead
+(`src/data/variantPresets.ts`): one run, Normal + Reverse Holo, 1st Edition +
+Unlimited, or Base Set's three. One is suggested from the set's age and region
+and can be changed whenever — only a collector knows whether they separate
+reverse holos.
+
 ## Layout
 
 ```
@@ -518,6 +547,11 @@ src/
   lib/sortOrder.ts      remembered list order for the set grid and the lot
   lib/totalsOpen.ts     whether the Collection totals are folded away
   lib/unpriced.ts       the slots no feed will put a number on
+  lib/regions.ts        the four print regions and which source serves each
+  lib/trackedSets.ts    the sets you collect, and merging two devices' lists
+  lib/sets.ts           set lookups, over whatever you track
+  api/tcgdex.ts         Japanese and Chinese cards
+  api/catalogue.ts      what there is to add, per region, cached a week
   lib/useScrollMemory.ts per-page scroll position across route changes
   views/                Collection, Set detail, Lot, Import, Settings
 ```

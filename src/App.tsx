@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { CardsIcon, ChevronLeftIcon, PokeballIcon, SlidersIcon } from './components/icons'
-import { getSet } from './data/vintageSets'
+import { getSet } from './lib/sets'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { usePhone } from './lib/useMediaQuery'
 import { useScrollMemory } from './lib/useScrollMemory'

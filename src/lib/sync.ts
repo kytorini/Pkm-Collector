@@ -1,4 +1,5 @@
 import type { PriceRules } from './priceRules'
+import type { TrackedSetsDoc } from './trackedSets'
 import type { CollectionMap } from '../types'
 
 /**
@@ -39,6 +40,7 @@ export interface RemoteRules {
  * anything if only one device has updated yet.
  */
 const rulesId = (s: SyncSettings) => `${s.syncCode.trim()}:priceRules`
+const setsId = (s: SyncSettings) => `${s.syncCode.trim()}:sets`
 
 export const EMPTY_SETTINGS: SyncSettings = { url: '', anonKey: '', syncCode: '', enabled: false }
 
@@ -143,6 +145,47 @@ export async function pullRules(s: SyncSettings): Promise<RemoteRules | null> {
 export async function pushRules(s: SyncSettings, rules: PriceRules): Promise<void> {
   const body = JSON.stringify([
     { id: rulesId(s), data: rules, updated_at: new Date().toISOString() },
+  ])
+  const res = await request(endpoint(s), {
+    method: 'POST',
+    headers: { ...headers(s), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body,
+  })
+  if (!res.ok) throw new Error(describe(res.status))
+}
+
+/**
+ * The sets the other device is tracking.
+ *
+ * Which sets you collect is collection data, not a view preference: a
+ * Japanese set added on a phone has to exist on the iPad, or the entries
+ * recorded against its cards are invisible there. Kept in a row of its own,
+ * beside the price rules, rather than folded into the collection document.
+ */
+export async function pullSets(s: SyncSettings): Promise<{ doc: TrackedSetsDoc; savedAt: number } | null> {
+  const url = `${endpoint(s)}?id=eq.${encodeURIComponent(setsId(s))}&select=data,updated_at`
+  const res = await request(url, { headers: headers(s) })
+  if (!res.ok) throw new Error(describe(res.status))
+
+  const rows = (await res.json()) as {
+    data?: TrackedSetsDoc & { updatedAt?: string }
+    updated_at?: string
+  }[]
+  if (!Array.isArray(rows) || rows.length === 0) return null
+  const row = rows[0]
+  if (!row.data || !Array.isArray(row.data.sets)) return null
+
+  const contentAt = row.data.updatedAt ? Date.parse(row.data.updatedAt) : NaN
+  const rowAt = row.updated_at ? Date.parse(row.updated_at) : NaN
+  return {
+    doc: { sets: row.data.sets, removed: row.data.removed ?? {} },
+    savedAt: Number.isFinite(contentAt) ? contentAt : Number.isFinite(rowAt) ? rowAt : 0,
+  }
+}
+
+export async function pushSets(s: SyncSettings, doc: TrackedSetsDoc, updatedAt: string): Promise<void> {
+  const body = JSON.stringify([
+    { id: setsId(s), data: { ...doc, updatedAt }, updated_at: new Date().toISOString() },
   ])
   const res = await request(endpoint(s), {
     method: 'POST',

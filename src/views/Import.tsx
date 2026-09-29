@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { VINTAGE_SETS } from '../data/vintageSets'
+import { useSets } from '../lib/sets'
 import { parseCsv } from '../lib/csv'
 import { looksLikeXlsx, parseXlsx, type WorkbookSheet } from '../lib/xlsx'
 import { download } from '../lib/exporters'
@@ -32,6 +32,7 @@ const VARIANT_CHOICES = [
 ]
 
 export function Import() {
+  const trackedSets = useSets()
   const { allCards, empty, cardsBySet, syncAll, progress } = useLibrary()
   const { collection, replaceAll, defaultCondition } = useCollection()
   const [sheets, setSheets] = useState<WorkbookSheet[] | null>(null)
@@ -267,7 +268,7 @@ export function Import() {
                           }}
                         >
                           <option value="">— skip this tab —</option>
-                          {VINTAGE_SETS.map((vs) => (
+                          {trackedSets.map((vs) => (
                             <option key={vs.id} value={vs.id}>{vs.name}</option>
                           ))}
                         </select>
@@ -309,7 +310,7 @@ export function Import() {
                       }}
                     >
                       <option value="">— match by card name across all sets —</option>
-                      {VINTAGE_SETS.map((vs) => (
+                      {trackedSets.map((vs) => (
                         <option key={vs.id} value={vs.id}>{vs.name}</option>
                       ))}
                     </select>
@@ -475,7 +476,7 @@ export function Import() {
                     }}
                   >
                     <option value="">— match by card name across all sets —</option>
-                    {VINTAGE_SETS.map((s) => (
+                    {trackedSets.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>

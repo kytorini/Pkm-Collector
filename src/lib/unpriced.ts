@@ -1,4 +1,4 @@
-import { VINTAGE_SETS } from '../data/vintageSets'
+import { allSets } from './sets'
 import type { PriceResolver } from './pricing'
 import { priceFor } from './pricing'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
@@ -36,7 +36,7 @@ export function unpricedSlots(
   // Set order, then the order the cards come in, which is the set's own —
   // the same order the binder page shows, so the list reads as a walk through
   // the sets rather than a pile.
-  for (const set of VINTAGE_SETS) {
+  for (const set of allSets()) {
     if (included && !included.has(set.id)) continue
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue

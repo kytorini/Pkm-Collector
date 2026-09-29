@@ -6,12 +6,15 @@ import {
   loadSyncSettings,
   pullRemote,
   pullRules,
+  pullSets,
   pushRemote,
   pushRules,
+  pushSets,
   saveSyncSettings,
   type SyncSettings,
 } from '../lib/sync'
 import { adoptPriceRules, loadPriceRules, markRulesSynced, rulesChangedAt, rulesNeedPush } from '../lib/priceRules'
+import { loadTrackedSetsDoc, mergeTrackedSets, replaceTrackedSets } from '../lib/trackedSets'
 import { useCollection } from './collection'
 
 const LAST_SYNCED_KEY = 'pkm-collector:lastSyncedAt'
@@ -106,6 +109,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       // does not — and a price nothing reads is a blank screen on the other
       // device. Whole-object, newest wins.
       await syncPriceRules(settings)
+      await syncTrackedSets(settings)
 
       const now = Date.now()
       setLastSyncedAt(now)
@@ -166,6 +170,36 @@ export function SyncProvider({ children }: { children: ReactNode }) {
  * object rather than a map of independently edited entries, so the newer copy
  * simply wins.
  */
+/**
+ * Which sets you collect, settled per set rather than per device.
+ *
+ * Both sides get merged and both sides get written: sets are added from
+ * whichever device is to hand, so a straight "newer wins" would throw away
+ * whatever the other one had added since.
+ */
+async function syncTrackedSets(settings: SyncSettings): Promise<void> {
+  const mine = loadTrackedSetsDoc()
+  const remote = await pullSets(settings)
+
+  if (!remote) {
+    if (mine.sets.length > 0) await pushSets(settings, mine, new Date().toISOString())
+    return
+  }
+
+  const merged = mergeTrackedSets(mine, remote.doc)
+  replaceTrackedSets(merged)
+
+  const changed =
+    merged.sets.length !== remote.doc.sets.length ||
+    merged.sets.some((set) => {
+      const theirs = remote.doc.sets.find((t) => t.id === set.id)
+      return !theirs || theirs.updatedAt !== set.updatedAt
+    })
+  // Only write when the remote copy is actually behind: an unconditional push
+  // would touch the row on every sync and make this device look newest.
+  if (changed) await pushSets(settings, merged, new Date().toISOString())
+}
+
 async function syncPriceRules(settings: SyncSettings): Promise<void> {
   // Taken before the request, and pushed as taken. Reading them again
   // afterwards meant a sync that adopted the other device's rules while this

@@ -6,7 +6,7 @@ import { OverflowMenu } from '../components/OverflowMenu'
 import { PriceInput } from '../components/PriceInput'
 import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
-import { getSet } from '../data/vintageSets'
+import { getSet } from '../lib/sets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { setSetSource, setVariantSource, usePriceRules, variantRuleKey } from '../lib/priceRules'
 import {

@@ -18,6 +18,7 @@ export interface CachedSet {
 export interface ApiSetMeta {
   id: string
   name: string
+  series?: string
   releaseDate: string
   printedTotal: number
   total: number
@@ -136,6 +137,18 @@ export async function checkConnection(): Promise<ConnectionCheck> {
     }
     return { ok: false, detail: `Could not connect${navigator.onLine ? '' : ' — this device reports it is offline'}`, ms }
   }
+}
+
+/**
+ * Every English set there is, for choosing which ones to track.
+ *
+ * One request rather than a search: the list is about 170 sets and a few tens
+ * of kilobytes, and having all of it makes the picker's own filtering instant
+ * and free of a round trip per keystroke.
+ */
+export async function listPokemonTcgSets(): Promise<ApiSetMeta[]> {
+  const body = await getJson<{ data: ApiSetMeta[] }>('/sets?pageSize=250&orderBy=releaseDate')
+  return Array.isArray(body.data) ? body.data.filter((s) => typeof s?.id === 'string') : []
 }
 
 /** Fetches every card in a set, following pagination. */
