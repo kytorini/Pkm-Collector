@@ -846,6 +846,12 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 .region-tag.is-on { border-color: var(--accent-dim); color: var(--accent); }
 .add-head { margin-top: 6px; }
 .set-manage-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
+/* The way in for a set no feed lists. Folded away until it's needed, since
+   most of the time the catalogue has what you want. */
+.hand-set { margin: 0 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.hand-set .labelled-select { margin: 0; }
+.hand-set .search-input { width: 100%; min-width: 0; flex: none; }
+.hand-list { font-family: inherit; line-height: 1.45; resize: vertical; }
 /* Four regions do not fit across a phone as equal segments, so this row
    scrolls rather than squeezing the labels into initials. */
 .region-picker { overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }

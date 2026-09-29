@@ -4,6 +4,7 @@ import { loadTcgdexSet } from '../api/tcgdex'
 import { idbDelete, idbGet, idbSet } from '../lib/idb'
 import { getRegion } from '../lib/regions'
 import { detectVariants } from '../lib/detectVariants'
+import { buildManualCards } from '../lib/manualSet'
 import { loadTrackedSets, needsDetection, setDetectedVariants, useTrackedSets, type TrackedSet } from '../lib/trackedSets'
 import type { ApiCard } from '../types'
 
@@ -82,6 +83,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       const cards: Record<string, ApiCard[]> = {}
       const stamps: Record<string, number> = {}
       for (const set of trackedSets) {
+        // A hand-built set carries its own cards, so there is nothing to
+        // read back and nothing that could fail to arrive.
+        if (set.source === 'manual') {
+          cards[set.id] = buildManualCards(set.id, set.region, set.name, set.manualCards ?? [])
+          stamps[set.id] = Date.parse(set.updatedAt) || Date.now()
+          continue
+        }
         const cached =
           set.source === 'tcgdex'
             ? await idbGet<CachedForeign>(`cards:${set.id}`)
@@ -132,6 +140,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
        * English API.
        */
       const set = loadTrackedSets().find((s) => s.id === setId)
+      // Nothing to fetch: its cards were typed in and live on the set itself.
+      if (set?.source === 'manual') {
+        const built = buildManualCards(set.id, set.region, set.name, set.manualCards ?? [])
+        setCardsBySet((prev) => ({ ...prev, [setId]: built }))
+        return { cards: built, fetchedAt: Date.now() }
+      }
       try {
         const result =
           set && set.source === 'tcgdex'

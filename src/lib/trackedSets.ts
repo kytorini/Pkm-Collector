@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { getPreset } from '../data/variantPresets'
+import type { ManualCard } from './manualSet'
 import { isRegion, scopedId, type RegionId, type SourceId } from './regions'
 import type { SetVariant, VintageSet } from '../types'
 
@@ -34,6 +35,12 @@ export interface TrackedSet extends VintageSet {
    * background job is how an app loses trust.
    */
   pinned?: boolean
+  /**
+   * The checklist of a hand-built set, kept here rather than in the card
+   * cache so it travels with the set list over sync. There is nowhere for
+   * another device to download these from, so it has to carry them.
+   */
+  manualCards?: ManualCard[]
   /** ISO. Ordering falls back to this when a set has no release date. */
   addedAt: string
   /** Last write, for settling two devices that both changed the list. */
@@ -207,6 +214,8 @@ export interface NewSet {
   year: number
   total: number
   preset: string
+  /** Given only for a set typed in here; it decides the source. */
+  manualCards?: ManualCard[]
 }
 
 /** Oldest print first, the way the collection page has always listed sets. */
@@ -223,13 +232,14 @@ export function addSet(set: NewSet, variants?: SetVariant[]): TrackedSet {
   const next: TrackedSet = {
     id,
     sourceId: set.sourceId,
-    source: set.region === 'en' ? 'pokemontcg' : 'tcgdex',
+    source: set.manualCards ? 'manual' : set.region === 'en' ? 'pokemontcg' : 'tcgdex',
     region: set.region,
     name: set.name,
     series: set.series,
     year: set.year,
     total: set.total,
     preset: set.preset,
+    ...(set.manualCards ? { manualCards: set.manualCards } : {}),
     variants: variants ?? getPreset(set.preset).variants,
     addedAt: existing?.addedAt ?? now,
     updatedAt: now,

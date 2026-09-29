@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { loadCatalogue, type CatalogueSet } from '../api/catalogue'
 import { getPreset, suggestPreset, VARIANT_PRESETS } from '../data/variantPresets'
 import { describeVariants, detectVariants } from '../lib/detectVariants'
+import { blankChecklist, manualSetId, parseChecklist } from '../lib/manualSet'
 import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
 import { scopedId } from '../lib/regions'
 import { addSet, removeSet, setDetectedVariants, setPreset, useTrackedSets } from '../lib/trackedSets'
@@ -25,6 +26,10 @@ export function SetManager({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null)
   /** Set ids currently being fetched, so each row can say so on its own. */
   const [busy, setBusy] = useState<string[]>([])
+  const [byHand, setByHand] = useState(false)
+  const [handName, setHandName] = useState('')
+  const [handList, setHandList] = useState('')
+  const [handCount, setHandCount] = useState('')
 
   useEffect(() => {
     let dead = false
@@ -100,6 +105,37 @@ export function SetManager({ onDone }: { onDone: () => void }) {
         : `No feed quotes this set yet, so its printings can't be read. Left as one run, which counts every card once. Set it by hand if you know better.`,
     )
   }
+
+  /*
+   * A set nothing lists yet.
+   *
+   * New releases reach a binder weeks before they reach an API, and a promo
+   * set printed this month is catalogued by collectors long before anything
+   * this app can call. Typing one in beats not tracking it.
+   */
+  const addByHand = () => {
+    const name = handName.trim()
+    if (!name) return
+    const checklist = handList.trim() ? parseChecklist(handList) : blankChecklist(Number(handCount))
+    if (checklist.length === 0) return
+    addSet({
+      sourceId: manualSetId(name),
+      region,
+      name,
+      series: 'Added by hand',
+      year: new Date().getFullYear(),
+      total: checklist.length,
+      // One run: nothing quotes this set, so there are no printings to read.
+      preset: 'single',
+      manualCards: checklist,
+    })
+    setHandName('')
+    setHandList('')
+    setHandCount('')
+    setByHand(false)
+  }
+
+  const handPreview = handList.trim() ? parseChecklist(handList) : blankChecklist(Number(handCount))
 
   const drop = async (id: string) => {
     removeSet(id)
@@ -214,6 +250,73 @@ export function SetManager({ onDone }: { onDone: () => void }) {
           collection like any other.
         </p>
       )}
+
+      <div className="hand-set">
+        {byHand ? (
+          <>
+            <p className="muted small">
+              For a set no feed lists yet — a promo run printed this month, say. Its cards get no
+              artwork and no price, and land under “not priced yet” to be given a figure by hand. The
+              checklist travels with your collection, so your other device rebuilds it without
+              needing anywhere to download it from.
+            </p>
+            <label className="labelled-select">
+              <span>Set name</span>
+              <input
+                className="search-input"
+                value={handName}
+                placeholder="Mega Evolution Black Star Promos"
+                onChange={(e) => setHandName(e.target.value)}
+              />
+            </label>
+            <label className="labelled-select">
+              <span>Paste the checklist — one card per line, "96 Moltres" or just a name</span>
+              <textarea
+                className="search-input hand-list"
+                rows={5}
+                value={handList}
+                placeholder={'96 Moltres\n97 Articuno\n98 Zapdos'}
+                onChange={(e) => setHandList(e.target.value)}
+              />
+            </label>
+            {!handList.trim() && (
+              <label className="labelled-select">
+                <span>…or just how many cards, for numbered blanks</span>
+                <input
+                  className="search-input"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  value={handCount}
+                  placeholder="101"
+                  onChange={(e) => setHandCount(e.target.value)}
+                />
+              </label>
+            )}
+            <p className="muted small hand-preview">
+              {handPreview.length === 0
+                ? 'Nothing to add yet.'
+                : `${handPreview.length} card${handPreview.length === 1 ? '' : 's'}, in ${getRegion(region).label}${
+                    handPreview.length > 0 ? ` — first is #${handPreview[0].number} ${handPreview[0].name}` : ''
+                  }`}
+            </p>
+            <div className="btn-row">
+              <button
+                className="btn primary small"
+                disabled={!handName.trim() || handPreview.length === 0}
+                onClick={addByHand}
+              >
+                Add this set
+              </button>
+              <button className="btn ghost small" onClick={() => setByHand(false)}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <button className="link-btn" onClick={() => setByHand(true)}>
+            Can’t find it? Add a set by hand
+          </button>
+        )}
+      </div>
 
       {loading && <p className="muted pad">Loading the {getRegion(region).label} set list…</p>}
       {error && <div className="error-banner"><p>{error}</p></div>}

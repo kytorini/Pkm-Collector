@@ -211,6 +211,18 @@ track travels with your collection over sync, settled per set: a set added on
 the phone and another on the iPad both survive, and a removal sticks rather
 than coming back from the other device's copy.
 
+**A set can be typed in.** New releases reach a binder weeks before they reach
+an API — a promo set printed this month is catalogued by collectors long
+before anything this app can call. **Add a set by hand** in Manage sets takes
+a name and either a pasted checklist (one card per line: *MEP096 Moltres*,
+*96 - Moltres*, *Moltres #96*, or just a name) or a card count for numbered
+blanks. Promo numbering is lettered, which the parser expects, because promo
+sets are exactly what the feeds are slowest to list. Those cards get no
+artwork and no price, and land under "not priced yet" with everything else
+needing a figure by hand. The checklist rides on the set list rather than in
+the card cache, so it syncs — the other device rebuilds the cards without
+needing somewhere to download them from, of which there is none.
+
 **Where the cards come from.** English comes from
 [pokemontcg.io](https://docs.pokemontcg.io), the only source here that
 publishes market prices — every money figure in the app rests on it, so it

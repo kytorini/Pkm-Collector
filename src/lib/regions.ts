@@ -10,7 +10,8 @@
  */
 export type RegionId = 'en' | 'ja' | 'zh-cn' | 'zh-tw'
 
-export type SourceId = 'pokemontcg' | 'tcgdex'
+/** `manual` is a set typed in here, for cards no feed lists. */
+export type SourceId = 'pokemontcg' | 'tcgdex' | 'manual'
 
 export interface Region {
   id: RegionId
