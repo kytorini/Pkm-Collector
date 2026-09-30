@@ -17,7 +17,7 @@ import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
 import { shortSetName } from '../lib/shortName'
 import { collectSingles, groupSingles, UNGROUPED } from '../lib/singles'
-import { isChasing } from '../lib/trackedSets'
+import { clearOrder, hasCustomOrder, isChasing, moveSet } from '../lib/trackedSets'
 import { unpricedCards, unpricedSlots } from '../lib/unpriced'
 import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
@@ -42,6 +42,7 @@ export function Dashboard() {
   const price = usePrices()
   const hidden = useHiddenSets()
   const [managing, setManaging] = useState(false)
+  const [reordering, setReordering] = useState(false)
   const trackedSets = useSets()
   // Sets opened in place. More than one at a time, so two runs can be compared
   // without collapsing the first, and remembered so stepping into a set and
@@ -461,15 +462,81 @@ export function Dashboard() {
       ) : (
       <section className="series-block">
         <div className="section-head">
-          <h2 className="series-title">Progress by set</h2>
+          <h2 className="series-title">{reordering ? 'Reorder sets' : 'Progress by set'}</h2>
           <div className="btn-row">
-            <button className="btn ghost small" onClick={() => setManaging(true)}>Manage sets</button>
-            <button className="btn ghost small" onClick={() => void syncAll(true)} disabled={progress.running}>
-              {progress.running ? `Refreshing ${progress.current}…` : 'Refresh all prices'}
-            </button>
+            {reordering ? (
+              <>
+                {hasCustomOrder() && (
+                  <button className="btn ghost small" onClick={clearOrder}>By release date</button>
+                )}
+                <button className="btn small" onClick={() => setReordering(false)}>Done</button>
+              </>
+            ) : (
+              <>
+                <button className="btn ghost small" onClick={() => setManaging(true)}>Manage sets</button>
+                <button className="btn ghost small" onClick={() => void syncAll(true)} disabled={progress.running}>
+                  {progress.running ? `Refreshing ${progress.current}…` : 'Refresh all prices'}
+                </button>
+                {chasing.length > 1 && (
+                  <button
+                    className="btn ghost small icon-btn"
+                    onClick={() => setReordering(true)}
+                    title="Reorder sets"
+                    aria-label="Reorder sets"
+                  >
+                    <span aria-hidden>⇅</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
+        {/*
+          * A mode rather than arrows on every row: rearranging is something
+          * you do once in a while, and two more controls on each row would
+          * cost the other ninety-nine percent of the time. Stripped down to
+          * the name and where you are, because that is what you order by, and
+          * because a progress bar is not a handle.
+          */}
+        {reordering ? (
+          <ul className="reorder-list">
+            {chasing.map((set, i) => {
+              const cards = cardsBySet[set.id] ?? []
+              const st = statsForSet(cards, set, collection, price)
+              const denom = st.total || set.total * set.variants.length
+              const ids = chasing.map((c) => c.id)
+              return (
+                <li key={set.id} className="reorder-row">
+                  <span className="reorder-name" title={set.name}>
+                    <strong>{shortSetName(set.name)}</strong>
+                    <span className="muted small">{st.owned}/{denom} · {set.year}</span>
+                  </span>
+                  <span className="reorder-moves">
+                    <button
+                      type="button"
+                      className="reorder-btn"
+                      onClick={() => moveSet(set.id, -1, ids)}
+                      disabled={i === 0}
+                      aria-label={`Move ${set.name} up`}
+                    >
+                      <span aria-hidden>↑</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="reorder-btn"
+                      onClick={() => moveSet(set.id, 1, ids)}
+                      disabled={i === chasing.length - 1}
+                      aria-label={`Move ${set.name} down`}
+                    >
+                      <span aria-hidden>↓</span>
+                    </button>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
         <div className="progress-table">
           {chasing.map((set) => {
             const cards = cardsBySet[set.id] ?? []
@@ -568,6 +635,7 @@ export function Dashboard() {
             </p>
           )}
         </div>
+        )}
       </section>
       )}
       </>

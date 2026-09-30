@@ -269,6 +269,26 @@ the set. Names are folded where they ride beside other data (singles, search
 results, the lot, the card panel, set rows) and left whole where the name is
 the point: a set's own page, and the picker where you choose one to add.
 
+**The sets are in your order, if you want one.** Release order is a good
+default and a poor permanent answer: what you are actually working on belongs
+at the top, and the app cannot know which set that is. The **⇅** button beside
+*Manage sets* turns the list into names and arrows — a mode rather than two
+more controls on every row, since rearranging is a once-in-a-while job and a
+progress bar is not a handle. **By release date** gives the years their say
+again, and is offered only once there is something to undo.
+
+The position is kept on each set rather than as a list of ids elsewhere, which
+is what lets it survive the sync: the merge rebuilds the list from whichever
+copy of each *set* was touched last, so an order held anywhere else would be
+lost the first time two devices met. Three details follow from ordering by
+hand. The first move ranks every set, not just the one you moved, because a
+list where one set knows its place and the rest don't has no order at all. A
+set you aren't chasing sits in the stored list but not on screen, so a move
+swaps with the neighbour you can *see* — otherwise the button would sometimes
+appear to do nothing. And a set added afterwards lands at the end, where you
+can see it and move it, rather than being slotted into the middle of an
+arrangement made for reasons its release year knows nothing about.
+
 **The sets are yours to choose.** Add any set from any of four regions —
 English, Japanese, Chinese (Simplified), Chinese (Traditional) — and remove
 one when you stop chasing it. **Manage sets** on the Collection page lists what

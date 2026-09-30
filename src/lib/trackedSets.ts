@@ -54,6 +54,19 @@ export interface TrackedSet extends VintageSet {
    * way it did.
    */
   chasing?: boolean
+  /**
+   * Where you put it, if you have moved it.
+   *
+   * Release order is a good default and a poor permanent answer: what you are
+   * working on belongs at the top, and the app has no way to know which set
+   * that is. Absent means "wherever the year says", so a list nobody has
+   * rearranged behaves exactly as it always did.
+   *
+   * Carried on the set rather than as a list of ids elsewhere, so it survives
+   * the sync merge — which rebuilds the list from whichever copy of each set
+   * was touched last and would lose an ordering held anywhere else.
+   */
+  rank?: number
   /** ISO. Ordering falls back to this when a set has no release date. */
   addedAt: string
   /** Last write, for settling two devices that both changed the list. */
@@ -233,9 +246,20 @@ export interface NewSet {
   chasing?: boolean
 }
 
-/** Oldest print first, the way the collection page has always listed sets. */
+/** Unranked sets sort after ranked ones, rather than sharing position 0. */
+const rankOf = (set: TrackedSet): number =>
+  typeof set.rank === 'number' ? set.rank : Number.MAX_SAFE_INTEGER
+
+/** Where you put them, or oldest print first for the sets you never moved. */
 function inOrder(list: TrackedSet[]): TrackedSet[] {
-  return [...list].sort((a, b) => a.year - b.year || a.name.localeCompare(b.name))
+  return [...list].sort(
+    (a, b) => rankOf(a) - rankOf(b) || a.year - b.year || a.name.localeCompare(b.name),
+  )
+}
+
+/** True once anything has been moved by hand, which changes where a new set lands. */
+function isRanked(list: TrackedSet[]): boolean {
+  return list.some((s) => typeof s.rank === 'number')
 }
 
 export function addSet(set: NewSet, variants?: SetVariant[]): TrackedSet {
@@ -257,6 +281,17 @@ export function addSet(set: NewSet, variants?: SetVariant[]): TrackedSet {
     ...(set.manualCards ? { manualCards: set.manualCards } : {}),
     ...(set.chasing === false ? { chasing: false } : {}),
     variants: variants ?? getPreset(set.preset).variants,
+    /*
+     * A set added to a list you have arranged goes on the end, where you can
+     * see it and move it. Slotting it in by year would drop it silently into
+     * the middle of an order you chose for reasons the year knows nothing
+     * about.
+     */
+    ...(existing?.rank !== undefined
+      ? { rank: existing.rank }
+      : isRanked(tracked)
+        ? { rank: Math.max(...tracked.map(rankOf).filter((r) => r < Number.MAX_SAFE_INTEGER), -1) + 1 }
+        : {}),
     addedAt: existing?.addedAt ?? now,
     updatedAt: now,
   }
@@ -316,6 +351,64 @@ export function setChasing(id: string, chasing: boolean): void {
   write(
     tracked.map((s) => (s.id === id ? { ...s, chasing, updatedAt: new Date().toISOString() } : s)),
   )
+}
+
+/**
+ * Moves a set one place up or down.
+ *
+ * `among` is the ids actually on screen, in the order they appear. A set you
+ * aren't chasing, or one filtered out, still sits somewhere in the stored
+ * list — swapping with it would look like the button did nothing. The swap is
+ * therefore made between neighbours *you can see*, and takes their places in
+ * the full list with them.
+ *
+ * The first move ranks everything, because a list where only one set knows
+ * its place has no order at all: the rest would pile up behind it.
+ */
+export function moveSet(id: string, delta: -1 | 1, among?: string[]): void {
+  const order = inOrder(tracked).map((s) => s.id)
+  const visible = among ? order.filter((o) => among.includes(o)) : order
+  const at = visible.indexOf(id)
+  const swapWith = visible[at + delta]
+  if (at < 0 || swapWith === undefined) return
+
+  const a = order.indexOf(id)
+  const b = order.indexOf(swapWith)
+  order[a] = swapWith
+  order[b] = id
+
+  const ranks = new Map(order.map((setId, rank) => [setId, rank]))
+  const now = new Date().toISOString()
+  write(
+    inOrder(
+      tracked.map((set) => {
+        const rank = ranks.get(set.id)
+        // Only what actually moved is restamped, so a reorder doesn't win
+        // every other argument the next sync has to settle.
+        return rank === undefined || rank === set.rank ? set : { ...set, rank, updatedAt: now }
+      }),
+    ),
+  )
+}
+
+/** Gives the list back to the release dates. */
+export function clearOrder(): void {
+  if (!isRanked(tracked)) return
+  const now = new Date().toISOString()
+  write(
+    inOrder(
+      tracked.map((set) => {
+        if (set.rank === undefined) return set
+        const { rank: _dropped, ...rest } = set
+        return { ...rest, updatedAt: now }
+      }),
+    ),
+  )
+}
+
+/** Whether the list has been arranged by hand, so the way back can be offered. */
+export function hasCustomOrder(): boolean {
+  return isRanked(tracked)
 }
 
 /** The sets counted towards completion and remaining cost. */

@@ -880,6 +880,39 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 }
 .single-tagger .tag-field > span { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
 
+/* ---------- putting the sets in your own order ---------- */
+/* An icon keeps its width whatever the row does to the buttons beside it:
+   two arrows do not need a third of the page to be tappable. */
+.icon-btn { flex: 0 0 auto !important; padding-left: 12px; padding-right: 12px; font-size: 1rem; }
+.reorder-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.reorder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+.reorder-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.reorder-name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reorder-moves { flex: 0 0 auto; display: flex; gap: 6px; }
+.reorder-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.reorder-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+/* Dimmed rather than hidden: a top row with one arrow missing reads as a
+   rendering fault, and the gap tells you where you are in the list. */
+.reorder-btn:disabled { opacity: 0.3; cursor: default; }
+
 .tag-field { display: flex; flex-direction: column; gap: 6px; }
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag {
