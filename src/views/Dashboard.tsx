@@ -8,6 +8,7 @@ import { ProgressBar } from '../components/ProgressBar'
 import { SetManager } from '../components/SetManager'
 import { SingleFinder } from '../components/SingleFinder'
 import { TagField } from '../components/TagField'
+import { WantList } from '../components/WantList'
 import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
@@ -43,6 +44,7 @@ export function Dashboard() {
   const hidden = useHiddenSets()
   const [managing, setManaging] = useState(false)
   const [reordering, setReordering] = useState(false)
+  const [wanting, setWanting] = useState(false)
   const trackedSets = useSets()
   // Sets opened in place. More than one at a time, so two runs can be compared
   // without collapsing the first, and remembered so stepping into a set and
@@ -179,6 +181,14 @@ export function Dashboard() {
     return (
       <div className="view">
         <SetManager onDone={() => setManaging(false)} />
+      </div>
+    )
+  }
+
+  if (wanting) {
+    return (
+      <div className="view">
+        <WantList onDone={() => setWanting(false)} />
       </div>
     )
   }
@@ -477,15 +487,34 @@ export function Dashboard() {
                 <button className="btn ghost small" onClick={() => void syncAll(true)} disabled={progress.running}>
                   {progress.running ? `Refreshing ${progress.current}…` : 'Refresh all prices'}
                 </button>
-                {chasing.length > 1 && (
-                  <button
-                    className="btn ghost small icon-btn"
-                    onClick={() => setReordering(true)}
-                    title="Reorder sets"
-                    aria-label="Reorder sets"
-                  >
-                    <span aria-hidden>⇅</span>
-                  </button>
+                {/* Two jobs you do now and then. Spelling them out in a
+                    panel beats a row of four buttons nobody can read on a
+                    phone — and beats a bare glyph, which says nothing. */}
+                {chasing.length > 0 && (
+                  <OverflowMenu id="set-list-options" label="More set options" className="icon-btn">
+                    {(close) => (
+                      <div className="info-panel">
+                        <button
+                          className="link-btn"
+                          onClick={() => { close(); setWanting(true) }}
+                        >
+                          Export a want list
+                        </button>
+                        <p className="muted small">The cards you're still missing, to send to a seller.</p>
+                        {chasing.length > 1 && (
+                          <>
+                            <button
+                              className="link-btn"
+                              onClick={() => { close(); setReordering(true) }}
+                            >
+                              Reorder sets
+                            </button>
+                            <p className="muted small">Put them in the order you work on them.</p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </OverflowMenu>
                 )}
               </>
             )}

@@ -913,6 +913,57 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
    rendering fault, and the gap tells you where you are in the list. */
 .reorder-btn:disabled { opacity: 0.3; cursor: default; }
 
+/* ---------- the list of what you still need ---------- */
+.want-picker, .want-shape, .want-out { margin-bottom: 18px; }
+.want-picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.want-set-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.want-set {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.want-set-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.want-set input { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--accent); }
+.want-shape .segmented { margin-bottom: 8px; }
+/* Matches the set ticks above it: two kinds of checkbox on one screen reads
+   as two kinds of choice. */
+.want-shape .check-inline input { accent-color: var(--accent); }
+.want-shape .segmented button { flex: 1; }
+.want-out-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+/* Monospaced because the numbers line up, which is how you check a list
+   against a binder without reading every word of it. */
+.want-preview {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 .tag-field { display: flex; flex-direction: column; gap: 6px; }
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag {

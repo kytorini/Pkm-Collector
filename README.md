@@ -269,10 +269,33 @@ the set. Names are folded where they ride beside other data (singles, search
 results, the lot, the card panel, set rows) and left whole where the name is
 the point: a set's own page, and the picker where you choose one to add.
 
+**A want list, for the person selling to you.** The app already knows what
+you're missing — it is what the remaining-cost figure counts — but as a number
+on a tile, which is no use when a dealer asks what you're after. *Export a want
+list* turns it into something you can send. Picking the sets first is the
+point rather than a convenience: everything you chase at once is hundreds of
+cards and no seller reads that.
+
+Three shapes, because "what I need" means something different depending on who
+reads it. **Message** names the cards grouped by set, numbered the way a binder
+is (`2/102 Blastoise`), for an email or a DM. **Numbers** is card numbers only
+with consecutive ones collapsed — `2, 5-7, 58` — because that is the same
+information as sixteen commas and fits in a chat window; runs of two stay
+listed, since `4-5` is longer to read than `4, 5`, and lettered promo numbers
+collapse by their prefix. **Spreadsheet** is a row per card with prices, for a
+seller who works from a sheet. Market prices are opt-in on the first two, and
+the total says plainly when some cards have no listed price rather than
+quietly understating the ask. Copy puts it on the clipboard, which is what you
+actually do with it; Download writes a dated .txt or .csv. Only sets you are
+chasing can be short of anything — one kept for singles has no complete state
+to fall short of — and sets with nothing missing or nothing downloaded are
+left out with a line saying how many and why, since a set you expected to see
+is otherwise a bug.
+
 **The sets are in your order, if you want one.** Release order is a good
 default and a poor permanent answer: what you are actually working on belongs
-at the top, and the app cannot know which set that is. The **⇅** button beside
-*Manage sets* turns the list into names and arrows — a mode rather than two
+at the top, and the app cannot know which set that is. *Reorder sets*, in the
+**⋯** menu beside *Manage sets*, turns the list into names and arrows — a mode rather than two
 more controls on every row, since rearranging is a once-in-a-while job and a
 progress bar is not a handle. **By release date** gives the years their say
 again, and is offered only once there is something to undo.
