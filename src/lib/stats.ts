@@ -1,4 +1,5 @@
 import { adjustedValue, isUnassessed } from './condition'
+import { cardsInRun } from './printRuns'
 import { priceFor, type PriceResolver } from './pricing'
 import { allSets } from './sets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
@@ -87,7 +88,7 @@ export function statsForSet(
   price: PriceResolver = AUTO_PRICE,
 ): VariantStats {
   return set.variants
-    .map((v) => statsForVariant(cards, v, collection, price))
+    .map((v) => statsForVariant(cardsInRun(cards, v, set.variants), v, collection, price))
     .reduce(
       (acc, s) => ({
         total: acc.total + s.total,

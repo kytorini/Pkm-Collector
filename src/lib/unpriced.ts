@@ -1,4 +1,5 @@
 import { allSets } from './sets'
+import { runsFor } from './printRuns'
 import type { PriceResolver } from './pricing'
 import { priceFor } from './pricing'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant, type VintageSet } from '../types'
@@ -41,7 +42,7 @@ export function unpricedSlots(
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue
     for (const card of cards) {
-      for (const variant of set.variants) {
+      for (const variant of runsFor(card, set.variants)) {
         if (price(card, variant).market != null) continue
         found.push({ card, set, variant, owned: Boolean(collection[entryKey(card.id, variant.id)]?.owned) })
       }

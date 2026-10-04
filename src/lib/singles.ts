@@ -1,4 +1,5 @@
 import { adjustedValue } from './condition'
+import { runsFor } from './printRuns'
 import { priceFor, type PriceResolver } from './pricing'
 import { allSets, type TrackedSet } from './sets'
 import { isChasing } from './trackedSets'
@@ -53,7 +54,7 @@ export function collectSingles(
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue
     for (const card of cards) {
-      for (const variant of set.variants) {
+      for (const variant of runsFor(card, set.variants)) {
         const entry = collection[entryKey(card.id, variant.id)]
         if (!entry?.owned) continue
         const market = price(card, variant).market

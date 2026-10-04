@@ -6,6 +6,7 @@ import { OverflowMenu } from '../components/OverflowMenu'
 import { PriceInput } from '../components/PriceInput'
 import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
+import { cardsInRun } from '../lib/printRuns'
 import { getSet } from '../lib/sets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { setSetSource, setVariantSource, usePriceRules, variantRuleKey } from '../lib/priceRules'
@@ -240,18 +241,23 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     }
   }, [lookedUp])
 
-  const cards = useMemo(() => cardsBySet[setId] ?? [], [cardsBySet, setId])
+  const allCards = useMemo(() => cardsBySet[setId] ?? [], [cardsBySet, setId])
   const activeVariant = useMemo(
     () => set?.variants.find((v) => v.id === variantId) ?? set?.variants[0],
     [set, variantId],
   )
+  // Only the cards printed in this run: 151's reverse holos stop at #165.
+  const cards = useMemo(
+    () => (set && activeVariant ? cardsInRun(allCards, activeVariant, set.variants) : allCards),
+    [allCards, set, activeVariant],
+  )
 
   // A set the user navigated to directly may not be cached yet.
   useEffect(() => {
-    if (!set || cards.length > 0 || progress.running) return
+    if (!set || allCards.length > 0 || progress.running) return
     setLoadFailed(false)
     void syncSet(setId).catch(() => setLoadFailed(true))
-  }, [set, setId, cards.length, syncSet, progress.running])
+  }, [set, setId, allCards.length, syncSet, progress.running])
 
   const visible = useMemo(() => {
     if (!activeVariant) return []
@@ -282,7 +288,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   if (!activeVariant) return <div className="view"><p>This set has no print variations configured.</p></div>
 
   const stats = statsForVariant(cards, activeVariant, collection, price)
-  const openCard = openCardId ? cards.find((c) => c.id === openCardId) ?? null : null
+  const openCard = openCardId ? allCards.find((c) => c.id === openCardId) ?? null : null
 
   // What each level falls back to, so the pickers can say what "inherit" means
   // and the coverage counts can resolve it.
@@ -505,7 +511,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         <div>
           <a className="back-link" href={routeHref.dashboard}>‹ Collection</a>
           <h1>{set.name}</h1>
-          <p className="muted">{set.series} series · {set.year} · {cards.length || set.total} cards</p>
+          <p className="muted">{set.series} series · {set.year} · {allCards.length || set.total} cards</p>
         </div>
         {!phone && (
           <div className="set-head-actions">
@@ -520,7 +526,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       <div ref={tabsRef} className={`variant-bar ${stuck ? 'is-stuck' : ''}`}>
         <nav className="variant-tabs" aria-label="Print variation">
           {set.variants.map((variant) => {
-            const s = statsForVariant(cards, variant, collection, price)
+            const s = statsForVariant(cardsInRun(allCards, variant, set.variants), variant, collection, price)
             return (
               <button
                 key={variant.id}
@@ -599,7 +605,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         {!phone && densitySelect}
       </div>
 
-      {cards.length === 0 && loadFailed ? (
+      {allCards.length === 0 && loadFailed ? (
         <div className="load-error">
           <h3>Couldn’t load {set.name}</h3>
           <p>{error ?? 'The card data request failed.'}</p>
@@ -614,7 +620,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             the Pokémon TCG API. Settings has a connection test if you want the detail.
           </p>
         </div>
-      ) : cards.length === 0 ? (
+      ) : allCards.length === 0 ? (
         <p className="muted pad">Loading cards from the Pokémon TCG API…</p>
       ) : entering ? (
         <PriceEntryList

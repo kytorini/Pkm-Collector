@@ -19,6 +19,7 @@ import { usePrices } from '../store/prices'
 import { PriceInput } from './PriceInput'
 import { TagField } from './TagField'
 import { PriceSourceSelect } from './PriceSourceSelect'
+import { runsFor } from '../lib/printRuns'
 import { CONDITIONS, GRADERS, type ApiCard, type ConditionId, type Grader, type VintageSet } from '../types'
 
 interface Props {
@@ -39,7 +40,9 @@ const lowerFirst = (text: string | undefined): string =>
 
 export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Props) {
   // The run you arrived on, which is the one the picture is standing in for.
-  const viewing = set.variants.find((v) => v.id === activeVariantId) ?? set.variants[0]
+  // Only the runs this card was printed in — no reverse holo slot for a secret rare.
+  const runs = runsFor(card, set.variants)
+  const viewing = runs.find((v) => v.id === activeVariantId) ?? runs[0]
   const { get, update, toggleOwned, remove, setPriceOverride } = useCollection()
   const resolvePrice = usePrices()
 
@@ -86,7 +89,7 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
             </p>
           </header>
 
-          {set.variants.map((variant) => {
+          {runs.map((variant) => {
             const entry = get(card.id, variant.id)
             const owned = Boolean(entry?.owned)
             const price = resolvePrice(card, variant)

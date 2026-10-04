@@ -1,0 +1,35 @@
+import type { ApiCard, SetVariant } from '../types'
+
+/**
+ * Whether a card was printed in a given run of its set.
+ *
+ * A set's runs are not every card's runs. Reverse holos are printed for the
+ * main numbered list only: the secret rares numbered past the printed total —
+ * 151's Illustration Rares and Special Illustration Rares, #166 to #207 — and
+ * the lettered subsets (Aquapolis's H1–H32, Trainer Galleries, Shiny Vaults)
+ * come in one finish and no other. Offering a reverse holo slot for them
+ * invents 42 cards in 151 that can never be found.
+ *
+ * Only a reverse holo run beside another run is trimmed. A set printed in
+ * reverse holo throughout has that as its only run, and every card is in it.
+ */
+export function inRun(card: ApiCard, variant: SetVariant, runs: readonly SetVariant[]): boolean {
+  if (variant.id !== 'reverse-holo') return true
+  if (!runs.some((run) => run.id !== 'reverse-holo')) return true
+  // The price feed quoting one settles it, whatever the number says.
+  if (card.tcgplayer?.prices?.reverseHolofoil) return true
+  const printed = card.set.printedTotal
+  if (!printed) return true
+  if (!/^\d+$/.test(card.number)) return false
+  return Number(card.number) <= printed
+}
+
+/** The runs this card was printed in, in the set's order. */
+export function runsFor(card: ApiCard, runs: readonly SetVariant[]): SetVariant[] {
+  return runs.filter((run) => inRun(card, run, runs))
+}
+
+/** The cards printed in one run of a set. */
+export function cardsInRun(cards: readonly ApiCard[], variant: SetVariant, runs: readonly SetVariant[]): ApiCard[] {
+  return cards.filter((card) => inRun(card, variant, runs))
+}

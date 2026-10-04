@@ -1,4 +1,5 @@
 import { formatMoney, priceFor, type PriceResolver } from './pricing'
+import { runsFor } from './printRuns'
 import { allSets, type TrackedSet } from './sets'
 import { entryKey, type ApiCard, type CollectionMap, type SetVariant } from '../types'
 
@@ -58,7 +59,7 @@ export function missingSlots(
     const cards = cardsBySet[set.id]
     if (!cards?.length) continue
     for (const card of cards) {
-      for (const variant of set.variants) {
+      for (const variant of runsFor(card, set.variants)) {
         if (collection[entryKey(card.id, variant.id)]?.owned) continue
         slots.push({ card, set, variant, market: price(card, variant).market })
       }

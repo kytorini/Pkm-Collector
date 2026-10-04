@@ -1,3 +1,4 @@
+import { inRun } from './printRuns'
 import { allSets, getSet } from './sets'
 import { entryKey, type ApiCard, type CollectionEntry, type CollectionMap, type ConditionId, type Grader, type VintageSet } from '../types'
 
@@ -575,6 +576,10 @@ export function buildPlan(
       const variant = set.variants.find((v) => v.id === target.variantId)
       if (!variant) {
         reason = `${set.name} has no ${target.variantId.replace(/-/g, ' ')} print run`
+        continue
+      }
+      if (!inRun(card, variant, set.variants)) {
+        reason = `#${card.number} wasn't printed in ${variant.label}`
         continue
       }
 

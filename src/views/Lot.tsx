@@ -3,6 +3,7 @@ import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardResult } from '../components/CardResult'
 import { OverflowMenu } from '../components/OverflowMenu'
+import { inRun, runsFor } from '../lib/printRuns'
 import { getSet } from '../lib/sets'
 import { adjustedValue, UNASSESSED } from '../lib/condition'
 import { clearLot, isPinned, lotKey, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
@@ -48,7 +49,7 @@ export function Lot() {
    */
   const results = useMemo(() => {
     const mine = ownedOnly
-      ? allCards.filter((card) => getSet(card.set.id)?.variants.some((v) => get(card.id, v.id)?.owned))
+      ? allCards.filter((card) => getSet(card.set.id)?.variants.some((v, _, runs) => inRun(card, v, runs) && get(card.id, v.id)?.owned))
       : allCards
     // "Only cards I own" is a search of its own when nothing is typed.
     if (!query.trim()) return ownedOnly ? mine.slice(0, 300) : []
@@ -233,7 +234,7 @@ export function Lot() {
               if (!set) return null
               return (
                 <CardResult key={card.id} card={card} set={set}>
-                  {set.variants.map((variant) => (
+                  {runsFor(card, set.variants).map((variant) => (
                     <PinChip key={variant.id} card={card} set={set} variant={variant} />
                   ))}
                 </CardResult>

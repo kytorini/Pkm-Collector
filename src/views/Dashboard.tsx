@@ -9,6 +9,7 @@ import { SetManager } from '../components/SetManager'
 import { SingleFinder } from '../components/SingleFinder'
 import { TagField } from '../components/TagField'
 import { WantList } from '../components/WantList'
+import { cardsInRun, runsFor } from '../lib/printRuns'
 import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
@@ -612,7 +613,7 @@ export function Dashboard() {
                     </div>
                     <div className="set-variants">
                       {set.variants.map((variant) => {
-                        const vs = statsForVariant(cards, variant, collection, price)
+                        const vs = statsForVariant(cardsInRun(cards, variant, set.variants), variant, collection, price)
                         const vDenom = vs.total || set.total
                         return (
                           <a
@@ -724,7 +725,7 @@ function SearchResults({
           if (!set) return null
           return (
             <CardResult key={card.id} card={card} set={set} onOpen={() => onOpen(card.id)}>
-              {set.variants.map((variant) => (
+              {runsFor(card, set.variants).map((variant) => (
                 <OwnChip key={variant.id} card={card} set={set} variant={variant} />
               ))}
             </CardResult>
@@ -908,7 +909,7 @@ function UnpricedList({
           <ul className="result-list">
             {cards.map(({ card, set }) => (
               <CardResult key={card.id} card={card} set={set} onOpen={() => onOpen(card.id)}>
-                {set.variants.map((variant) => (
+                {runsFor(card, set.variants).map((variant) => (
                   <OwnChip key={variant.id} card={card} set={set} variant={variant} />
                 ))}
               </CardResult>
