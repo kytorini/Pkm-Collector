@@ -1819,3 +1819,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .progress-row.is-choosing { min-height: 48px; }
   .progress-row.is-choosing input { width: 22px; height: 22px; }
 }
+
+/* ---------- missing ---------- */
+.missing-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.missing-controls .select { flex: 1 1 140px; min-width: 0; }

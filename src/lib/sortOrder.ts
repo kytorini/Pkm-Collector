@@ -1,5 +1,6 @@
 /**
- * How the two lists are ordered: the binder grid of a set, and the lot.
+ * How the lists are ordered: the binder grid of a set, the lot, and the
+ * cards still missing.
  *
  * Remembered per device, alongside grid density and hidden sets. An order you
  * chose is a decision, and having to make it again on every visit — or every
@@ -10,6 +11,7 @@
 
 export type SetSort = 'number' | 'name' | 'price-desc' | 'price-asc'
 export type LotSort = 'added' | 'value-desc' | 'value-asc' | 'name'
+export type MissingSort = 'price-desc' | 'price-asc' | 'set' | 'name'
 
 /** Every option reads as an order, so a bare select can't be read as a filter. */
 export const SET_SORTS: Array<{ id: SetSort; label: string }> = [
@@ -26,8 +28,17 @@ export const LOT_SORTS: Array<{ id: LotSort; label: string }> = [
   { id: 'name', label: 'Name, A to Z' },
 ]
 
+/** Dearest first by default: the cards that decide what finishing costs. */
+export const MISSING_SORTS: Array<{ id: MissingSort; label: string }> = [
+  { id: 'price-desc', label: 'Price, high to low' },
+  { id: 'price-asc', label: 'Price, low to high' },
+  { id: 'set', label: 'Set order' },
+  { id: 'name', label: 'Name, A to Z' },
+]
+
 const SET_KEY = 'pkm-collector:setSort'
 const LOT_KEY = 'pkm-collector:lotSort'
+const MISSING_KEY = 'pkm-collector:missingSort'
 
 /**
  * Checked against the same list the picker renders, so an order dropped in a
@@ -56,3 +67,6 @@ export const saveSetSort = (sort: SetSort): void => write(SET_KEY, sort)
 
 export const loadLotSort = (): LotSort => read(LOT_KEY, LOT_SORTS, 'added')
 export const saveLotSort = (sort: LotSort): void => write(LOT_KEY, sort)
+
+export const loadMissingSort = (): MissingSort => read(MISSING_KEY, MISSING_SORTS, 'price-desc')
+export const saveMissingSort = (sort: MissingSort): void => write(MISSING_KEY, sort)

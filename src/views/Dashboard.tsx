@@ -3,6 +3,7 @@ import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardResult } from '../components/CardResult'
 import { ChevronDownIcon, InfoIcon } from '../components/icons'
+import { MissingList } from '../components/MissingList'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
 import { SetManager } from '../components/SetManager'
@@ -70,7 +71,7 @@ export function Dashboard() {
   // Reached from the "i" panel, which is where the count that prompts the
   // question is stated. Not a stored preference — it's an errand, not a view.
   const [showUnpriced, setShowUnpriced] = useState(false)
-  const [tab, setTab] = useState<'sets' | 'singles'>('sets')
+  const [tab, setTab] = useState<'sets' | 'singles' | 'missing'>('sets')
   const [addingSingle, setAddingSingle] = useState(false)
 
   const toggleTotals = () => {
@@ -160,8 +161,9 @@ export function Dashboard() {
   const openCard = openCardId ? byId.get(openCardId) : undefined
   const openSet = openCard ? getSet(openCard.set.id) : undefined
 
-  const openPanel = (cardId: string) => {
-    setWalk(listed.map((c) => c.id))
+  /** `pool` is the list the card was opened from, when it isn't search or the unpriced list. */
+  const openPanel = (cardId: string, pool?: string[]) => {
+    setWalk(pool ?? listed.map((c) => c.id))
     setOpenCardId(cardId)
   }
   /** Left and right walk the list you opened, so a page of them is one panel. */
@@ -461,9 +463,14 @@ export function Dashboard() {
           <button className={tab === 'singles' ? 'is-active' : ''} onClick={() => setTab('singles')} aria-pressed={tab === 'singles'}>
             Singles{singles.length > 0 ? ` · ${new Set(singles.map((s) => `${s.card.id}::${s.variant.id}`)).size}` : ''}
           </button>
+          <button className={tab === 'missing' ? 'is-active' : ''} onClick={() => setTab('missing')} aria-pressed={tab === 'missing'}>
+            Missing{missing > 0 ? ` · ${missing}` : ''}
+          </button>
         </div>
 
-      {tab === 'singles' ? (
+      {tab === 'missing' ? (
+        <MissingList sets={chasing} onOpen={openPanel} />
+      ) : tab === 'singles' ? (
         <SinglesList
           groups={singleGroups}
           worth={singlesWorth}
