@@ -20,7 +20,8 @@ import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
 import { shortSetName } from '../lib/shortName'
 import { collectSingles, groupSingles, UNGROUPED } from '../lib/singles'
-import { clearOrder, hasCustomOrder, isChasing, moveSet } from '../lib/trackedSets'
+import { clearOrder, eraOf, hasCustomOrder, isChasing, moveSet, type Era } from '../lib/trackedSets'
+import { loadEraView, saveEraView } from '../lib/eraView'
 import { unpricedCards, unpricedSlots } from '../lib/unpriced'
 import { remainingCostNote, statsForCollection, statsForSet, statsForVariant, type VariantStats } from '../lib/stats'
 import { useCollection } from '../store/collection'
@@ -88,7 +89,23 @@ export function Dashboard() {
       return next
     })
 
-  const shown = useMemo(() => trackedSets.filter((s) => !hidden.includes(s.id)), [trackedSets, hidden])
+  const visible = useMemo(() => trackedSets.filter((s) => !hidden.includes(s.id)), [trackedSets, hidden])
+  /*
+   * Vintage and modern are kept apart: everything below — totals, sets,
+   * singles, missing, search — reads one or the other. The switch only
+   * appears once there is something in both; until then the page simply
+   * shows what you have.
+   */
+  const [eraView, setEraView] = useState<Era>(loadEraView)
+  const hasVintage = visible.some((s) => eraOf(s) === 'vintage')
+  const hasModern = visible.some((s) => eraOf(s) === 'modern')
+  const splitByEra = hasVintage && hasModern
+  const era: Era = splitByEra ? eraView : hasModern ? 'modern' : 'vintage'
+  const chooseEra = (next: Era) => {
+    setEraView(next)
+    saveEraView(next)
+  }
+  const shown = useMemo(() => visible.filter((s) => eraOf(s) === era), [visible, era])
   // Totals answer "how am I doing on what I collect", so they follow the same
   // selection as the list rather than counting sets that were put aside.
   /*
@@ -115,7 +132,11 @@ export function Dashboard() {
   }
 
   const singles = useMemo(
-    () => (shown.length > chasing.length ? collectSingles(cardsBySet, collection, price) : []),
+    () => {
+      if (shown.length === chasing.length) return []
+      const here = new Set(shown.map((s) => s.id))
+      return collectSingles(cardsBySet, collection, price).filter((s) => here.has(s.set.id))
+    },
     [shown, chasing, cardsBySet, collection, price],
   )
   const singleGroups = useMemo(() => groupSingles(singles), [singles])
@@ -270,6 +291,12 @@ export function Dashboard() {
                 {total.owned} of {total.total} tracked slots across {total.setsStarted}{' '}
                 set{total.setsStarted === 1 ? '' : 's'}.
               </p>
+              {splitByEra && (
+                <p>
+                  Everything on this page covers your {era} sets only. A set's release year decides
+                  which collection it's in; Manage sets can move one.
+                </p>
+              )}
               {hidden.length > 0 && (
                 <p>
                   {hidden.length} set{hidden.length === 1 ? '' : 's'} hidden, left out of these totals.{' '}
@@ -334,6 +361,17 @@ export function Dashboard() {
           <ChevronDownIcon />
         </button>
       </header>
+
+      {splitByEra && (
+        <div className="segmented era-tabs" role="group" aria-label="Which collection">
+          <button className={era === 'vintage' ? 'is-active' : ''} onClick={() => chooseEra('vintage')} aria-pressed={era === 'vintage'}>
+            Vintage
+          </button>
+          <button className={era === 'modern' ? 'is-active' : ''} onClick={() => chooseEra('modern')} aria-pressed={era === 'modern'}>
+            Modern
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="error-banner">

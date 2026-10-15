@@ -5,7 +5,7 @@ import { describeVariants, detectVariants } from '../lib/detectVariants'
 import { blankChecklist, manualSetId, parseChecklist } from '../lib/manualSet'
 import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
 import { scopedId } from '../lib/regions'
-import { addSet, isChasing, removeSet, setChasing, setDetectedVariants, setPreset, useTrackedSets } from '../lib/trackedSets'
+import { addSet, eraOf, isChasing, removeSet, setChasing, setDetectedVariants, setEra, setPreset, useTrackedSets, type Era } from '../lib/trackedSets'
 import { useLibrary } from '../store/library'
 
 /**
@@ -186,6 +186,17 @@ export function SetManager({ onDone }: { onDone: () => void }) {
                       onChange={(e) => setChasing(set.id, e.target.checked)}
                     />
                     Chasing this set
+                  </label>
+                  <label className="labelled-select">
+                    <span>Collection</span>
+                    <select
+                      className="select select-compact"
+                      value={eraOf(set)}
+                      onChange={(e) => setEra(set.id, e.target.value as Era)}
+                    >
+                      <option value="vintage">Vintage</option>
+                      <option value="modern">Modern</option>
+                    </select>
                   </label>
                   <label className="labelled-select">
                     <span>Print runs</span>

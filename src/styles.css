@@ -1823,3 +1823,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 /* ---------- missing ---------- */
 .missing-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .missing-controls .select { flex: 1 1 140px; min-width: 0; }
+
+/* ---------- vintage / modern ---------- */
+/* Above the totals, because it decides what every figure on the page covers. */
+.era-tabs { margin-bottom: 14px; }
+.era-tabs button { flex: 1; font-weight: 600; }

@@ -67,6 +67,11 @@ export interface TrackedSet extends VintageSet {
    * was touched last and would lose an ordering held anywhere else.
    */
   rank?: number
+  /**
+   * Which half of the collection it belongs to, when you've said. Absent
+   * means "go by its release year" — see `eraOf`.
+   */
+  era?: Era
   /** ISO. Ordering falls back to this when a set has no release date. */
   addedAt: string
   /** Last write, for settling two devices that both changed the list. */
@@ -409,6 +414,33 @@ export function clearOrder(): void {
 /** Whether the list has been arranged by hand, so the way back can be offered. */
 export function hasCustomOrder(): boolean {
   return isRanked(tracked)
+}
+
+/**
+ * Vintage or modern: the two collections the home page keeps apart.
+ *
+ * A 1999 Base Set and 2023's 151 are collected for different reasons and
+ * priced on different scales, and one completion figure across both says
+ * little about either. The release year decides by default — the WOTC sets
+ * and the e-Card era are vintage — and any set can be moved by hand.
+ */
+export type Era = 'vintage' | 'modern'
+
+/** Last release year still counted as vintage. */
+const LAST_VINTAGE_YEAR = 2003
+
+export function eraOf(set: TrackedSet): Era {
+  if (set.era) return set.era
+  // No year known: a hand-built set, most likely, and this app began vintage.
+  if (!set.year) return 'vintage'
+  return set.year <= LAST_VINTAGE_YEAR ? 'vintage' : 'modern'
+}
+
+/** Moves a set into one collection or the other. */
+export function setEra(id: string, era: Era): void {
+  write(
+    tracked.map((s) => (s.id === id ? { ...s, era, updatedAt: new Date().toISOString() } : s)),
+  )
 }
 
 /** The sets counted towards completion and remaining cost. */
