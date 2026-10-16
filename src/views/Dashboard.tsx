@@ -630,7 +630,6 @@ export function Dashboard() {
                 <div key={set.id} className="set-row">
                   <a className="progress-row" href={routeHref.set(set.id)}>
                     <span className="progress-row-name" title={set.name}>
-                      <span className="row-caret is-link" aria-hidden>›</span>
                       {shortSetName(set.name)}
                     </span>
                     <ProgressBar value={s.owned} total={denom} />
