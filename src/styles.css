@@ -39,6 +39,8 @@
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }
+/* No double-tap zoom, which also drops the tap delay that waited for it. */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 body {
   margin: 0;

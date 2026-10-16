@@ -5,6 +5,23 @@ import { refreshFxRate } from './lib/fx'
 import { requestPersistentStorage } from './lib/storage'
 import './styles.css'
 
+/*
+ * No zooming. The layout is built to the screen, and a stray pinch or
+ * double-tap while ticking cards off left the page zoomed and sideways.
+ * Safari in a browser tab ignores the viewport's user-scalable=no, so its
+ * pinch gesture is cancelled here too; double-tap is handled in CSS.
+ */
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false })
+}
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    if (e.touches.length > 1) e.preventDefault()
+  },
+  { passive: false },
+)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
