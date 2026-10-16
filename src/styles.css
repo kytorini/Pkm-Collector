@@ -764,22 +764,42 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   pointer-events: none;
 }
+.tile.is-reverse .tile-art { container-type: inline-size; }
 .tile-reverse {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 5px 4px 6px;
+  padding: 0.5em 2px 0.6em;
   background: linear-gradient(90deg, #ff6b9a, #ffd36b, #7cf0a8, #6bc8ff, #b48cff);
   color: #12141a;
-  font-size: 0.68rem;
+  /*
+   * Sized to the tile, not the screen: "REVERSE HOLO" is about 9 of its own
+   * font sizes wide, so 8cqi fills roughly three quarters of whatever width
+   * the grid gives the card — a phone at five per row or a desktop at three.
+   * Capped so a big tile doesn't shout; the fixed size is for browsers
+   * without container units.
+   */
+  font-size: 0.55rem;
+  font-size: min(8cqi, 0.8rem);
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-align: center;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
+}
+/*
+ * Below about 90px the full label would drop under 7px — unreadable — so a
+ * narrow tile (five or six to a row on a phone) says "Rev" instead, at a
+ * size that still reads.
+ */
+.tile-reverse-short { display: none; }
+@container (max-width: 90px) {
+  .tile-reverse { font-size: min(20cqi, 0.8rem); letter-spacing: 0.08em; }
+  .tile-reverse-full { display: none; }
+  .tile-reverse-short { display: inline; }
 }
 .tile-meta { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: baseline; margin-top: 8px; font-size: 0.8rem; }
 .tile-number { color: var(--text-dim); font-variant-numeric: tabular-nums; }

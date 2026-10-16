@@ -10,7 +10,7 @@ import { SetManager } from '../components/SetManager'
 import { SingleFinder } from '../components/SingleFinder'
 import { TagField } from '../components/TagField'
 import { WantList } from '../components/WantList'
-import { cardsInRun, runsFor } from '../lib/printRuns'
+import { cardsInRun, runsFor, showsRunsTogether } from '../lib/printRuns'
 import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
@@ -657,6 +657,26 @@ export function Dashboard() {
                       )}
                     </div>
                     <div className="set-variants">
+                      {/* Both runs in one grid — the page the set opens on. */}
+                      {showsRunsTogether(set.variants) && (
+                        <a className="set-variant-link is-all" href={routeHref.set(set.id)}>
+                          <span className="set-variant-line">
+                            <span>All</span>
+                            <span className="muted">{s.owned}/{denom}</span>
+                          </span>
+                          <ProgressBar value={s.owned} total={denom} />
+                          {cards.length > 0 && (
+                            <span className="set-variant-money">
+                              {s.ownedValue > 0 ? (
+                                <span className="money-held">{formatMoney(s.ownedValue)}</span>
+                              ) : (
+                                <span className="muted">nothing held</span>
+                              )}
+                              <span className="muted">{remainderNote(s)}</span>
+                            </span>
+                          )}
+                        </a>
+                      )}
                       {set.variants.map((variant) => {
                         const vs = statsForVariant(cardsInRun(cards, variant, set.variants), variant, collection, price)
                         const vDenom = vs.total || set.total

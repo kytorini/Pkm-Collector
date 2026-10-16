@@ -38,7 +38,12 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
       >
         <img src={card.images.small} alt={card.name} loading="lazy" decoding="async" width={245} height={342} />
         <span className={`tile-veil ${owned ? 'is-clear' : ''}`} aria-hidden />
-        {reverse && <span className="tile-reverse" aria-hidden>Reverse Holo</span>}
+        {reverse && (
+          <span className="tile-reverse" aria-hidden>
+            <span className="tile-reverse-full">Reverse Holo</span>
+            <span className="tile-reverse-short">Rev</span>
+          </span>
+        )}
       </button>
 
       <button
