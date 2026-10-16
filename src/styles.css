@@ -298,6 +298,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 /* Separates rows whether they're bare (while choosing) or wrapped in .set-row. */
 .progress-table > * + * { border-top: 1px solid var(--line-soft); }
 .progress-row:hover { background: #1b202a; }
+/* A set with nothing to unfold is a link straight into it. */
+a.progress-row { text-decoration: none; }
 .set-row.is-open .progress-row { background: #1b202a; }
 .progress-row-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .row-caret {
@@ -1884,3 +1886,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 /* Above the totals, because it decides what every figure on the page covers. */
 .era-tabs { margin-bottom: 14px; }
 .era-tabs button { flex: 1; font-weight: 600; }
+
+/* Its own row under the status filters: a second question, asked the same way. */
+.run-filter { flex: 1 1 100%; }
+.run-filter button { flex: 1; }
+
+.search-row { display: flex; gap: 6px; flex: 1 1 100%; align-items: center; }
+.search-row .search-input { flex: 1 1 auto; min-width: 0; }
+.search-row .overflow-btn { min-width: 38px; min-height: 38px; padding: 6px; }

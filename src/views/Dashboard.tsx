@@ -618,6 +618,28 @@ export function Dashboard() {
             const s = statsForSet(cards, set, collection, price)
             const denom = s.total || set.total * set.variants.length
             const isOpen = open.includes(set.id)
+            /*
+             * Only a set collected as separate editions opens in place. One
+             * list — or normal and reverse holo, which the set page filters
+             * between — has nothing to unfold, so the row is the way in.
+             */
+            const nested = set.variants.length > 1 && !showsRunsTogether(set.variants)
+
+            if (!nested) {
+              return (
+                <div key={set.id} className="set-row">
+                  <a className="progress-row" href={routeHref.set(set.id)}>
+                    <span className="progress-row-name" title={set.name}>
+                      <span className="row-caret is-link" aria-hidden>›</span>
+                      {shortSetName(set.name)}
+                    </span>
+                    <ProgressBar value={s.owned} total={denom} />
+                    <span className="progress-row-count muted">{s.owned}/{denom}</span>
+                    <span className="progress-row-value">{s.ownedValue ? formatMoney(s.ownedValue) : ''}</span>
+                  </a>
+                </div>
+              )
+            }
 
             return (
               <div key={set.id} className={`set-row ${isOpen ? 'is-open' : ''}`}>
@@ -657,26 +679,6 @@ export function Dashboard() {
                       )}
                     </div>
                     <div className="set-variants">
-                      {/* Both runs in one grid — the page the set opens on. */}
-                      {showsRunsTogether(set.variants) && (
-                        <a className="set-variant-link is-all" href={routeHref.set(set.id)}>
-                          <span className="set-variant-line">
-                            <span>All</span>
-                            <span className="muted">{s.owned}/{denom}</span>
-                          </span>
-                          <ProgressBar value={s.owned} total={denom} />
-                          {cards.length > 0 && (
-                            <span className="set-variant-money">
-                              {s.ownedValue > 0 ? (
-                                <span className="money-held">{formatMoney(s.ownedValue)}</span>
-                              ) : (
-                                <span className="muted">nothing held</span>
-                              )}
-                              <span className="muted">{remainderNote(s)}</span>
-                            </span>
-                          )}
-                        </a>
-                      )}
                       {set.variants.map((variant) => {
                         const vs = statsForVariant(cardsInRun(cards, variant, set.variants), variant, collection, price)
                         const vDenom = vs.total || set.total

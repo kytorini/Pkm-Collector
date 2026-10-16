@@ -192,6 +192,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   // rather than assumed: it changes with the tab count, with a wrapped label,
   // and when the bar compacts itself.
   const tabsRef = useRef<HTMLDivElement>(null)
+  const viewRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
 
   useEffect(() => {
@@ -226,6 +227,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   useLayoutEffect(() => {
     const el = tabsRef.current
     const scope = el?.parentElement
+    // A set with no edition tabs pins the toolbar straight under the top bar.
+    if (!el) viewRef.current?.style.removeProperty('--tabs-h')
     if (!el || !scope) return
     const publishHeight = () =>
       scope.style.setProperty('--tabs-h', `${el.getBoundingClientRect().height}px`)
@@ -309,6 +312,12 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   if (!activeVariant) return <div className="view"><p>This set has no print variations configured.</p></div>
 
   const together = showsRunsTogether(set.variants)
+  /*
+   * Editions — 1st Edition, Shadowless, Unlimited — each cover the whole set
+   * and are worked through one at a time, so they get tabs. Normal and
+   * reverse holo are one list with a filter, and a single run needs neither.
+   */
+  const editionTabs = set.variants.length > 1 && !together
   const allRuns = together ? statsForSet(allCards, set, collection, price) : null
   const stats =
     combined && allRuns
@@ -464,7 +473,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
               )}
               {combined ? (
                 <p className="muted small">
-                  Open the Normal or Reverse Holo tab to choose that run's price source or type its
+                  Filter to Normal or Reverse Holo to choose that run's price source or type its
                   prices in.
                 </p>
               ) : (
@@ -545,37 +554,37 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     </select>
   )
 
+  const searchInput = (
+    <input
+      className="search-input"
+      type="search"
+      placeholder="Filter by name or number"
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    />
+  )
+
   return (
-    <div className="view">
+    <div className="view" ref={viewRef}>
       <header className="view-head set-head">
         <div>
           <a className="back-link" href={routeHref.dashboard}>‹ Collection</a>
           <h1>{set.name}</h1>
           <p className="muted">{set.series} series · {set.year} · {allCards.length || set.total} cards</p>
         </div>
-        {!phone && (
+        {!phone ? (
           <div className="set-head-actions">
             <button className="btn ghost" onClick={onRefresh} disabled={refreshing}>
               {refreshing ? 'Refreshing…' : 'Refresh prices'}
             </button>
             {optionsMenu}
           </div>
-        )}
+        ) : null}
       </header>
 
+      {editionTabs && (
       <div ref={tabsRef} className={`variant-bar ${stuck ? 'is-stuck' : ''}`}>
         <nav className="variant-tabs" aria-label="Print variation">
-          {allRuns && (
-            <button
-              className={`variant-tab ${combined ? 'is-active' : ''}`}
-              onClick={() => navigate(routeHref.set(setId))}
-            >
-              <span className="variant-tab-name">All</span>
-              <span className="variant-tab-count">
-                {allRuns.owned}/{allRuns.total || set.total}
-              </span>
-            </button>
-          )}
           {set.variants.map((variant) => {
             const s = statsForVariant(cardsInRun(allCards, variant, set.variants), variant, collection, price)
             return (
@@ -592,6 +601,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         </nav>
         {phone && optionsMenu}
       </div>
+      )}
 
       <div className="set-summary">
         <div className="summary-progress">
@@ -631,13 +641,15 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
       </div>
 
       <div className="toolbar">
-        <input
-          className="search-input"
-          type="search"
-          placeholder="Filter by name or number"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        {phone && !editionTabs ? (
+          // With no tab row to share, the menu rides beside the search.
+          <div className="search-row">
+            {searchInput}
+            {optionsMenu}
+          </div>
+        ) : (
+          searchInput
+        )}
         <div className="segmented">
           {([
             ['all', 'All'],
@@ -652,6 +664,24 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
             </button>
           ))}
         </div>
+        {/* Normal and reverse holo are a filter over one list, not separate
+            lists: only part of the set comes in reverse at all. */}
+        {together && (
+          <div className="segmented run-filter" role="group" aria-label="Print run">
+            <button className={combined ? 'is-active' : ''} onClick={() => navigate(routeHref.set(setId))}>
+              Both
+            </button>
+            {set.variants.map((variant) => (
+              <button
+                key={variant.id}
+                className={!combined && variant.id === activeVariant.id ? 'is-active' : ''}
+                onClick={() => navigate(routeHref.set(setId, variant.id))}
+              >
+                {variant.label}
+              </button>
+            ))}
+          </div>
+        )}
         {!phone && sortSelect}
         {!phone && densitySelect}
       </div>

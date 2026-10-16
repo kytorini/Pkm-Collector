@@ -71,7 +71,10 @@ function Shell() {
     if (route.name !== 'set') return null
     const set = getSet(route.setId)
     if (!set) return null
-    if (!route.variantId && showsRunsTogether(set.variants)) return { set: set.name, variant: 'All runs' }
+    // A set with one run has nothing to name; normal and reverse together are just the set.
+    if (set.variants.length === 1 || (!route.variantId && showsRunsTogether(set.variants))) {
+      return { set: set.name, variant: '' }
+    }
     const variant = set.variants.find((v) => v.id === route.variantId) ?? set.variants[0]
     return { set: set.name, variant: variant?.label ?? '' }
   }, [route])
