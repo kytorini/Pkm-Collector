@@ -34,6 +34,15 @@ import type { ApiCard, SetVariant, VintageSet } from '../types'
  * "complete"; one whose missing cards have no price feed says so rather than
  * quoting a misleading $0.
  */
+/**
+ * Only a set collected as separate editions opens in place on this page. One
+ * list — or normal and reverse holo, which the set page filters between — has
+ * nothing to unfold, so its row is a link straight in.
+ */
+function opensInPlace(set: VintageSet): boolean {
+  return set.variants.length > 1 && !showsRunsTogether(set.variants)
+}
+
 function remainderNote(s: VariantStats): string {
   if (s.total > 0 && s.owned >= s.total) return 'complete'
   if (s.missingValue > 0) return `${formatMoney(s.missingValue)} to finish`
@@ -613,23 +622,22 @@ export function Dashboard() {
           </ul>
         ) : (
         <div className="progress-table">
-          {chasing.map((set) => {
+          {chasing.map((set, _, list) => {
             const cards = cardsBySet[set.id] ?? []
             const s = statsForSet(cards, set, collection, price)
             const denom = s.total || set.total * set.variants.length
             const isOpen = open.includes(set.id)
-            /*
-             * Only a set collected as separate editions opens in place. One
-             * list — or normal and reverse holo, which the set page filters
-             * between — has nothing to unfold, so the row is the way in.
-             */
-            const nested = set.variants.length > 1 && !showsRunsTogether(set.variants)
+            const nested = opensInPlace(set)
+            // In a list that mixes the two, the names stay in one column: a
+            // row with no caret keeps its space.
+            const alignNames = !nested && list.some(opensInPlace)
 
             if (!nested) {
               return (
                 <div key={set.id} className="set-row">
                   <a className="progress-row" href={routeHref.set(set.id)}>
                     <span className="progress-row-name" title={set.name}>
+                      {alignNames && <span className="row-caret is-blank" aria-hidden>›</span>}
                       {shortSetName(set.name)}
                     </span>
                     <ProgressBar value={s.owned} total={denom} />

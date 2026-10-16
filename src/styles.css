@@ -310,6 +310,7 @@ a.progress-row { text-decoration: none; }
   line-height: 1;
   transition: transform 0.15s, color 0.15s;
 }
+.row-caret.is-blank { visibility: hidden; }
 .set-row.is-open .row-caret { transform: rotate(90deg); color: var(--accent); }
 .progress-row-count, .progress-row-value { font-size: 0.85rem; text-align: right; font-variant-numeric: tabular-nums; }
 .progress-row-value { color: var(--gold); }
