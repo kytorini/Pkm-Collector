@@ -10,6 +10,7 @@ import { SyncProvider } from './store/sync'
 import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
 import { Lot } from './views/Lot'
+import { showsRunsTogether } from './lib/printRuns'
 import { SetDetail } from './views/SetDetail'
 import { Settings } from './views/Settings'
 
@@ -70,6 +71,7 @@ function Shell() {
     if (route.name !== 'set') return null
     const set = getSet(route.setId)
     if (!set) return null
+    if (!route.variantId && showsRunsTogether(set.variants)) return { set: set.name, variant: 'All runs' }
     const variant = set.variants.find((v) => v.id === route.variantId) ?? set.variants[0]
     return { set: set.name, variant: variant?.label ?? '' }
   }, [route])

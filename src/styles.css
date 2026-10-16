@@ -745,6 +745,42 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   color: var(--gold);
 }
 
+/*
+ * Reverse holo: a foil frame round the art and a ribbon across its foot. The
+ * scan is the normal card's, so without these the two copies in a combined
+ * grid are indistinguishable. The ribbon sits above the veil so it reads on a
+ * card you don't own yet, which is when you most need to know which it is.
+ */
+.tile.is-reverse .tile-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #ff6b9a, #ffd36b, #7cf0a8, #6bc8ff, #b48cff, #ff6b9a);
+  /* Only the ring: the middle is cut away so the art shows through. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+.tile-reverse {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 5px 4px 6px;
+  background: linear-gradient(90deg, #ff6b9a, #ffd36b, #7cf0a8, #6bc8ff, #b48cff);
+  color: #12141a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
 .tile-meta { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: baseline; margin-top: 8px; font-size: 0.8rem; }
 .tile-number { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .tile-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -50,3 +50,13 @@ export function runsFor(card: ApiCard, runs: readonly SetVariant[]): SetVariant[
 export function cardsInRun(cards: readonly ApiCard[], variant: SetVariant, runs: readonly SetVariant[]): ApiCard[] {
   return cards.filter((card) => inRun(card, variant, runs))
 }
+
+/**
+ * Whether a set's page opens on every run in one grid. Normal and reverse
+ * holo are the same cards in two finishes, collected side by side, so they
+ * read best together; 1st Edition and Unlimited are worked through one run
+ * at a time and keep their tabs.
+ */
+export function showsRunsTogether(runs: readonly SetVariant[]): boolean {
+  return runs.length > 1 && runs.some((run) => run.id === 'reverse-holo')
+}

@@ -24,12 +24,21 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
   // Once a copy is owned, show what that copy is worth rather than the
   // near-mint quote, so the grid agrees with the set's totals.
   const shown = owned ? adjustedValue(price.market, entry) : price.market
+  // The feed has one scan per card, so a reverse holo looks exactly like its
+  // normal copy. The foil frame and the ribbon are the only way to tell them
+  // apart in a grid holding both.
+  const reverse = variant.id === 'reverse-holo'
 
   return (
-    <div className={`tile ${owned ? 'is-owned' : ''}`}>
-      <button className="tile-art" onClick={() => onOpen(card)} aria-label={`Open ${card.name}`}>
+    <div className={`tile ${owned ? 'is-owned' : ''} ${reverse ? 'is-reverse' : ''}`}>
+      <button
+        className="tile-art"
+        onClick={() => onOpen(card)}
+        aria-label={`Open ${card.name}${reverse ? ', reverse holo' : ''}`}
+      >
         <img src={card.images.small} alt={card.name} loading="lazy" decoding="async" width={245} height={342} />
         <span className={`tile-veil ${owned ? 'is-clear' : ''}`} aria-hidden />
+        {reverse && <span className="tile-reverse" aria-hidden>Reverse Holo</span>}
       </button>
 
       <button

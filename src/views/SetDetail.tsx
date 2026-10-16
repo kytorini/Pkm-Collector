@@ -6,7 +6,7 @@ import { OverflowMenu } from '../components/OverflowMenu'
 import { PriceInput } from '../components/PriceInput'
 import { PriceSourceSelect } from '../components/PriceSourceSelect'
 import { ProgressBar } from '../components/ProgressBar'
-import { cardsInRun } from '../lib/printRuns'
+import { cardsInRun, runsFor, showsRunsTogether } from '../lib/printRuns'
 import { getSet } from '../lib/sets'
 import { formatMoney, priceFor } from '../lib/pricing'
 import { setSetSource, setVariantSource, usePriceRules, variantRuleKey } from '../lib/priceRules'
@@ -28,7 +28,7 @@ import { isUnassessed } from '../lib/condition'
 import { DENSITIES, gridTemplate, loadDensity, saveDensity, type Density } from '../lib/density'
 import { usePhone } from '../lib/useMediaQuery'
 import { SET_SORTS, loadSetSort, saveSetSort, type SetSort } from '../lib/sortOrder'
-import { remainingCostNote, statsForVariant } from '../lib/stats'
+import { remainingCostNote, statsForSet, statsForVariant } from '../lib/stats'
 import { useCollection } from '../store/collection'
 import { useLibrary } from '../store/library'
 import type { ApiCard, CollectionMap, SetVariant, VintageSet } from '../types'
@@ -146,6 +146,12 @@ function PriceEntryList({
 
 type Filter = 'all' | 'owned' | 'missing' | 'unassessed' | 'unpriced'
 
+/** One tile in the grid: a card in one of its runs. */
+interface Slot {
+  card: ApiCard
+  variant: SetVariant
+}
+
 
 export function SetDetail({ setId, variantId }: { setId: string; variantId?: string }) {
   const set = getSet(setId)
@@ -159,6 +165,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
   const [sort, setSort] = useState<SetSort>(loadSetSort)
   const [query, setQuery] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
+  // Which run the panel opened on: in the combined grid a card has two tiles.
+  const [openVariantId, setOpenVariantId] = useState<string | null>(null)
   /*
    * The grid as it stood when the card was opened. Under the "No price"
    * filter, typing a price takes the card out of `visible` mid-edit, and the
@@ -251,6 +259,17 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     () => (set && activeVariant ? cardsInRun(allCards, activeVariant, set.variants) : allCards),
     [allCards, set, activeVariant],
   )
+  /*
+   * Normal and reverse holo in one grid, each card's reverse right after its
+   * normal copy. The default for a set with a reverse holo run; the run tabs
+   * stay for pricing a run or typing its prices in.
+   */
+  const combined = Boolean(set && showsRunsTogether(set.variants)) && !variantId
+  const runSlots = useMemo<Slot[]>(() => {
+    if (!set || !activeVariant) return []
+    if (!combined) return cards.map((card) => ({ card, variant: activeVariant }))
+    return allCards.flatMap((card) => runsFor(card, set.variants).map((variant) => ({ card, variant })))
+  }, [set, activeVariant, combined, cards, allCards])
 
   // A set the user navigated to directly may not be cached yet.
   useEffect(() => {
@@ -259,35 +278,42 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     void syncSet(setId).catch(() => setLoadFailed(true))
   }, [set, setId, allCards.length, syncSet, progress.running])
 
-  const visible = useMemo(() => {
-    if (!activeVariant) return []
+  const visibleSlots = useMemo(() => {
     const q = query.trim().toLowerCase()
-    let list = cards.filter((card) => {
-      const entry = collection[`${card.id}::${activeVariant.id}`]
+    let list = runSlots.filter(({ card, variant }) => {
+      const entry = collection[`${card.id}::${variant.id}`]
       const owned = Boolean(entry?.owned)
       if (filter === 'owned' && !owned) return false
       if (filter === 'missing' && owned) return false
       if (filter === 'unassessed' && !isUnassessed(entry)) return false
       // The gap behind every total on this page: no price means counted as
       // nothing, whether you own the card or not.
-      if (filter === 'unpriced' && price(card, activeVariant).market != null) return false
+      if (filter === 'unpriced' && price(card, variant).market != null) return false
       if (q && !card.name.toLowerCase().includes(q) && !card.number.toLowerCase().includes(q)) return false
       return true
     })
-    if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name))
+    // Stable sorts, so a card's two runs stay together when they tie on name.
+    if (sort === 'name') list = [...list].sort((a, b) => a.card.name.localeCompare(b.card.name))
     if (sort === 'price-desc' || sort === 'price-asc') {
       const dir = sort === 'price-desc' ? -1 : 1
       list = [...list].sort(
-        (a, b) => dir * ((price(a, activeVariant).market ?? 0) - (price(b, activeVariant).market ?? 0)),
+        (a, b) => dir * ((price(a.card, a.variant).market ?? 0) - (price(b.card, b.variant).market ?? 0)),
       )
     }
     return list
-  }, [cards, collection, activeVariant, filter, sort, query, price])
+  }, [runSlots, collection, filter, sort, query, price])
+  // The cards behind those tiles, for the one-run price entry list.
+  const visible = useMemo(() => visibleSlots.map((s) => s.card), [visibleSlots])
 
   if (!set) return <div className="view"><p>Unknown set. <a href={routeHref.dashboard}>Back to your collection</a></p></div>
   if (!activeVariant) return <div className="view"><p>This set has no print variations configured.</p></div>
 
-  const stats = statsForVariant(cards, activeVariant, collection, price)
+  const together = showsRunsTogether(set.variants)
+  const allRuns = together ? statsForSet(allCards, set, collection, price) : null
+  const stats =
+    combined && allRuns
+      ? { ...allRuns, pct: allRuns.total ? Math.round((allRuns.owned / allRuns.total) * 100) : 0 }
+      : statsForVariant(cards, activeVariant, collection, price)
   const openCard = openCardId ? allCards.find((c) => c.id === openCardId) ?? null : null
 
   // What each level falls back to, so the pickers can say what "inherit" means
@@ -319,10 +345,11 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     return `${n} of ${cards.length}`
   }
 
-  const openPanel = (cardId: string) => {
+  const openPanel = (cardId: string, runId?: string) => {
     const pool = visible.length ? visible : cards
-    setWalk(pool.map((c) => c.id))
+    setWalk([...new Set(pool.map((c) => c.id))])
     setOpenCardId(cardId)
+    setOpenVariantId(runId ?? null)
   }
 
   const step = (delta: number) => {
@@ -357,7 +384,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
    * which is the plain reading of the button.
    */
   const ownAll = (owned: boolean) => {
-    const slots = visible.map((card) => ({ cardId: card.id, variantId: activeVariant.id }))
+    const slots = visibleSlots.map(({ card, variant }) => ({ cardId: card.id, variantId: variant.id }))
     const moving = slots.filter((slot) => Boolean(get(slot.cardId, slot.variantId)?.owned) !== owned)
     if (moving.length === 0) return
     const what = `${moving.length} card${moving.length === 1 ? '' : 's'}`
@@ -366,12 +393,16 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
     // saying "this covers all 12" while moving 3 of them reads like a
     // warning that it will touch 12.
     const scope =
-      visible.length < cards.length ? ` Only the ${visible.length} showing ${visible.length === 1 ? 'is' : 'are'} affected.` : ''
-    if (!confirm(`${verb} in ${set.name} ${activeVariant.label}?${scope}`)) return
+      visibleSlots.length < runSlots.length
+        ? ` Only the ${visibleSlots.length} showing ${visibleSlots.length === 1 ? 'is' : 'are'} affected.`
+        : ''
+    const where = combined ? set.name : `${set.name} ${activeVariant.label}`
+    if (!confirm(`${verb} in ${where}?${scope}`)) return
     setOwnedMany(moving, owned)
   }
 
-  const unowned = visible.filter((card) => !get(card.id, activeVariant.id)?.owned).length
+  const unowned = visibleSlots.filter(({ card, variant }) => !get(card.id, variant.id)?.owned).length
+  const showing = visibleSlots.length
 
   const optionsMenu = (
         <OverflowMenu
@@ -387,25 +418,25 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
                   behind the menu rather than on the toolbar. */}
               <button
                 className="btn"
-                disabled={visible.length === 0 || unowned === 0}
+                disabled={showing === 0 || unowned === 0}
                 onClick={() => {
                   close()
                   ownAll(true)
                 }}
               >
-                {unowned === 0 && visible.length > 0
-                  ? `All ${visible.length < cards.length ? 'showing' : ''} owned`.replace('  ', ' ')
+                {unowned === 0 && showing > 0
+                  ? `All ${showing < runSlots.length ? 'showing' : ''} owned`.replace('  ', ' ')
                   : `Mark ${unowned} owned`}
               </button>
               <button
                 className="btn"
-                disabled={visible.length === 0 || unowned === visible.length}
+                disabled={showing === 0 || unowned === showing}
                 onClick={() => {
                   close()
                   ownAll(false)
                 }}
               >
-                Un-mark {visible.length - unowned}
+                Un-mark {showing - unowned}
               </button>
               <hr className="menu-rule" />
               {phone && (
@@ -431,6 +462,13 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
                   <hr className="menu-rule" />
                 </>
               )}
+              {combined ? (
+                <p className="muted small">
+                  Open the Normal or Reverse Holo tab to choose that run's price source or type its
+                  prices in.
+                </p>
+              ) : (
+              <>
               <PriceSourceSelect
                 level="variant"
                 id="variant-price-source"
@@ -465,6 +503,8 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
                 >
                   Type in {RECORDED_SOURCES.find((r) => r.key === enterKey)?.label} prices
                 </button>
+              )}
+              </>
               )}
             </div>
           )}
@@ -525,12 +565,23 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
 
       <div ref={tabsRef} className={`variant-bar ${stuck ? 'is-stuck' : ''}`}>
         <nav className="variant-tabs" aria-label="Print variation">
+          {allRuns && (
+            <button
+              className={`variant-tab ${combined ? 'is-active' : ''}`}
+              onClick={() => navigate(routeHref.set(setId))}
+            >
+              <span className="variant-tab-name">All</span>
+              <span className="variant-tab-count">
+                {allRuns.owned}/{allRuns.total || set.total}
+              </span>
+            </button>
+          )}
           {set.variants.map((variant) => {
             const s = statsForVariant(cardsInRun(allCards, variant, set.variants), variant, collection, price)
             return (
               <button
                 key={variant.id}
-                className={`variant-tab ${variant.id === activeVariant.id ? 'is-active' : ''}`}
+                className={`variant-tab ${!combined && variant.id === activeVariant.id ? 'is-active' : ''}`}
                 onClick={() => navigate(routeHref.set(setId, variant.id))}
               >
                 <span className="variant-tab-name">{variant.label}</span>
@@ -622,7 +673,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         </div>
       ) : allCards.length === 0 ? (
         <p className="muted pad">Loading cards from the Pokémon TCG API…</p>
-      ) : entering ? (
+      ) : entering && !combined ? (
         <PriceEntryList
           set={set}
           variant={activeVariant}
@@ -636,13 +687,18 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
           onDone={() => setEntering(null)}
           setPriceOverride={setPriceOverride}
         />
-      ) : visible.length === 0 ? (
+      ) : visibleSlots.length === 0 ? (
         <p className="muted pad">Nothing matches those filters.</p>
       ) : (
         <>
           <div className="card-grid" style={{ '--grid-template': gridTemplate(density) } as CSSProperties}>
-            {visible.map((card) => (
-              <CardTile key={card.id} card={card} variant={activeVariant} onOpen={(c) => openPanel(c.id)} />
+            {visibleSlots.map(({ card, variant }) => (
+              <CardTile
+                key={`${card.id}::${variant.id}`}
+                card={card}
+                variant={variant}
+                onOpen={(c) => openPanel(c.id, variant.id)}
+              />
             ))}
           </div>
           <BackToTop />
@@ -655,7 +711,7 @@ export function SetDetail({ setId, variantId }: { setId: string; variantId?: str
         <CardDetail
           card={openCard}
           set={set}
-          activeVariantId={activeVariant.id}
+          activeVariantId={openVariantId ?? activeVariant.id}
           onClose={() => setOpenCardId(null)}
           onStep={step}
         />
