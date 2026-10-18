@@ -857,7 +857,9 @@ a.progress-row { text-decoration: none; }
 .result-main { flex: 1; min-width: 0; }
 .result-title { display: flex; gap: 8px; align-items: baseline; }
 .result-set { font-size: 0.82rem; display: block; margin-top: 2px; }
-.result-set:hover { color: var(--text); }
+a.result-set:hover { color: var(--text); }
+.result.is-openable { cursor: pointer; }
+.result.is-openable:hover .result-open strong { color: var(--accent); }
 .chip-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
 .chip {
   display: flex;

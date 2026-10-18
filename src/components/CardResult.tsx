@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { routeHref } from '../lib/router'
 import { shortSetName } from '../lib/shortName'
 import type { ApiCard, VintageSet } from '../types'
@@ -28,8 +28,22 @@ export function CardResult({ card, set, onOpen, children }: Props) {
     </span>
   )
 
+  /*
+   * The whole row opens the card. The set line used to be a link to the set,
+   * and as a full-width block it took most of the row's taps — so tapping a
+   * card's name area landed you in its set's list instead of on the card.
+   * Taps on the run chips are their own and pass through.
+   */
+  const openFromRow = onOpen
+    ? (e: MouseEvent<HTMLLIElement>) => {
+        if ((e.target as HTMLElement).closest('button, a, input, select')) return
+        onOpen()
+      }
+    : undefined
+  const where = `${shortSetName(set.name)} · ${set.year}`
+
   return (
-    <li className="result">
+    <li className={`result ${onOpen ? 'is-openable' : ''}`} onClick={openFromRow}>
       {onOpen ? (
         <button type="button" className="result-art" onClick={onOpen} aria-label={`Open ${card.name}`}>
           <img src={card.images.small} alt="" loading="lazy" width={60} height={84} />
@@ -43,9 +57,11 @@ export function CardResult({ card, set, onOpen, children }: Props) {
         ) : (
           title
         )}
-        <a className="result-set muted" href={routeHref.set(set.id)} title={set.name}>
-          {shortSetName(set.name)} · {set.year}
-        </a>
+        {onOpen ? (
+          <span className="result-set muted" title={set.name}>{where}</span>
+        ) : (
+          <a className="result-set muted" href={routeHref.set(set.id)} title={set.name}>{where}</a>
+        )}
         <div className="chip-row">{children}</div>
       </div>
     </li>
