@@ -18,6 +18,10 @@ import type { ApiCard } from '../types'
 export interface ManualCard {
   number: string
   name: string
+  /** Optional extras for a built-in checklist; a typed-in one has none. */
+  rarity?: string
+  image?: string
+  imageLarge?: string
 }
 
 /**
@@ -83,8 +87,9 @@ export function buildManualCards(
     name: card.name,
     number: card.number || String(i + 1),
     supertype: 'Pokémon',
+    ...(card.rarity ? { rarity: card.rarity } : {}),
     set: { id: setId, name: setName, printedTotal: total, total, releaseDate: '' },
-    images: { small: '', large: '' },
+    images: { small: card.image ?? '', large: card.imageLarge ?? card.image ?? '' },
   }))
 }
 

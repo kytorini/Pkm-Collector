@@ -5,7 +5,7 @@ import { describeVariants, detectVariants } from '../lib/detectVariants'
 import { blankChecklist, manualSetId, parseChecklist } from '../lib/manualSet'
 import { DEFAULT_REGION, getRegion, REGIONS, type RegionId } from '../lib/regions'
 import { scopedId } from '../lib/regions'
-import { addSet, eraOf, isChasing, removeSet, setChasing, setDetectedVariants, setEra, setPreset, useTrackedSets, type Era } from '../lib/trackedSets'
+import { addSet, addWotcPrerelease, wotcPrereleaseId, eraOf, isChasing, removeSet, setChasing, setDetectedVariants, setEra, setPreset, useTrackedSets, type Era } from '../lib/trackedSets'
 import { useLibrary } from '../store/library'
 
 /**
@@ -286,6 +286,19 @@ export function SetManager({ onDone }: { onDone: () => void }) {
           show up under “not priced yet”, where you can type a figure in — it then travels with your
           collection like any other.
         </p>
+      )}
+
+      {/* No feed lists these as a set, so the picker below never offers it. */}
+      {region === 'en' && !tracked.some((s) => s.id === wotcPrereleaseId()) && (
+        <div className="hand-set">
+          <button className="btn small" onClick={() => addWotcPrerelease()}>
+            Add WOTC Prerelease
+          </button>
+          <p className="muted small">
+            The five cards Wizards stamped “Prerelease”, from Base Set to Gym Heroes, as a set of
+            their own.
+          </p>
+        </div>
       )}
 
       <div className="hand-set">

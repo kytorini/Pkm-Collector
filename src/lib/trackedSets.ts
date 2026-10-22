@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { getPreset } from '../data/variantPresets'
+import { PRERELEASE_RUN, WOTC_PRERELEASE_CARDS, WOTC_PRERELEASE_NAME, WOTC_PRERELEASE_SOURCE_ID } from '../data/wotcPrerelease'
 import type { ManualCard } from './manualSet'
 import { isRegion, scopedId, type RegionId, type SourceId } from './regions'
 import type { SetVariant, VintageSet } from '../types'
@@ -493,3 +494,45 @@ function subscribe(fn: () => void): () => void {
 export function useTrackedSets(): TrackedSet[] {
   return useSyncExternalStore(subscribe, loadTrackedSets, loadTrackedSets)
 }
+
+/** Whether the prerelease set has been offered on this device already. */
+const PRERELEASE_SEEDED_KEY = 'pkm-collector:wotcPrereleaseAdded'
+
+/** Adds the WOTC prerelease cards as a set of their own. */
+export function addWotcPrerelease(): TrackedSet {
+  const set = addSet(
+    {
+      sourceId: WOTC_PRERELEASE_SOURCE_ID,
+      region: 'en',
+      name: WOTC_PRERELEASE_NAME,
+      series: 'Wizards Prerelease',
+      year: 1999,
+      total: WOTC_PRERELEASE_CARDS.length,
+      preset: 'prerelease',
+      manualCards: WOTC_PRERELEASE_CARDS,
+    },
+    [PRERELEASE_RUN],
+  )
+  // A run written by hand: never re-read off cards that carry no prices.
+  write(tracked.map((s) => (s.id === set.id ? { ...s, pinned: true } : s)))
+  return set
+}
+
+export const wotcPrereleaseId = (): string => scopedId('en', WOTC_PRERELEASE_SOURCE_ID)
+
+/*
+ * Put it into an existing collection once. Not into a fresh install, which
+ * starts empty on purpose, and not back after it has been removed: the grave
+ * says no, and so does the flag on a device that already did this once.
+ */
+;(() => {
+  try {
+    if (localStorage.getItem(PRERELEASE_SEEDED_KEY)) return
+    localStorage.setItem(PRERELEASE_SEEDED_KEY, '1')
+  } catch {
+    return
+  }
+  const id = wotcPrereleaseId()
+  if (tracked.length === 0 || removed[id] || tracked.some((s) => s.id === id)) return
+  addWotcPrerelease()
+})()
