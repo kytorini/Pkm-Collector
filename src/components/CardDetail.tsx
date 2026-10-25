@@ -246,7 +246,7 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                   <p className="muted small">
                     {chosenRecorded
                       ? chosenRecorded.site
-                        ? `${chosenRecorded.site} publishes no feed this app can read, so the figure is yours: open the link above, read the price, type it here. It is used everywhere this card is valued and travels with your collection.`
+                        ? `${chosenRecorded.site} publishes no feed this app can read, so the figure is yours: ${chosenRecorded.linkId ? 'open the link above' : `look the card up in ${chosenRecorded.site}`}, read the price, type it here. It is used everywhere this card is valued and travels with your collection.`
                         : 'Type what a card is worth to you. It is used everywhere this card is valued, and travels with your collection.'
                       : `Showing ${price.bucket ? `the ${price.bucket} price` : 'no price'}. This card only — the print run, set and collection keep their own choice.`}
                   </p>

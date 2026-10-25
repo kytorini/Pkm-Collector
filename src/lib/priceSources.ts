@@ -37,6 +37,9 @@ export const MANUAL: PriceSourceId = 'manual'
 export const RECORDED_SOURCES: { key: string; label: string; linkId: string; site: string }[] = [
   { key: 'pricecharting', label: 'PriceCharting', linkId: 'pricecharting', site: 'PriceCharting' },
   { key: 'ebay', label: 'eBay sold', linkId: 'ebay', site: 'eBay' },
+  // A phone app with no public interface and no web search to link to: the
+  // figure is read in the app and typed in here.
+  { key: 'collectr', label: 'Collectr', linkId: '', site: 'Collectr' },
   { key: 'own', label: 'Your own price', linkId: '', site: '' },
 ]
 
@@ -135,10 +138,18 @@ export function labelFor(id: PriceSourceId): string {
   return id
 }
 
-/** Inside one chosen bucket, the figure to read — never another bucket. */
+/**
+ * Inside one chosen bucket, the figure to read — never another bucket.
+ *
+ * Only TCGplayer's market price: what copies have recently sold for, which
+ * for singles is overwhelmingly near-mint copies. The bucket's mid and low
+ * are asking prices across every condition — one damaged copy listed cheap
+ * sets the low — so falling back to them priced cards well off the near-mint
+ * figure. No market price now means no price, and the card shows up under
+ * "Unpriced" to be given one.
+ */
 export function readBucket(bucket: TcgPriceBucket | undefined): number | null {
-  if (!bucket) return null
-  return bucket.market ?? bucket.mid ?? bucket.low ?? null
+  return bucket?.market ?? null
 }
 
 /**

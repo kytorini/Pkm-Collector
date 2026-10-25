@@ -82,9 +82,11 @@ function PriceEntryList({
         <div>
           <h3>{source.site || 'Your own'} prices · {variant.label}</h3>
           <p className="muted small">
-            {source.site
+            {source.linkId
               ? `Open a card's link, read the price, type it here. ${filled} of ${cards.length} filled in.`
-              : `${filled} of ${cards.length} filled in.`}
+              : source.site
+                ? `Look each card up in ${source.site}, read its price, type it here. ${filled} of ${cards.length} filled in.`
+                : `${filled} of ${cards.length} filled in.`}
             {stale > 0 && ` ${stale} ${stale === 1 ? 'is' : 'are'} over ${STALE_DAYS} days old.`}
           </p>
         </div>

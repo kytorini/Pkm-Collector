@@ -34,9 +34,8 @@ const EMPTY: VariantPrice = { market: null, low: null, high: null, bucket: null,
 const toUsd = (value: number | null | undefined): number | null =>
   value == null ? null : convertEurToUsd(value)
 
-function pick(bucket: TcgPriceBucket): number | null {
-  return bucket.market ?? bucket.mid ?? bucket.low ?? null
-}
+/** Market price only — see readBucket for why never mid or low. */
+const pick = (bucket: TcgPriceBucket): number | null => readBucket(bucket)
 
 /**
  * Which source applies to one slot, most specific first: the card's own
