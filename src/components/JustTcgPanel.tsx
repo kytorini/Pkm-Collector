@@ -65,7 +65,8 @@ export function JustTcgPanel() {
         1st Edition, Shadowless and Unlimited priced separately. With a key, these come first; TCGplayer’s
         market price fills any gaps. Free keys at{' '}
         <a href="https://justtcg.com/" target="_blank" rel="noreferrer noopener">justtcg.com</a>. Prices
-        refresh weekly, inside the free plan’s 1,000 requests a month.
+        refresh weekly, inside the free plan’s 1,000 requests a month — every set’s holos first, then the
+        commons, uncommons and reverse holos.
       </p>
       <div className="btn-row">
         <input

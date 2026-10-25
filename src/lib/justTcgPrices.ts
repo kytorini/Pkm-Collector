@@ -12,6 +12,12 @@ import type { ApiCard, SetVariant } from '../types'
  * Prices are kept for a week: the free plan's 1,000 requests a month cover a
  * weekly refresh of a large collection, and a daily one would not.
  *
+ * Holo printings come first. A refresh makes two passes: every set's holos,
+ * asked for by printing so each set costs a page or two, and only then the
+ * rest — commons, uncommons, reverse holos — which are most of the requests
+ * and least of the value. With the allowance short, it is the cheap cards
+ * that wait.
+ *
  * Base Set is the awkward one. TCGplayer, and so JustTCG, files its 1st
  * Edition and Shadowless copies under a separate "Base Set (Shadowless)" set,
  * so a tracked set also reads its "(Shadowless)" twin when there is one.
@@ -32,8 +38,23 @@ export interface SetPrices {
   /** The JustTCG sets read, main first. Empty when no match was found. */
   matched: { id: string; name: string }[]
   byNumber: Record<string, PricedCard[]>
+  /** The most recent fetch of either pass. */
   fetchedAt: number
+  /** When each pass last ran. Absent on data fetched before the split: both ran then. */
+  holoAt?: number
+  restAt?: number
 }
+
+export type Pass = 'holo' | 'rest'
+
+/** The printings the first pass asks for: holo rares in every edition. */
+const HOLO_PRINTINGS = ['Holofoil', '1st Edition Holofoil', 'Unlimited Holofoil']
+
+/** Reverse holos are commons and uncommons in foil, so they wait with the rest. */
+const isHoloPrinting = (printing: string): boolean => /holo/i.test(printing) && !/reverse/i.test(printing)
+
+const passAt = (held: SetPrices | undefined, pass: Pass): number =>
+  (pass === 'holo' ? held?.holoAt : held?.restAt) ?? held?.fetchedAt ?? 0
 
 const store = new Map<string, SetPrices>()
 let version = 0
@@ -109,9 +130,8 @@ export function canPrice(set: TrackedSet): boolean {
   return set.region === 'en' && set.source !== 'manual'
 }
 
-function isStale(setId: string): boolean {
-  const held = store.get(setId)
-  return !held || Date.now() - held.fetchedAt > STALE_MS
+function isStale(setId: string, pass: Pass): boolean {
+  return Date.now() - passAt(store.get(setId), pass) > STALE_MS
 }
 
 /** Whether the allowance can stand `requests` more without touching the reserve. */
@@ -124,11 +144,11 @@ function affordable(requests: number): boolean {
   )
 }
 
-async function fetchAllCards(jtSetId: string): Promise<JustTcgCard[]> {
+async function fetchAllCards(jtSetId: string, printings?: readonly string[]): Promise<JustTcgCard[]> {
   const cards: JustTcgCard[] = []
   for (let offset = 0; offset < 2000; ) {
     if (!affordable(1)) throw new Error('allowance')
-    const page = await setCardsPage(jtSetId, offset)
+    const page = await setCardsPage(jtSetId, offset, printings)
     cards.push(...page.cards)
     if (!page.hasMore || page.cards.length === 0) break
     offset += page.cards.length
@@ -136,9 +156,10 @@ async function fetchAllCards(jtSetId: string): Promise<JustTcgCard[]> {
   return cards
 }
 
-/** Fetches one set's near-mint prices. Throws on a failed request. */
-export async function refreshSet(set: TrackedSet): Promise<SetPrices> {
-  let matched = store.get(set.id)?.matched
+/** Fetches one pass of a set's near-mint prices. Throws on a failed request. */
+export async function refreshSet(set: TrackedSet, pass: Pass): Promise<SetPrices> {
+  const held = store.get(set.id)
+  let matched = held?.matched
   if (!matched || matched.length === 0) {
     const candidates = await searchSets(set.name)
     const main = bestMatch(set, candidates)
@@ -151,10 +172,18 @@ export async function refreshSet(set: TrackedSet): Promise<SetPrices> {
     }
   }
 
+  // This pass replaces its own printings and keeps the other pass's.
   const byNumber: Record<string, PricedCard[]> = {}
+  const mine = (printing: string) => isHoloPrinting(printing.replace(/^SL:/, '')) === (pass === 'holo')
+  for (const [num, list] of Object.entries(held?.byNumber ?? {})) {
+    byNumber[num] = list.map((c) => ({
+      name: c.name,
+      prices: Object.fromEntries(Object.entries(c.prices).filter(([k]) => !mine(k))),
+    }))
+  }
   for (const [i, jt] of matched.entries()) {
     const prefix = i > 0 ? 'SL:' : ''
-    for (const card of await fetchAllCards(jt.id)) {
+    for (const card of await fetchAllCards(jt.id, pass === 'holo' ? HOLO_PRINTINGS : undefined)) {
       const num = normalNumber(card.number)
       if (!num) continue
       const prices: Record<string, number> = {}
@@ -162,6 +191,7 @@ export async function refreshSet(set: TrackedSet): Promise<SetPrices> {
         if (v.price == null) continue
         if (v.language && v.language !== 'English') continue
         if (!/near mint/i.test(v.condition)) continue
+        if (!mine(v.printing)) continue
         prices[`${prefix}${v.printing}`] = v.price
       }
       const list = (byNumber[num] ??= [])
@@ -171,7 +201,14 @@ export async function refreshSet(set: TrackedSet): Promise<SetPrices> {
     }
   }
 
-  const result: SetPrices = { matched, byNumber, fetchedAt: Date.now() }
+  const now = Date.now()
+  const result: SetPrices = {
+    matched,
+    byNumber,
+    fetchedAt: now,
+    holoAt: pass === 'holo' ? now : passAt(held, 'holo'),
+    restAt: pass === 'rest' ? now : passAt(held, 'rest'),
+  }
   store.set(set.id, result)
   await idbSet(keyFor(set.id), result)
   emit()
@@ -198,28 +235,35 @@ export function refreshStale(sets: readonly TrackedSet[], force = false): Promis
   running = (async () => {
     const report: RefreshReport = { refreshed: [], unmatched: [], deferred: [] }
     if (!getJustTcgKey()) return report
-    const due = sets
-      .filter(canPrice)
-      .filter((s) => force || isStale(s.id))
-      .sort((a, b) => (store.get(a.id)?.fetchedAt ?? 0) - (store.get(b.id)?.fetchedAt ?? 0))
-    for (const set of due) {
-      // A set costs one request per 20 cards, plus one to find it the first time.
-      const cost = Math.ceil((set.total || 100) / 20) + (store.get(set.id)?.matched.length ? 0 : 1)
-      if (!affordable(cost)) {
-        report.deferred.push(set.name)
-        continue
-      }
-      try {
-        const result = await refreshSet(set)
-        if (result.matched.length === 0) report.unmatched.push(set.name)
-        else report.refreshed.push(set.name)
-      } catch (err) {
-        if (err instanceof Error && err.message === 'allowance') {
-          report.deferred.push(set.name)
+    const priceable = sets.filter(canPrice)
+    // Every set's holos before any set's commons.
+    passes: for (const pass of ['holo', 'rest'] as Pass[]) {
+      const due = priceable
+        .filter((s) => force || isStale(s.id, pass))
+        .filter((s) => !(store.get(s.id) && store.get(s.id)!.matched.length === 0 && pass === 'rest'))
+        .sort((a, b) => passAt(store.get(a.id), pass) - passAt(store.get(b.id), pass))
+      for (const set of due) {
+        // Holos are a page or two; the rest is one request per 20 cards.
+        // Finding the set costs one more, the first time.
+        const pages = pass === 'holo' ? 2 : Math.ceil((set.total || 100) / 20)
+        const cost = pages + (store.get(set.id)?.matched.length ? 0 : 1)
+        if (!affordable(cost)) {
+          if (!report.deferred.includes(set.name)) report.deferred.push(set.name)
           continue
         }
-        report.error = err instanceof Error ? err.message : 'JustTCG could not be reached.'
-        break
+        try {
+          const result = await refreshSet(set, pass)
+          if (result.matched.length === 0) {
+            if (!report.unmatched.includes(set.name)) report.unmatched.push(set.name)
+          } else if (!report.refreshed.includes(set.name)) report.refreshed.push(set.name)
+        } catch (err) {
+          if (err instanceof Error && err.message === 'allowance') {
+            if (!report.deferred.includes(set.name)) report.deferred.push(set.name)
+            continue
+          }
+          report.error = err instanceof Error ? err.message : 'JustTCG could not be reached.'
+          break passes
+        }
       }
     }
     return report

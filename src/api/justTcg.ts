@@ -134,10 +134,11 @@ export async function searchSets(name: string): Promise<JustTcgSet[]> {
   return body.data
 }
 
-/** One page of a set's cards, near-mint prices only. */
+/** One page of a set's cards, near-mint prices only, optionally only some printings. */
 export async function setCardsPage(
   setId: string,
   offset: number,
+  printings?: readonly string[],
 ): Promise<{ cards: JustTcgCard[]; hasMore: boolean; total: number }> {
   const body = await get<JustTcgCard[]>('/cards', {
     game: 'pokemon',
@@ -145,6 +146,7 @@ export async function setCardsPage(
     condition: 'NM',
     limit: PAGE_SIZE,
     offset,
+    ...(printings?.length ? { printing: printings.join(',') } : {}),
   })
   const total = body.meta?.total ?? body.data.length
   const hasMore = body.meta ? body.meta.hasMore : body.data.length === PAGE_SIZE
