@@ -1,3 +1,4 @@
+import { nearMintPrice } from './justTcgPrices'
 import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../types'
 
 /**
@@ -14,6 +15,7 @@ import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../ty
  * An id is one of:
  *   'auto'                    the variation's own buckets, then its permitted
  *                             fallback — what the app has always done
+ *   'jt:nm'                   JustTCG's near-mint price
  *   'manual'                  a figure you recorded yourself
  *   'tcg:<bucket>'            one named TCGplayer bucket, and only that one
  *   'cm:<stat>'               one named Cardmarket figure, converted to USD
@@ -22,6 +24,8 @@ import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../ty
 export type PriceSourceId = string
 
 export const AUTO: PriceSourceId = 'auto'
+/** JustTCG's near-mint price, when a key is set and the card is matched. */
+export const JUSTTCG_NM: PriceSourceId = 'jt:nm'
 /** Written before prices were tagged by where they were read. Means 'rec:own'. */
 export const MANUAL: PriceSourceId = 'manual'
 
@@ -107,6 +111,7 @@ export function sourceOptions(
   if (level !== 'collection') {
     options.push({ id: 'inherit', label: inheritLabel ?? 'Inherit', group: 'Automatic' })
   }
+  options.push({ id: JUSTTCG_NM, label: 'JustTCG near mint', group: 'JustTCG' })
   for (const bucket of TCG_BUCKETS) {
     options.push({ id: `tcg:${bucket.key}`, label: bucket.label, group: 'TCGplayer' })
   }
@@ -123,6 +128,7 @@ export function sourceOptions(
 export function labelFor(id: PriceSourceId): string {
   if (id === AUTO) return 'Auto'
   if (id === 'inherit') return 'Inherited'
+  if (id === JUSTTCG_NM) return 'JustTCG near mint'
   if (isRecorded(id)) {
     const key = recordedKey(id)
     return RECORDED_SOURCES.find((s) => s.key === key)?.label ?? 'Your own price'
@@ -157,7 +163,8 @@ export function readBucket(bucket: TcgPriceBucket | undefined): number | null {
  * what the feed actually holds, so a source is chosen from what exists rather
  * than guessed at.
  */
-export function previewSource(card: ApiCard, id: PriceSourceId): number | null {
+export function previewSource(card: ApiCard, id: PriceSourceId, variant?: SetVariant): number | null {
+  if (id === JUSTTCG_NM) return variant ? nearMintPrice(card, variant)?.price ?? null : null
   if (id.startsWith('tcg:')) return readBucket(card.tcgplayer?.prices?.[id.slice(4)])
   if (id.startsWith('cm:')) {
     const stat = id.slice(3) as 'trendPrice' | 'averageSellPrice' | 'lowPrice'

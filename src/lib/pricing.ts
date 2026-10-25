@@ -1,5 +1,6 @@
 import { convertEurToUsd } from './fx'
-import { AUTO, isRecorded, labelFor, matchesVariant, readBucket, recordedKey, recordedPrice } from './priceSources'
+import { nearMintPrice } from './justTcgPrices'
+import { AUTO, JUSTTCG_NM, isRecorded, labelFor, matchesVariant, readBucket, recordedKey, recordedPrice } from './priceSources'
 import { variantRuleKey, type PriceRules } from './priceRules'
 import type { PriceSourceId } from './priceSources'
 import type { ApiCard, CollectionEntry, SetVariant, TcgPriceBucket } from '../types'
@@ -131,6 +132,10 @@ export function priceFor(card: ApiCard, variant: SetVariant, options: PriceOptio
     }
   }
 
+  if (source === JUSTTCG_NM) {
+    return justTcgPrice(card, variant, source) ?? { ...EMPTY, url: card.tcgplayer?.url, sourceId: source, sourceEmpty: true }
+  }
+
   if (source.startsWith('cm:')) {
     const stat = source.slice(3) as 'trendPrice' | 'averageSellPrice' | 'lowPrice'
     const value = card.cardmarket?.prices?.[stat]
@@ -155,7 +160,28 @@ export function priceFor(card: ApiCard, variant: SetVariant, options: PriceOptio
   return autoPrice(card, variant)
 }
 
+/** JustTCG's near-mint figure, when it has one for this card and run. */
+function justTcgPrice(card: ApiCard, variant: SetVariant, sourceId: PriceSourceId): VariantPrice | null {
+  const nm = nearMintPrice(card, variant)
+  if (!nm) return null
+  return {
+    market: nm.price,
+    low: null,
+    high: null,
+    bucket: `JustTCG near mint · ${nm.printing}`,
+    approximate: false,
+    url: card.tcgplayer?.url,
+    currency: 'USD',
+    sourceId,
+  }
+}
+
 function autoPrice(card: ApiCard, variant: SetVariant): VariantPrice {
+  // Near mint by condition first: the figure a collection is valued at. The
+  // TCGplayer market price below mixes every condition sold.
+  const nm = justTcgPrice(card, variant, AUTO)
+  if (nm) return nm
+
   const buckets = card.tcgplayer?.prices ?? {}
   for (const key of variant.priceKeys) {
     const bucket = buckets[key]

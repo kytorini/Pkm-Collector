@@ -10,6 +10,7 @@ import { formatBytes, getPersistState, getStorageUse, requestPersistentStorage, 
 import { routeHref } from '../lib/router'
 import { resetPriceRules, setCollectionSource, usePriceRules } from '../lib/priceRules'
 import { PriceSourceSelect } from '../components/PriceSourceSelect'
+import { JustTcgPanel } from '../components/JustTcgPanel'
 import { CONDITIONS, type ConditionId } from '../types'
 
 export function Settings() {
@@ -118,6 +119,8 @@ export function Settings() {
         </div>
         {message && <p className="note">{message}</p>}
       </section>
+
+      <JustTcgPanel />
 
       <section className="panel">
         <h2>Pokémon TCG API key</h2>

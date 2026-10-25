@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useJustTcgVersion } from '../lib/justTcgPrices'
 import { usePriceRules } from '../lib/priceRules'
 import { makePriceResolver, type PriceResolver } from '../lib/pricing'
 import { useCollection } from './collection'
@@ -11,5 +12,7 @@ import { useCollection } from './collection'
 export function usePrices(): PriceResolver {
   const rules = usePriceRules()
   const { get } = useCollection()
-  return useMemo(() => makePriceResolver(rules, get), [rules, get])
+  // New near-mint prices arriving make a new resolver, so everything redraws.
+  const nmVersion = useJustTcgVersion()
+  return useMemo(() => makePriceResolver(rules, get), [rules, get, nmVersion])
 }

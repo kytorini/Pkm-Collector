@@ -5,6 +5,7 @@ import { idbDelete, idbGet, idbSet } from '../lib/idb'
 import { getRegion } from '../lib/regions'
 import { detectVariants } from '../lib/detectVariants'
 import { buildManualCards } from '../lib/manualSet'
+import { hydrateJustTcg, refreshStale } from '../lib/justTcgPrices'
 import { loadTrackedSets, needsDetection, setDetectedVariants, useTrackedSets, type TrackedSet } from '../lib/trackedSets'
 import type { ApiCard } from '../types'
 
@@ -99,6 +100,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
           stamps[set.id] = cached.fetchedAt
         }
       }
+      // Near-mint prices from earlier sessions, before anything is drawn.
+      await hydrateJustTcg(trackedSets)
       if (dead) return
       // Anything no longer tracked drops out of memory here rather than
       // lingering in totals it no longer belongs to.
@@ -124,6 +127,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         if (!found.confident) continue
         setDetectedVariants(set.id, found.variants)
       }
+
+      // Anything a week old, within the free allowance. Quiet: Settings
+      // reports on it when asked, and stale prices beat none meanwhile.
+      void refreshStale(trackedSets).catch(() => undefined)
     })()
     return () => {
       dead = true

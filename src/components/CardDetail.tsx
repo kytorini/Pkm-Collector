@@ -117,7 +117,7 @@ export function CardDetail({ card, set, activeVariantId, onClose, onStep }: Prop
                 const auto = priceFor(card, variant).market
                 return auto == null ? 'no price' : formatMoney(auto)
               }
-              const value = previewSource(card, id)
+              const value = previewSource(card, id, variant)
               if (value == null) return 'no price'
               // Cardmarket quotes euros; showing the raw number as dollars
               // would make the wrong option look like the cheap one.
