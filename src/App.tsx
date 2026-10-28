@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { CardsIcon, ChevronLeftIcon, PokeballIcon, SlidersIcon } from './components/icons'
+import { CardsIcon, ChevronLeftIcon, PokeballIcon, SlidersIcon, VendingIcon } from './components/icons'
 import { getSet } from './lib/sets'
 import { navigate, routeHref, useRoute } from './lib/router'
 import { usePhone } from './lib/useMediaQuery'
@@ -11,12 +11,14 @@ import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
 import { Lot } from './views/Lot'
 import { showsRunsTogether } from './lib/printRuns'
+import { Vending } from './views/Vending'
 import { SetDetail } from './views/SetDetail'
 import { Settings } from './views/Settings'
 
 const NAV = [
   { href: routeHref.dashboard, label: 'Collection', Icon: PokeballIcon, match: 'dashboard' },
   { href: routeHref.lot, label: 'Lot', Icon: CardsIcon, match: 'lot' },
+  { href: routeHref.vending, label: 'VM', Icon: VendingIcon, match: 'vending' },
   { href: routeHref.settings, label: 'Settings', Icon: SlidersIcon, match: 'settings' },
 ] as const
 
@@ -131,6 +133,7 @@ function Shell() {
         {route.name === 'lot' && <Lot />}
         {route.name === 'settings' && <Settings />}
         {route.name === 'import' && <Import />}
+        {route.name === 'vending' && <Vending />}
       </main>
     </div>
   )

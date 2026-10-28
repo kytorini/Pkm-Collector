@@ -1901,3 +1901,20 @@ a.result-set:hover { color: var(--text); }
 .search-row .overflow-btn { min-width: 38px; min-height: 38px; padding: 6px; }
 
 .jt-matches { list-style: none; padding: 0; margin: 8px 0 12px; display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+
+/* ---------- vending machines ---------- */
+.vm-toolbar { flex-wrap: wrap; }
+.vm-toolbar .search-input { flex: 1 1 200px; }
+.vm-row { align-items: center; }
+.vm-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }
+.vm-miles { font-size: 0.85rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.vm-new {
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--accent-fill);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

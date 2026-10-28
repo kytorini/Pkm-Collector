@@ -61,6 +61,17 @@ export function SlidersIcon({ size, className }: Props) {
   )
 }
 
+/** Vending machines: a cabinet with its window and coin slot. */
+export function VendingIcon({ size, className }: Props) {
+  return (
+    <svg {...base(size)} className={className}>
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <rect x="7.6" y="5.8" width="8.8" height="7.4" rx="1" />
+      <path d="M8 16.8h4.5M15.6 16.3v1.2" />
+    </svg>
+  )
+}
+
 /** The detail behind a heading, when it doesn't earn a line of its own. */
 export function InfoIcon({ size, className }: Props) {
   return (
