@@ -6,7 +6,6 @@ export type Route =
   | { name: 'lot' }
   | { name: 'settings' }
   | { name: 'import' }
-  | { name: 'vending' }
 
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0]
@@ -20,7 +19,6 @@ export function parseHash(hash: string): Route {
   if (parts[0] === 'lot' || parts[0] === 'search') return { name: 'lot' }
   if (parts[0] === 'settings') return { name: 'settings' }
   if (parts[0] === 'import') return { name: 'import' }
-  if (parts[0] === 'vm') return { name: 'vending' }
   return { name: 'dashboard' }
 }
 
@@ -43,6 +41,5 @@ export const routeHref = {
   lot: '#/lot',
   settings: '#/settings',
   import: '#/import',
-  vending: '#/vm',
   set: (setId: string, variantId?: string) => `#/set/${setId}${variantId ? `/${variantId}` : ''}`,
 }

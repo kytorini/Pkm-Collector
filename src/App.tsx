@@ -11,14 +11,19 @@ import { Dashboard } from './views/Dashboard'
 import { Import } from './views/Import'
 import { Lot } from './views/Lot'
 import { showsRunsTogether } from './lib/printRuns'
-import { Vending } from './views/Vending'
 import { SetDetail } from './views/SetDetail'
 import { Settings } from './views/Settings'
+
+/**
+ * The Pokémon Company's own vending machine locator. It can't be shown inside
+ * the app — it sits behind bot protection and won't load in a frame — so this
+ * opens it in the browser, a tap from anywhere.
+ */
+const VENDING_LOCATOR = 'https://vending.pokemon.com/en-us/'
 
 const NAV = [
   { href: routeHref.dashboard, label: 'Collection', Icon: PokeballIcon, match: 'dashboard' },
   { href: routeHref.lot, label: 'Lot', Icon: CardsIcon, match: 'lot' },
-  { href: routeHref.vending, label: 'VM', Icon: VendingIcon, match: 'vending' },
   { href: routeHref.settings, label: 'Settings', Icon: SlidersIcon, match: 'settings' },
 ] as const
 
@@ -105,6 +110,16 @@ function Shell() {
             <span className="topbar-title-variant">{here.variant}</span>
           </p>
         )}
+        <a
+          className="topbar-action"
+          href={VENDING_LOCATOR}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="Find Pokémon vending machines (opens the official locator)"
+          title="Find Pokémon vending machines"
+        >
+          <VendingIcon />
+        </a>
       </header>
 
       {/*
@@ -119,6 +134,17 @@ function Shell() {
             <span className="nav-label">{item.label}</span>
           </a>
         ))}
+        {/* On a wide screen the tabs hold the top right, so it joins them there. */}
+        <a
+          className="nav-link nav-vending"
+          href={VENDING_LOCATOR}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="Find Pokémon vending machines (opens the official locator)"
+          title="Find Pokémon vending machines"
+        >
+          <span className="nav-icon"><VendingIcon /></span>
+        </a>
       </nav>
 
       {progress.running && (
@@ -133,7 +159,6 @@ function Shell() {
         {route.name === 'lot' && <Lot />}
         {route.name === 'settings' && <Settings />}
         {route.name === 'import' && <Import />}
-        {route.name === 'vending' && <Vending />}
       </main>
     </div>
   )

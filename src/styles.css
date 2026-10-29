@@ -1902,19 +1902,28 @@ a.result-set:hover { color: var(--text); }
 
 .jt-matches { list-style: none; padding: 0; margin: 8px 0 12px; display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
 
-/* ---------- vending machines ---------- */
-.vm-toolbar { flex-wrap: wrap; }
-.vm-toolbar .search-input { flex: 1 1 200px; }
-.vm-row { align-items: center; }
-.vm-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }
-.vm-miles { font-size: 0.85rem; color: var(--gold); font-variant-numeric: tabular-nums; }
-.vm-new {
-  padding: 2px 7px;
-  border-radius: 99px;
-  background: var(--accent-fill);
-  color: #fff;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+/*
+ * The vending machine locator, top right. On a phone the bar's right side is
+ * free (the tabs live at the bottom); on a wider screen the tabs sit there,
+ * so it joins the end of their row instead.
+ */
+.topbar-action {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  flex: 0 0 auto;
+  transition: background 0.15s, color 0.15s;
+}
+.topbar-action:hover { background: var(--bg-raised); color: var(--text); }
+/* One or the other: the bar's own on a phone, the tab row's elsewhere. */
+.nav-vending { display: none; }
+@media (min-width: 701px) {
+  .topbar-action { display: none; }
+  .nav-vending { display: flex; }
 }
