@@ -806,6 +806,8 @@ a.progress-row { text-decoration: none; }
   .tile-reverse-full { display: none; }
   .tile-reverse-short { display: inline; }
 }
+/* In the post: blue rather than gold, since there's no grade to report yet. */
+.tile-condition.is-en-route { color: #8ec5ff; }
 .tile-meta { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: baseline; margin-top: 8px; font-size: 0.8rem; }
 .tile-number { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .tile-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

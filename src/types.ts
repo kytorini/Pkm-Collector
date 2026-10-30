@@ -4,6 +4,8 @@
  */
 export const CONDITIONS = [
   { id: '-', label: 'Not assessed yet' },
+  // Bought and on its way: owned, but not in hand to be graded yet.
+  { id: 'ENR', label: 'En Route' },
   { id: 'M', label: 'Mint' },
   { id: 'NM', label: 'Near Mint' },
   { id: 'LP', label: 'Lightly Played' },

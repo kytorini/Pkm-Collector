@@ -56,8 +56,8 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
       </button>
 
       {owned && entry && (
-        <span className="tile-condition" title="Condition">
-          {entry.graded ? `${entry.graded.company} ${entry.graded.grade}` : entry.condition}
+        <span className={`tile-condition ${entry.condition === 'ENR' && !entry.graded ? 'is-en-route' : ''}`} title="Condition">
+          {entry.graded ? `${entry.graded.company} ${entry.graded.grade}` : entry.condition === 'ENR' ? 'En route' : entry.condition}
           {entry.quantity > 1 ? ` ×${entry.quantity}` : ''}
         </span>
       )}

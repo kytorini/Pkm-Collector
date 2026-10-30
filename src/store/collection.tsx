@@ -239,7 +239,9 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
       const now = new Date().toISOString()
       for (const [key, entry] of Object.entries(prev)) {
         // A graded card has already been assessed, by someone with a loupe.
-        const skip = Boolean(entry.graded) || entry.condition === UNASSESSED
+        // One still en route hasn't been seen yet, and wiping that would lose
+        // the only note of it being in the post.
+        const skip = Boolean(entry.graded) || entry.condition === UNASSESSED || entry.condition === 'ENR'
         if (skip) {
           next[key] = entry
           continue

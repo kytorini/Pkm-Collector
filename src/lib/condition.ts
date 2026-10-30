@@ -13,6 +13,8 @@ export const CONDITION_MULTIPLIER: Record<ConditionId, number> = {
   // invented. It counts at the feed's own quoted price, and the views report
   // how many are unassessed so the total reads as provisional.
   '-': 1,
+  // Bought and still in the post: nothing to judge until it arrives.
+  ENR: 1,
   M: 1.1,
   NM: 1,
   LP: 0.8,
@@ -23,6 +25,7 @@ export const CONDITION_MULTIPLIER: Record<ConditionId, number> = {
 
 export const CONDITION_NOTE: Record<ConditionId, string> = {
   '-': 'not assessed yet, so counted at the quoted market price',
+  ENR: 'on its way, so counted at the quoted market price until it arrives',
   M: '10% above the near-mint market price',
   NM: 'the quoted market price',
   LP: '80% of the near-mint market price',

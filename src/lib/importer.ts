@@ -245,6 +245,7 @@ const CONDITION_ALIASES: Record<string, ConditionId> = {
   gd: 'MP', good: 'MP', vg: 'MP', 'very good': 'MP',
   hp: 'HP', 'heavily played': 'HP', 'heavy play': 'HP', poor: 'HP',
   dmg: 'DMG', damaged: 'DMG', dmgd: 'DMG',
+  'en route': 'ENR', enroute: 'ENR', 'in transit': 'ENR', shipped: 'ENR', shipping: 'ENR', incoming: 'ENR', ordered: 'ENR',
 }
 
 export interface ConditionGuess {
