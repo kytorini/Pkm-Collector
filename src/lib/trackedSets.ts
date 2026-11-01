@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { VINTAGE_SETS } from '../data/vintageSets'
 import { getPreset } from '../data/variantPresets'
-import { PRERELEASE_RUN, WOTC_PRERELEASE_CARDS, WOTC_PRERELEASE_NAME, WOTC_PRERELEASE_SOURCE_ID } from '../data/wotcPrerelease'
+import { PRERELEASE_RUN, WOTC_PRERELEASE_CARDS, WOTC_PRERELEASE_NAME, WOTC_PRERELEASE_OLD_NAME, WOTC_PRERELEASE_SOURCE_ID } from '../data/wotcPrerelease'
 import type { ManualCard } from './manualSet'
 import { isRegion, scopedId, type RegionId, type SourceId } from './regions'
 import type { SetVariant, VintageSet } from '../types'
@@ -538,7 +538,8 @@ export const wotcPrereleaseId = (): string => scopedId('en', WOTC_PRERELEASE_SOU
 })()
 
 /*
- * A set added before the checklist grew carries the old copy of it. Cards
+ * A set added before the checklist grew carries the old copy of it, and the
+ * old name. Cards
  * missing from it are added — nothing is removed or renumbered, so every
  * card already marked keeps its slot — and the run takes its current name.
  */
@@ -550,13 +551,16 @@ export const wotcPrereleaseId = (): string => scopedId('en', WOTC_PRERELEASE_SOU
   const missing = WOTC_PRERELEASE_CARDS.filter((c) => !have.has(c.number))
   const run = set.variants[0]
   const renamed = run && run.id === PRERELEASE_RUN.id && run.label !== PRERELEASE_RUN.label
-  if (missing.length === 0 && !renamed) return
+  // The set itself took a new name with the W promos; the id stays, so marks do too.
+  const retitled = set.name === WOTC_PRERELEASE_OLD_NAME
+  if (missing.length === 0 && !renamed && !retitled) return
   const manualCards = [...(set.manualCards ?? []), ...missing]
   write(
     tracked.map((s) =>
       s.id === id
         ? {
             ...s,
+            ...(retitled ? { name: WOTC_PRERELEASE_NAME } : {}),
             manualCards,
             total: manualCards.length,
             variants: renamed ? [PRERELEASE_RUN, ...s.variants.slice(1)] : s.variants,

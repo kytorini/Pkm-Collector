@@ -19,7 +19,9 @@ import type { SetVariant } from '../types'
  * leagues and giveaways between 1999 and 2001.
  */
 export const WOTC_PRERELEASE_SOURCE_ID = 'wotc-prerelease'
-export const WOTC_PRERELEASE_NAME = 'WOTC Prerelease'
+export const WOTC_PRERELEASE_NAME = 'WOTC Stamped'
+/** What it was called before the W promos joined, for renaming sets added then. */
+export const WOTC_PRERELEASE_OLD_NAME = 'WOTC Prerelease'
 
 const scan = (set: string, number: number) => ({
   image: `https://images.pokemontcg.io/${set}/${number}.png`,

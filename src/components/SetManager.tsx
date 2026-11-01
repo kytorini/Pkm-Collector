@@ -292,7 +292,7 @@ export function SetManager({ onDone }: { onDone: () => void }) {
       {region === 'en' && !tracked.some((s) => s.id === wotcPrereleaseId()) && (
         <div className="hand-set">
           <button className="btn small" onClick={() => addWotcPrerelease()}>
-            Add WOTC Prerelease
+            Add WOTC Stamped
           </button>
           <p className="muted small">
             The cards Wizards stamped “Prerelease” and the seven gold “W” stamp promos, Base Set to
