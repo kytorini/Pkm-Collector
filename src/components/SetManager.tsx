@@ -295,8 +295,8 @@ export function SetManager({ onDone }: { onDone: () => void }) {
             Add WOTC Prerelease
           </button>
           <p className="muted small">
-            The five cards Wizards stamped “Prerelease”, from Base Set to Gym Heroes, as a set of
-            their own.
+            The cards Wizards stamped “Prerelease” and the seven gold “W” stamp promos, Base Set to
+            Gym Challenge, as a set of their own.
           </p>
         </div>
       )}

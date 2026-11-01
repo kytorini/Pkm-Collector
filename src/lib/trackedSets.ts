@@ -536,3 +536,33 @@ export const wotcPrereleaseId = (): string => scopedId('en', WOTC_PRERELEASE_SOU
   if (tracked.length === 0 || removed[id] || tracked.some((s) => s.id === id)) return
   addWotcPrerelease()
 })()
+
+/*
+ * A set added before the checklist grew carries the old copy of it. Cards
+ * missing from it are added — nothing is removed or renumbered, so every
+ * card already marked keeps its slot — and the run takes its current name.
+ */
+;(() => {
+  const id = wotcPrereleaseId()
+  const set = tracked.find((s) => s.id === id)
+  if (!set) return
+  const have = new Set((set.manualCards ?? []).map((c) => c.number))
+  const missing = WOTC_PRERELEASE_CARDS.filter((c) => !have.has(c.number))
+  const run = set.variants[0]
+  const renamed = run && run.id === PRERELEASE_RUN.id && run.label !== PRERELEASE_RUN.label
+  if (missing.length === 0 && !renamed) return
+  const manualCards = [...(set.manualCards ?? []), ...missing]
+  write(
+    tracked.map((s) =>
+      s.id === id
+        ? {
+            ...s,
+            manualCards,
+            total: manualCards.length,
+            variants: renamed ? [PRERELEASE_RUN, ...s.variants.slice(1)] : s.variants,
+            updatedAt: new Date().toISOString(),
+          }
+        : s,
+    ),
+  )
+})()
