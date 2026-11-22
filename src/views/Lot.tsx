@@ -5,7 +5,7 @@ import { CardResult } from '../components/CardResult'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { inRun, runsFor } from '../lib/printRuns'
 import { getSet } from '../lib/sets'
-import { adjustedValue, UNASSESSED } from '../lib/condition'
+import { adjustedValue, conditionBadge, UNASSESSED } from '../lib/condition'
 import { clearLot, isPinned, lotKey, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
 import { formatMoney } from '../lib/pricing'
 import { shortSetName } from '../lib/shortName'
@@ -372,10 +372,16 @@ export function Lot() {
 function PinChip({ card, set, variant }: { card: ApiCard; set: VintageSet; variant: SetVariant }) {
   const { get } = useCollection()
   const price = usePrices()
-  useLot() // re-render this chip when the lot changes anywhere
+  const lot = useLot() // re-render this chip when the lot changes anywhere
   const pinned = isPinned(card.id, variant.id)
-  const owned = Boolean(get(card.id, variant.id)?.owned)
+  const held = get(card.id, variant.id)
+  const owned = Boolean(held?.owned)
   const p = price(card, variant)
+  // The copy this chip is about: the one in the lot once pinned, otherwise
+  // the one you already own.
+  const inLot = pinned ? lot.find((e) => e.cardId === card.id && e.variantId === variant.id) : undefined
+  const source = inLot ?? (owned ? held : undefined)
+  const badge = conditionBadge(source)
 
   return (
     <button
@@ -390,6 +396,14 @@ function PinChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
       <span className="chip-price">
         {p.market == null ? '—' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
       </span>
+      {badge && (
+        <span
+          className={`chip-condition ${badge === 'En route' ? 'is-en-route' : ''}`}
+          title={inLot ? 'Condition of the copy in the lot' : 'Condition of the copy you own'}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   )
 }
