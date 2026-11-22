@@ -15,6 +15,7 @@ import { getSet, useSets } from '../lib/sets'
 import { showAllSets, useHiddenSets } from '../lib/hiddenSets'
 import { loadOpenSets, saveOpenSets } from '../lib/openSets'
 import { loadTotalsOpen, saveTotalsOpen } from '../lib/totalsOpen'
+import { conditionBadge } from '../lib/condition'
 import { formatMoney } from '../lib/pricing'
 import { routeHref } from '../lib/router'
 import { countMatches, searchCards } from '../lib/searchCards'
@@ -1010,6 +1011,7 @@ function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
   const owned = Boolean(entry?.owned)
   const copies = owned ? Math.max(1, entry?.quantity ?? 1) : 0
   const p = price(card, variant)
+  const badge = conditionBadge(entry)
 
   return (
     <button
@@ -1026,6 +1028,10 @@ function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
       <span className={`chip-price ${p.market == null ? 'is-missing' : ''}`}>
         {p.market == null ? 'no price' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
       </span>
+      {/* The copy you hold, at a glance, without opening the card. */}
+      {owned && badge && (
+        <span className={`chip-condition ${entry?.condition === 'ENR' && !entry.graded ? 'is-en-route' : ''}`}>{badge}</span>
+      )}
     </button>
   )
 }

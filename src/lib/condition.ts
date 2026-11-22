@@ -56,3 +56,14 @@ export function adjustedValue(market: number | null, entry: Pick<CollectionEntry
   if (market == null) return null
   return market * valueMultiplier(entry)
 }
+
+/**
+ * The short label a copy's condition is shown by: "NM", "LP", "PSA 10",
+ * "En route". Null when there is nothing to say yet — not assessed.
+ */
+export function conditionBadge(entry: Pick<CollectionEntry, 'condition' | 'graded'> | undefined): string | null {
+  if (!entry) return null
+  if (entry.graded) return `${entry.graded.company} ${entry.graded.grade}`.trim()
+  if (entry.condition === UNASSESSED) return null
+  return entry.condition === 'ENR' ? 'En route' : entry.condition
+}

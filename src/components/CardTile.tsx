@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { adjustedValue } from '../lib/condition'
+import { adjustedValue, conditionBadge } from '../lib/condition'
 import { formatMoney } from '../lib/pricing'
 import { useCollection } from '../store/collection'
 import { usePrices } from '../store/prices'
@@ -57,7 +57,7 @@ export const CardTile = memo(function CardTile({ card, variant, onOpen }: Props)
 
       {owned && entry && (
         <span className={`tile-condition ${entry.condition === 'ENR' && !entry.graded ? 'is-en-route' : ''}`} title="Condition">
-          {entry.graded ? `${entry.graded.company} ${entry.graded.grade}` : entry.condition === 'ENR' ? 'En route' : entry.condition}
+          {conditionBadge(entry) ?? entry.condition}
           {entry.quantity > 1 ? ` ×${entry.quantity}` : ''}
         </span>
       )}

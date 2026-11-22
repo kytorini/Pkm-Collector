@@ -1191,6 +1191,20 @@ a.result-set:hover { color: var(--text); }
 .chip.is-pinned .chip-price, .chip.is-owned .chip-price { opacity: 0.8; }
 .chip-mark { font-size: 0.95rem; line-height: 1; opacity: 0.75; }
 .chip-count { font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* The condition of the copy you hold, on the chip's right: a small dark pill,
+   gold like the tile's badge, so it reads as a label rather than a price. */
+.chip-condition {
+  margin-left: 2px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(10, 12, 17, 0.38);
+  color: var(--gold);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.chip-condition.is-en-route { color: #8ec5ff; }
 /* Not a price, and not pretending to be one. */
 .chip-price.is-missing { opacity: 1; color: var(--gold-dim); font-style: italic; }
 .chip.is-owned .chip-price.is-missing, .chip.is-pinned .chip-price.is-missing { color: rgba(255, 255, 255, 0.78); }
