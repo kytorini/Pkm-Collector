@@ -147,3 +147,26 @@ function subscribe(fn: () => void): () => void {
 export function useLot(): LotEntry[] {
   return useSyncExternalStore(subscribe, loadLot, () => [])
 }
+
+/**
+ * How the lot is laid out: rows to grade and count in, or a grid of tiles to
+ * see the pile at a glance. Kept per device, like the binder's density.
+ */
+export type LotView = 'list' | 'grid'
+const VIEW_KEY = 'pkm-collector:lotView'
+
+export function loadLotView(): LotView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'list'
+  } catch {
+    return 'list'
+  }
+}
+
+export function saveLotView(view: LotView): void {
+  try {
+    localStorage.setItem(VIEW_KEY, view)
+  } catch {
+    /* a preference isn't worth failing over */
+  }
+}

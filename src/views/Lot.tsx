@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardResult } from '../components/CardResult'
@@ -6,7 +6,8 @@ import { OverflowMenu } from '../components/OverflowMenu'
 import { inRun, runsFor } from '../lib/printRuns'
 import { getSet } from '../lib/sets'
 import { adjustedValue, conditionBadge, UNASSESSED } from '../lib/condition'
-import { clearLot, isPinned, lotKey, setCondition, setQuantity, togglePin, unpin, useLot } from '../lib/lot'
+import { clearLot, isPinned, loadLotView, lotKey, saveLotView, setCondition, setQuantity, togglePin, unpin, useLot, type LotEntry, type LotView } from '../lib/lot'
+import { gridTemplate, loadDensity } from '../lib/density'
 import { formatMoney } from '../lib/pricing'
 import { shortSetName } from '../lib/shortName'
 import { searchCards } from '../lib/searchCards'
@@ -39,7 +40,12 @@ export function Lot() {
   // you choose another.
   const [sort, setSort] = useState<LotSort>(loadLotSort)
   const [openLine, setOpenLine] = useState<string | null>(null)
+  const [view, setView] = useState<LotView>(loadLotView)
   const phone = usePhone()
+  const chooseView = (next: LotView) => {
+    setView(next)
+    saveLotView(next)
+  }
 
   const byId = useMemo(() => new Map(allCards.map((c) => [c.id, c])), [allCards])
 
@@ -174,6 +180,14 @@ export function Lot() {
               have to look for twice. Sorting one card is nothing to offer, so
               that row is what varies, inside the menu where it costs nothing. */}
           <div className="lot-bar-actions">
+            <div className="segmented lot-view" role="group" aria-label="Show the lot as">
+              <button className={view === 'list' ? 'is-active' : ''} aria-pressed={view === 'list'} onClick={() => chooseView('list')}>
+                List
+              </button>
+              <button className={view === 'grid' ? 'is-active' : ''} aria-pressed={view === 'grid'} onClick={() => chooseView('grid')}>
+                Grid
+              </button>
+            </div>
             {phone ? (
               <OverflowMenu id="lot-options" label="Lot options" flagged={sort !== 'added'}>
                 {(close) => (
@@ -247,6 +261,22 @@ export function Lot() {
           Search for a card, then tap the print run you're being offered. It lands here with a price, and
           the total adds up as you go.
         </p>
+      ) : view === 'grid' ? (
+        // The binder's own grid and density, so a lot reads like a set page.
+        <div className="card-grid lot-grid" style={{ '--grid-template': gridTemplate(loadDensity()) } as CSSProperties}>
+          {shown.map(({ entry, card, set, variant, each, worth }) => (
+            <LotTile
+              key={lotKey(entry.cardId, entry.variantId)}
+              entry={entry}
+              card={card}
+              set={set}
+              variant={variant}
+              approximate={Boolean(each?.approximate)}
+              worth={worth}
+              onOpen={() => setOpenLine(lotKey(entry.cardId, entry.variantId))}
+            />
+          ))}
+        </div>
       ) : (
         <ul className="lot-list">
           {shown.map(({ entry, card, set, variant, each, worth }) => {
@@ -360,6 +390,84 @@ export function Lot() {
           onStep={step}
         />
       )}
+    </div>
+  )
+}
+
+/**
+ * One line of the lot as a binder tile: the art, what it's in, how many, and
+ * what the line comes to. Condition is graded right under it, so the grid is
+ * as workable as the list for the job the lot exists for.
+ */
+function LotTile({
+  entry,
+  card,
+  set,
+  variant,
+  approximate,
+  worth,
+  onOpen,
+}: {
+  entry: LotEntry
+  card?: ApiCard
+  set?: VintageSet
+  variant?: SetVariant
+  approximate: boolean
+  worth: number | null
+  onOpen: () => void
+}) {
+  const badge = conditionBadge(entry)
+  if (!card || !set || !variant) {
+    return (
+      <div className="tile lot-tile is-missing">
+        <p className="muted small">{entry.cardId}: this set's card data isn't loaded on this device.</p>
+        <button className="btn small" onClick={() => unpin(entry.cardId, entry.variantId)}>Remove</button>
+      </div>
+    )
+  }
+  const line = worth == null ? null : worth * entry.quantity
+  return (
+    <div className="tile lot-tile">
+      <button className="tile-art" onClick={onOpen} aria-label={`Open ${card.name} ${variant.label}`}>
+        <img src={card.images.small} alt={card.name} loading="lazy" decoding="async" width={245} height={342} />
+        {entry.quantity > 1 && <span className="lot-tile-qty">×{entry.quantity}</span>}
+      </button>
+      {badge && (
+        <span className={`tile-condition ${badge === 'En route' ? 'is-en-route' : ''}`} title="Condition of the copy in the lot">
+          {badge}
+        </span>
+      )}
+      <button
+        className="tile-check lot-tile-remove"
+        onClick={() => unpin(entry.cardId, entry.variantId)}
+        aria-label={`Remove ${card.name} ${variant.label} from the lot`}
+        title="Remove from the lot"
+      >
+        ✕
+      </button>
+      <div className="tile-meta">
+        <span className="tile-number">#{card.number}</span>
+        <span className="tile-name" title={`${card.name} · ${set.name} · ${variant.label}`}>{card.name}</span>
+        <span className={`tile-price ${approximate ? 'is-approx' : ''}`}>
+          {line == null ? '—' : `${approximate ? '~' : ''}${formatMoney(line)}`}
+        </span>
+      </div>
+      <div className="lot-tile-foot">
+        <span className="muted small" title={set.name}>{variant.short}</span>
+        <select
+          className="select select-compact"
+          aria-label={`Condition of ${card.name} ${variant.label}`}
+          value={entry.condition}
+          onChange={(e) => setCondition(entry.cardId, entry.variantId, e.target.value as ConditionId)}
+        >
+          {/* Short labels: a tile is too narrow for "Lightly Played". */}
+          {CONDITIONS.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.id === UNASSESSED ? 'Condition' : c.id === 'ENR' ? 'En route' : c.id}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   )
 }

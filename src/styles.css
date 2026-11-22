@@ -1965,3 +1965,25 @@ a.result-set:hover { color: var(--text); }
   .topbar-action { display: none; }
   .nav-vending { display: flex; }
 }
+
+/* ---------- the lot as a grid ---------- */
+.lot-view { flex: 0 0 auto; }
+.lot-view button { padding: 6px 12px; }
+.lot-tile-remove { font-size: 0.85rem; }
+.lot-tile-qty {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(10, 12, 17, 0.85);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.lot-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; }
+.lot-tile-foot > span { white-space: nowrap; }
+.lot-tile-foot .select { min-width: 0; flex: 1 1 auto; max-width: none; padding-top: 4px; padding-bottom: 4px; font-size: 0.78rem; }
+.lot-tile.is-missing { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: var(--radius-sm); }
