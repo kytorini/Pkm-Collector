@@ -1013,7 +1013,7 @@ function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
   const p = price(card, variant)
   const badge = conditionBadge(entry)
 
-  return (
+  const chip = (
     <button
       className={`chip ${owned ? 'is-owned' : ''}`}
       aria-pressed={owned}
@@ -1028,10 +1028,20 @@ function OwnChip({ card, set, variant }: { card: ApiCard; set: VintageSet; varia
       <span className={`chip-price ${p.market == null ? 'is-missing' : ''}`}>
         {p.market == null ? 'no price' : `${p.approximate ? '~' : ''}${formatMoney(p.market)}`}
       </span>
-      {/* The copy you hold, at a glance, without opening the card. */}
-      {owned && badge && (
-        <span className={`chip-condition ${entry?.condition === 'ENR' && !entry.graded ? 'is-en-route' : ''}`}>{badge}</span>
-      )}
     </button>
+  )
+  if (!owned || !badge) return chip
+  // The copy you hold, at a glance: its own pill beside the run's, kept
+  // together so a wrapping row never parts them.
+  return (
+    <span className="chip-pair">
+      {chip}
+      <span
+        className={`chip-condition ${entry?.condition === 'ENR' && !entry.graded ? 'is-en-route' : ''}`}
+        title="Condition"
+      >
+        {badge}
+      </span>
+    </span>
   )
 }

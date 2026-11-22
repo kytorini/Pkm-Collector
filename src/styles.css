@@ -1191,15 +1191,18 @@ a.result-set:hover { color: var(--text); }
 .chip.is-pinned .chip-price, .chip.is-owned .chip-price { opacity: 0.8; }
 .chip-mark { font-size: 0.95rem; line-height: 1; opacity: 0.75; }
 .chip-count { font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-/* The condition of the copy you hold, on the chip's right: a small dark pill,
-   gold like the tile's badge, so it reads as a label rather than a price. */
+/* The condition of the copy you hold, as its own pill beside the run's. The
+   same size and shape as a chip, but quiet: it labels, it doesn't toggle. */
+.chip-pair { display: inline-flex; align-items: stretch; gap: 5px; }
 .chip-condition {
-  margin-left: 2px;
-  padding: 1px 7px;
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
   border-radius: 99px;
-  background: rgba(10, 12, 17, 0.38);
+  background: var(--bg-sunken);
   color: var(--gold);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
