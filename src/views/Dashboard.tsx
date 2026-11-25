@@ -3,6 +3,7 @@ import { BackToTop } from '../components/BackToTop'
 import { CardDetail } from '../components/CardDetail'
 import { CardResult } from '../components/CardResult'
 import { ChevronDownIcon, InfoIcon } from '../components/icons'
+import { EnRouteList, useEnRoute } from '../components/EnRouteList'
 import { MissingList } from '../components/MissingList'
 import { OverflowMenu } from '../components/OverflowMenu'
 import { ProgressBar } from '../components/ProgressBar'
@@ -82,7 +83,9 @@ export function Dashboard() {
   // Reached from the "i" panel, which is where the count that prompts the
   // question is stated. Not a stored preference — it's an errand, not a view.
   const [showUnpriced, setShowUnpriced] = useState(false)
-  const [tab, setTab] = useState<'sets' | 'singles' | 'missing'>('sets')
+  const [tab, setTab] = useState<'sets' | 'singles' | 'missing' | 'enroute'>('sets')
+  // Cards bought and in the post, across every set; the tab shows while there are any.
+  const enRoute = useEnRoute()
   const [addingSingle, setAddingSingle] = useState(false)
 
   const toggleTotals = () => {
@@ -514,9 +517,16 @@ export function Dashboard() {
           <button className={tab === 'missing' ? 'is-active' : ''} onClick={() => setTab('missing')} aria-pressed={tab === 'missing'}>
             Missing{missing > 0 ? ` · ${missing}` : ''}
           </button>
+          {(enRoute.length > 0 || tab === 'enroute') && (
+            <button className={tab === 'enroute' ? 'is-active' : ''} onClick={() => setTab('enroute')} aria-pressed={tab === 'enroute'}>
+              En route{enRoute.length > 0 ? ` · ${enRoute.length}` : ''}
+            </button>
+          )}
         </div>
 
-      {tab === 'missing' ? (
+      {tab === 'enroute' ? (
+        <EnRouteList onOpen={openPanel} />
+      ) : tab === 'missing' ? (
         <MissingList sets={chasing} onOpen={openPanel} />
       ) : tab === 'singles' ? (
         <SinglesList
